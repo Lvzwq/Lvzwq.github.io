@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[闲散记事]]></title>
+  <link href="lvzwq.github.io/atom.xml" rel="self"/>
+  <link href="lvzwq.github.io/"/>
+  <updated>2016-12-04T08:28:15+08:00</updated>
+  <id>lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Mac使用Octopress搭建博客]]></title>
+    <link href="lvzwq.github.io/blog/2016/12/04/macshi-yong-jekyllzhu-ti-octopressda-jian-bo-ke/"/>
+    <updated>2016-12-04T08:22:05+08:00</updated>
+    <id>lvzwq.github.io/blog/2016/12/04/macshi-yong-jekyllzhu-ti-octopressda-jian-bo-ke</id>
+    <content type="html"><![CDATA[<p>一、搭建环境</p>
+
+<ul>
+<li>安装<code>homebrew</code></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>使用<code>homebrew</code>升级新版本ruby替换系统自带<code>ruby</code></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>brew install ruby</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>升级<code>gem</code>版本</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>gem update  --system 2.6.6</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>安装<code>bundler</code></li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo gem install bundler</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>升级<code>rake</code>版本</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>boundle update rake</span></code></pre></td></tr></table></div></figure>
+
+
+<p>二、在本地启动博客服务</p>
+
+<ul>
+<li>安装博客所需要的<code>ruby</code>依赖</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>bundler install</span></code></pre></td></tr></table></div></figure>
+
+
+<p>
+* 安装默认主题和配置</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>rake install</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>编译markdown文件，生成静态文件</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>rake generate</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>本地预览</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>rake preview</span></code></pre></td></tr></table></div></figure>
+
+
+<p>三、将本地博客上传至<code>GitPage</code></p>
+]]></content>
+  </entry>
+  
+</feed>
