@@ -4,7 +4,7 @@
   <title><![CDATA[闲散记事]]></title>
   <link href="http://lvzwq.github.io/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-04-13T21:27:24+08:00</updated>
+  <updated>2017-04-13T21:29:01+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -83,6 +83,9 @@
 <span class='line-number'>32</span>
 <span class='line-number'>33</span>
 <span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'># The number of milliseconds of each tick
 </span><span class='line'>tickTime=2000
 </span><span class='line'># The number of ticks that the initial
@@ -94,9 +97,11 @@
 </span><span class='line'># the directory where the snapshot is stored.
 </span><span class='line'># do not use /tmp for storage, /tmp here is just
 </span><span class='line'># example sakes.
+</span><span class='line'>
 </span><span class='line'># 修改zk数据文件存储位置
 </span><span class='line'>dataDir=/root/zookeeper
 </span><span class='line'># the port at which the clients will connect
+</span><span class='line'>
 </span><span class='line'># 修改zk 客户端连接端口
 </span><span class='line'>clientPort=2181
 </span><span class='line'># the maximum number of client connections.
@@ -113,6 +118,7 @@
 </span><span class='line'># Purge task interval in hours
 </span><span class='line'># Set to "0" to disable auto purge feature
 </span><span class='line'>#autopurge.purgeInterval=1
+</span><span class='line'>
 </span><span class='line'># zk集群的端口
 </span><span class='line'>server.0=192.168.138.128:20881:30881
 </span><span class='line'>server.1=192.168.138.129:20881:30881
@@ -127,11 +133,11 @@
 </ul>
 
 
-<blockquote><p>server.0、server.1、server.2 是指整个zookeeper集群内的节点列表。server的配置规则为：server.N=YYY:A:B
-N表示服务器编号
-YYY表示服务器的IP地址
-A为LF通信端口，表示该服务器与集群中的leader交换的信息的端口。
-B为选举端口，表示选举新leader时服务器间相互通信的端口（当leader挂掉时，其余服务器会相互通信，选择出新的leader）
+<blockquote><p>server.0、server.1、server.2 是指整个zookeeper集群内的节点列表。server的配置规则为：  server.N=YYY:A:B<br/>
+N表示服务器编号<br/>
+YYY表示服务器的IP地址<br/>
+A为LF通信端口，表示该服务器与集群中的leader交换的信息的端口。<br/>
+B为选举端口，表示选举新leader时服务器间相互通信的端口（当leader挂掉时，其余服务器会相互通信，选择出新的leader）<br/>
 一般来说，集群中每个服务器的A端口都是一样，每个服务器的B端口也是一样。但是当所采用的为伪集群时，IP地址都一样，只能是A端口和B端口不一样。</p></blockquote>
 
 <h3>启动前配置</h3>
