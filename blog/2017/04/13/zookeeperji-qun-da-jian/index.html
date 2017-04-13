@@ -1,24 +1,92 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[闲散记事]]></title>
-  <link href="http://lvzwq.github.io/atom.xml" rel="self"/>
-  <link href="http://lvzwq.github.io/"/>
-  <updated>2017-04-13T21:27:24+08:00</updated>
-  <id>http://lvzwq.github.io/</id>
-  <author>
-    <name><![CDATA[Lvzwq]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Zookeeper集群搭建 - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
 
   
-  <entry>
-    <title type="html"><![CDATA[Zookeeper集群搭建]]></title>
-    <link href="http://lvzwq.github.io/blog/2017/04/13/zookeeperji-qun-da-jian/"/>
-    <updated>2017-04-13T21:25:29+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2017/04/13/zookeeperji-qun-da-jian</id>
-    <content type="html"><![CDATA[<h2>环境安装</h2>
+  <meta name="description" content="环境安装 java环境 1
+yum install java-1.8.0-openjdk-headless.x86_64 下载zookeeper安装包 1
+wget http://mirrors.cnnic.cn/apache/zookeeper/zookeeper-3.4.9/zookeeper &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2017/04/13/zookeeperji-qun-da-jian/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>A blogging framework for hackers.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Zookeeper集群搭建</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-04-13T21:25:29+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:25 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>环境安装</h2>
 
 <h3>java环境</h3>
 
@@ -244,118 +312,101 @@ B为选举端口，表示选举新leader时服务器间相互通信的端口（�
 </span><span class='line'>2.asia.pool.ntp.org
 </span><span class='line'>3.asia.pool.ntp.org</span></code></pre></td></tr></table></div></figure>
 
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-  <entry>
-    <title type="html"><![CDATA[Mac使用Octopress搭建博客]]></title>
-    <link href="http://lvzwq.github.io/blog/2016/12/04/Mac%E4%BD%BF%E7%94%A8Octopress%E6%90%AD%E5%BB%BA%E5%8D%9A%E5%AE%A2/"/>
-    <updated>2016-12-04T08:22:05+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2016/12/04/Mac使用Octopress搭建博客</id>
-    <content type="html"><![CDATA[<p>一、搭建环境</p>
 
-<ul>
-<li>安装<code>homebrew</code></li>
-</ul>
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
 
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>使用<code>homebrew</code>升级新版本ruby替换系统自带<code>ruby</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>brew install ruby</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>升级<code>gem</code>版本</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>gem update  --system 2.6.6</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>安装<code>bundler</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sudo gem install bundler</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>升级<code>rake</code>版本</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>boundle update rake</span></code></pre></td></tr></table></div></figure>
-
-
-<p>二、在本地启动博客服务</p>
-
-<ul>
-<li>安装博客所需要的<code>ruby</code>依赖</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>bundler install</span></code></pre></td></tr></table></div></figure>
-
-
-<p>
-* 安装默认主题和配置</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake install</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>编译markdown文件，生成静态文件</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake generate</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>本地预览</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake preview</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>新建文章</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake new_post
-</span><span class='line'>Enter a title for your post:</span></code></pre></td></tr></table></div></figure>
-
-
-<p>三、将本地博客上传至<code>GitPage</code></p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake generate
-</span><span class='line'>rake deploy</span></code></pre></td></tr></table></div></figure>
+      
 
 
 
-]]></content>
-  </entry>
+
+<time class='entry-date' datetime='2017-04-13T21:25:29+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:25 pm</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
   
-</feed>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2017/04/13/zookeeperji-qun-da-jian/" data-via="" data-counturl="http://lvzwq.github.io/blog/2017/04/13/zookeeperji-qun-da-jian/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/12/04/Mac%E4%BD%BF%E7%94%A8Octopress%E6%90%AD%E5%BB%BA%E5%8D%9A%E5%AE%A2/" title="Previous Post: Mac使用Octopress搭建博客">&laquo; Mac使用Octopress搭建博客</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/04/Mac%E4%BD%BF%E7%94%A8Octopress%E6%90%AD%E5%BB%BA%E5%8D%9A%E5%AE%A2/">Mac使用Octopress搭建博客</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

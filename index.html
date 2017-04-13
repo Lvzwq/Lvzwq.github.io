@@ -9,8 +9,9 @@
   <meta name="author" content="Lvzwq">
 
   
-  <meta name="description" content="一、搭建环境 安装homebrew 1
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" 使用homebrew升级新版本ruby替换系统自带ruby &hellip;">
+  <meta name="description" content="环境安装 java环境 1
+yum install java-1.8.0-openjdk-headless.x86_64 下载zookeeper安装包 1
+wget http://mirrors.cnnic.cn/apache/zookeeper/zookeeper-3.4.9/zookeeper &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -66,6 +67,260 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-04-13T21:25:29+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:25 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>环境安装</h2>
+
+<h3>java环境</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>yum install java-1.8.0-openjdk-headless.x86_64</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>下载zookeeper安装包</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>wget http://mirrors.cnnic.cn/apache/zookeeper/zookeeper-3.4.9/zookeeper-3.4.9.tar.gz</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>配置</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>tar zxvf zookeeper-3.4.9.tar.gz
+</span><span class='line'>cd zookeeper-3.4.9/conf
+</span><span class='line'># 修改zoo.cfg
+</span><span class='line'>cp zoo_sample.cfg zoo.cfg</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>配置文件中主要修改</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># The number of milliseconds of each tick
+</span><span class='line'>tickTime=2000
+</span><span class='line'># The number of ticks that the initial
+</span><span class='line'># synchronization phase can take
+</span><span class='line'>initLimit=10
+</span><span class='line'># The number of ticks that can pass between
+</span><span class='line'># sending a request and getting an acknowledgement
+</span><span class='line'>syncLimit=5
+</span><span class='line'># the directory where the snapshot is stored.
+</span><span class='line'># do not use /tmp for storage, /tmp here is just
+</span><span class='line'># example sakes.
+</span><span class='line'># 修改zk数据文件存储位置
+</span><span class='line'>dataDir=/root/zookeeper
+</span><span class='line'># the port at which the clients will connect
+</span><span class='line'># 修改zk 客户端连接端口
+</span><span class='line'>clientPort=2181
+</span><span class='line'># the maximum number of client connections.
+</span><span class='line'># increase this if you need to handle more clients
+</span><span class='line'>#maxClientCnxns=60
+</span><span class='line'>#
+</span><span class='line'># Be sure to read the maintenance section of the
+</span><span class='line'># administrator guide before turning on autopurge.
+</span><span class='line'>#
+</span><span class='line'># http://zookeeper.apache.org/doc/current/zookeeperAdmin.html#sc_maintenance
+</span><span class='line'>#
+</span><span class='line'># The number of snapshots to retain in dataDir
+</span><span class='line'>#autopurge.snapRetainCount=3
+</span><span class='line'># Purge task interval in hours
+</span><span class='line'># Set to "0" to disable auto purge feature
+</span><span class='line'>#autopurge.purgeInterval=1
+</span><span class='line'># zk集群的端口
+</span><span class='line'>server.0=192.168.138.128:20881:30881
+</span><span class='line'>server.1=192.168.138.129:20881:30881
+</span><span class='line'>server.2=192.168.138.130:20881:30881</span></code></pre></td></tr></table></div></figure>
+
+
+<pre><code>    在对应的机器上将server.x=xxx.xxx.xx.xx:20881:30881改为0.0.0.0:20881:30881
+</code></pre>
+
+<ul>
+<li>参数的含义</li>
+</ul>
+
+
+<blockquote><p>server.0、server.1、server.2 是指整个zookeeper集群内的节点列表。server的配置规则为：server.N=YYY:A:B
+N表示服务器编号
+YYY表示服务器的IP地址
+A为LF通信端口，表示该服务器与集群中的leader交换的信息的端口。
+B为选举端口，表示选举新leader时服务器间相互通信的端口（当leader挂掉时，其余服务器会相互通信，选择出新的leader）
+一般来说，集群中每个服务器的A端口都是一样，每个服务器的B端口也是一样。但是当所采用的为伪集群时，IP地址都一样，只能是A端口和B端口不一样。</p></blockquote>
+
+<h3>启动前配置</h3>
+
+<pre><code>在zk数据dataDir存储目录新建myid文件，并分别写入0,1,2，与配置中的相同
+</code></pre>
+
+<p>启动服务</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>bin/zkServer.sh start</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>查看服务状态</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># zookeeper1
+</span><span class='line'>[root@master zookeeper-3.4.9]# bin/zkServer.sh status
+</span><span class='line'>ZooKeeper JMX enabled by default
+</span><span class='line'>Using config: /root/zookeeper-3.4.9/bin/../conf/zoo.cfg
+</span><span class='line'>Mode: follower
+</span><span class='line'>
+</span><span class='line'># zookeeper2
+</span><span class='line'>root@ubuntu:~/zookeeper-3.4.9# bin/zkServer.sh status
+</span><span class='line'>ZooKeeper JMX enabled by default
+</span><span class='line'>Using config: /root/zookeeper-3.4.9/bin/../conf/zoo.cfg
+</span><span class='line'>Mode: leader</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>遇到的问题</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>2017-04-11 20:48:09,120 [myid:2] - WARN  [/0.0.0.0:30881:QuorumCnxManager@400] - Cannot open channel to 0 at election address /192.168.138.128:30881
+</span><span class='line'>java.net.NoRouteToHostException: No route to host (Host unreachable)
+</span><span class='line'>  at java.net.PlainSocketImpl.socketConnect(Native Method)
+</span><span class='line'>  at java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:350)
+</span><span class='line'>  at java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:206)
+</span><span class='line'>  at java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:188)
+</span><span class='line'>  at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+</span><span class='line'>  at java.net.Socket.connect(Socket.java:589)
+</span><span class='line'>  at org.apache.zookeeper.server.quorum.QuorumCnxManager.connectOne(QuorumCnxManager.java:381)
+</span><span class='line'>  at org.apache.zookeeper.server.quorum.QuorumCnxManager.receiveConnection(QuorumCnxManager.java:295)
+</span><span class='line'>  at org.apache.zookeeper.server.quorum.QuorumCnxManager$Listener.run(QuorumCnxManager.java:543)
+</span><span class='line'>2017-04-11 20:48:09,121 [myid:2] - INFO  [/0.0.0.0:30881:QuorumPeer$QuorumServer@149] - Resolved hostname: 192.168.138.128 to address: /192.168.138.128</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个出现在了一台centos机器上，主要原因是防火墙禁止访问
+最简单的方法是禁止防火墙</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>systemctl stop firewalld.service 
+</span><span class='line'>systemctl disable firewalld.service #禁止firewall开机启动</span></code></pre></td></tr></table></div></figure>
+
+
+<p>另外一种开启端口访问</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>/sbin/iptables -I INPUT -p tcp --dport 2181 -j ACCEPT
+</span><span class='line'>/sbin/iptables -I INPUT -p tcp --dport 20881 -j ACCEPT
+</span><span class='line'>/sbin/iptables -I INPUT -p tcp --dport 30881 -j ACCEPT</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>同步服务器时间</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>yum install nptdate
+</span><span class='line'>
+</span><span class='line'>ntpdate time.nist.gov
+</span><span class='line'>另外的时间服务器
+</span><span class='line'>time.nist.gov
+</span><span class='line'>time.nuri.net
+</span><span class='line'>0.asia.pool.ntp.org
+</span><span class='line'>1.asia.pool.ntp.org
+</span><span class='line'>2.asia.pool.ntp.org
+</span><span class='line'>3.asia.pool.ntp.org</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -177,7 +432,9 @@
 
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake post title="titlename"</span></code></pre></td></tr></table></div></figure>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>rake new_post
+</span><span class='line'>Enter a title for your post:</span></code></pre></td></tr></table></div></figure>
 
 
 <p>三、将本地博客上传至<code>GitPage</code></p>
@@ -207,6 +464,10 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/12/04/Mac%E4%BD%BF%E7%94%A8Octopress%E6%90%AD%E5%BB%BA%E5%8D%9A%E5%AE%A2/">Mac使用Octopress搭建博客</a>
