@@ -9,12 +9,23 @@
   <meta name="author" content="Lvzwq">
 
   
-  <meta name="description" content="参考:kafka环境搭建2-broker集群+zookeeper集群 首先搭建zk集群 前面已经介绍过了 Kafka配置修改 修改config/server.properties 1
+  <meta name="description" content="参考: Elasticsearch5.2.1集群搭建，动态加入节点，并添加监控诊断插件 准备阶段 1、Java1.8
+2、下载elasticsearch5.3.1 3、设置环境变量 JAVA_HOME 配置修改 1
 2
 3
 4
-broker.id=1 host.name=192.168.138.128
-log.dirs=/ &hellip;">
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+cluster &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -70,6 +81,243 @@ log.dirs=/ &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-05-06T16:25:43+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>4:25 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>参考: <a href="http://blog.csdn.net/gamer_gyt/article/details/59077189">Elasticsearch5.2.1集群搭建，动态加入节点，并添加监控诊断插件</a></p>
+
+<h2>准备阶段</h2>
+
+<p>1、Java1.8<br/>
+2、下载elasticsearch5.3.1  <br/>
+3、设置环境变量 JAVA_HOME</p>
+
+<h2>配置修改</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cluster.name: es5-cluster   # 集群名称
+</span><span class='line'>node.name: node-1    # 节点名称
+</span><span class='line'>network.host: 192.168.138.129
+</span><span class='line'>http.port: 9200
+</span><span class='line'>transport.tcp.port: 9300
+</span><span class='line'>node.master: true  # 是否作为集群的主结点
+</span><span class='line'>node.data: true  # 是否存储数据，值为true
+</span><span class='line'>discovery.zen.ping.unicast.hosts: ["192.168.138.128:9300", "192.168.138.129:9300", "192.168.138.130:9300"]
+</span><span class='line'>discovery.zen.minimum_master_nodes: 1
+</span><span class='line'>gateway.recover_after_nodes: 2
+</span><span class='line'>gateway.recover_after_time: 5m
+</span><span class='line'>gateway.expected_nodes: 1
+</span><span class='line'>script.engine.groovy.inline.search: on
+</span><span class='line'>script.engine.groovy.inline.aggs: on
+</span><span class='line'>indices.recovery.max_bytes_per_sec: 20mb</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>常见的错误</h2>
+
+<p>启动命令<code>bin/elasticsearch -d</code>后，出现</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[2017-04-22T10:14:51,251][ERROR][o.e.b.Bootstrap          ] [node-3] node validation exception
+</span><span class='line'>bootstrap checks failed
+</span><span class='line'>max file descriptors [4096] for elasticsearch process is too low, increase to at least [65536]
+</span><span class='line'>[2017-04-22T10:14:51,332][INFO ][o.e.n.Node               ] [node-3] stopping ...
+</span><span class='line'>[2017-04-22T10:14:51,401][INFO ][o.e.n.Node               ] [node-3] stopped
+</span><span class='line'>[2017-04-22T10:14:51,402][INFO ][o.e.n.Node               ] [node-3] closing ...
+</span><span class='line'>[2017-04-22T10:14:51,417][INFO ][o.e.n.Node               ] [node-3] closed</span></code></pre></td></tr></table></div></figure>
+
+
+<p>解决方法</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>sudo sysctl -w vm.max_map_count=655360
+</span><span class='line'># 设置系统打开文件最大句柄
+</span><span class='line'>sudo cat /proc/sys/fs/file-max
+</span><span class='line'>ulimit -n 65536</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以根据服务器的配置修改JVM参数，修改文件<code>elasticsearch-5.3.1/config/jvm.options</code></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># Xms represents the initial size of total heap space
+</span><span class='line'># Xmx represents the maximum size of total heap space
+</span><span class='line'>
+</span><span class='line'>-Xms512m
+</span><span class='line'>-Xmx512m
+</span><span class='line'>
+</span><span class='line'>################################################################
+</span><span class='line'>## Expert settings
+</span><span class='line'>################################################################
+</span><span class='line'>##
+</span><span class='line'>## All settings below this section are considered
+</span><span class='line'>## expert settings. Don't tamper with them unless
+</span><span class='line'>## you understand what you are doing
+</span><span class='line'>##
+</span><span class='line'>################################################################
+</span><span class='line'>
+</span><span class='line'>## GC configuration
+</span><span class='line'>-XX:+UseConcMarkSweepGC
+</span><span class='line'>-XX:CMSInitiatingOccupancyFraction=75
+</span><span class='line'>-XX:+UseCMSInitiatingOccupancyOnly</span></code></pre></td></tr></table></div></figure>
+
+
+<p>打开浏览器，访问<a href="http://192.168.138.129:9200,">http://192.168.138.129:9200,</a> 如果出现以下页面则表示安装成功
+<img src="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164120@2x.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164120@2x.png" /></p>
+
+<p>访问<a href="http://192.168.138.129:9200/_cluster/health?pretty=true">http://192.168.138.129:9200/_cluster/health?pretty=true</a>
+<img src="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164430@2x.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164430@2x.png" /></p>
+
+<h2>kibana安装</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>wget https://artifacts.elastic.co/downloads/kibana/kibana-5.3.1-linux-x86_64.tar.gz</span></code></pre></td></tr></table></div></figure>
+
+
+<p>修改config/kibana.yml文件</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>server.port: 5601
+</span><span class='line'>server.host: "192.168.138.129"
+</span><span class='line'>elasticsearch.url: "http://192.168.138.129:9200"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>启动</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>bin/kibana </span></code></pre></td></tr></table></div></figure>
+
+
+<p>访问<a href="http://192.168.138.129:5601">http://192.168.138.129:5601</a> 客户端</p>
+
+<h2>head插件安装</h2>
+
+<p>下载head插件，首先需要保证系统安装nodejs</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>git clone git://github.com/mobz/elasticsearch-head.git
+</span><span class='line'>cd elasticsearch-head
+</span><span class='line'>npm install</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在elasticsearch.yml文件中添加</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># 增加新的参数，这样head插件可以访问es
+</span><span class='line'>http.cors.enabled: true
+</span><span class='line'>http.cors.allow-origin: "*"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>修改head/Gruntfile.js</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>connect: {
+</span><span class='line'>    server: {
+</span><span class='line'>        options: {
+</span><span class='line'>            port: 9100,
+</span><span class='line'>            hostname: '*',
+</span><span class='line'>            base: '.',
+</span><span class='line'>            keepalive: true
+</span><span class='line'>        }
+</span><span class='line'>    }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>把localhost修改成你es的服务器地址，如:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>this.base_uri = this.config.base_uri || this.prefs.get("app-base_uri") || "http://192.168.138.129:9200";</span></code></pre></td></tr></table></div></figure>
+
+
+<p>启动grunt服务</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>node_modules/grunt/bin/grunt server</span></code></pre></td></tr></table></div></figure>
+
+
+<p>访问<a href="http://192.168.138.129:9100,">http://192.168.138.129:9100,</a> 如果出现以下则表示集群安装成功</p>
+
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-171946@2x.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-171946@2x.png" /></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -697,6 +945,10 @@ B为选举端口，表示选举新leader时服务器间相互通信的端口（�
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a>

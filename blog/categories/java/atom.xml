@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Java | 闲散记事]]></title>
+  <link href="http://lvzwq.github.io/blog/categories/java/atom.xml" rel="self"/>
+  <link href="http://lvzwq.github.io/"/>
+  <updated>2017-05-06T17:22:26+08:00</updated>
+  <id>http://lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Java 对字符串转为可执行代码]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/"/>
+    <updated>2017-04-25T00:54:14+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma</id>
+    <content type="html"><![CDATA[<h2>方法一</h2>
+
+<p>参考: <a href="http://wiselyman.iteye.com/blog/1677444">java实现字符串转换成可执行代码</a></p>
+
+<p>使用commons的jexl包</p>
+
+<pre><code>    &lt;dependency&gt;
+            &lt;groupId&gt;org.apache.commons&lt;/groupId&gt;
+            &lt;artifactId&gt;commons-jexl&lt;/artifactId&gt;
+            &lt;version&gt;2.0&lt;/version&gt;
+        &lt;/dependency&gt;
+</code></pre>
+
+<p>代码示例</p>
+
+<pre><code>    Map&lt;String,Object&gt; map=new HashMap&lt;String,Object&gt;();  
+    map.put("testService",testService);  
+    map.put("person",person);  
+    String expression="testService.save(person)";  
+
+     JexlEngine jexl=new JexlEngine();  
+     Expression e = jexl.createExpression(expression);  
+     JexlContext jc = new MapContext();  
+     for(String key:map.keySet()){  
+           jc.set(key, map.get(key));  
+     }  
+     Object o = e.evaluate(jc);
+</code></pre>
+
+<h2>方式二</h2>
+
+<p>参考:<a href="http://blog.csdn.net/w1014074794/article/details/45968559">java执行字符串数学表达式 ScriptEngine</a></p>
+
+<p>使用Java自带的jdk, <code>javax.script.ScriptEngine</code></p>
+
+<pre><code>        String str = "3&amp;&amp;2&amp;&amp;1";
+        ScriptEngineManager factory = new ScriptEngineManager();
+        ScriptEngine engine = factory.getEngineByName("JavaScript");
+        str = str.replace("2", "true");
+        str = str.replace("3", "true");
+        str = str.replace("1", "false");
+        Object o = null;
+        try {
+            o = engine.eval(str);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>
