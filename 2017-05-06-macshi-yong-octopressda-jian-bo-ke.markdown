@@ -5,12 +5,16 @@ date: 2016-12-04 08:22:05 +0800
 comments: true
 categories: Mac
 ---
+
+<!--more-->
 一、搭建环境
 
 * 安装`homebrew`
 ```
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
+
+
 
 * 使用`homebrew`升级新版本ruby替换系统自带`ruby`  
 ```

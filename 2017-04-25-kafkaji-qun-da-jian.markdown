@@ -6,6 +6,9 @@ comments: true
 categories: Kafka
 ---
 参考:[kafka环境搭建2-broker集群+zookeeper集群](http://www.jianshu.com/p/dc4770fc34b6)
+
+<!--more-->
+
 ###首先搭建zk集群
 前面已经介绍过了
 ### Kafka配置修改

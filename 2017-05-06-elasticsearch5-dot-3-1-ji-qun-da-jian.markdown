@@ -8,10 +8,14 @@ categories: ElasticSearch
 
 
 参考: [Elasticsearch5.2.1集群搭建，动态加入节点，并添加监控诊断插件](http://blog.csdn.net/gamer_gyt/article/details/59077189)
+
+<!--more-->
+
 ## 准备阶段
 1、Java1.8  
 2、下载elasticsearch5.3.1    
 3、设置环境变量 JAVA_HOME
+
 
 ## 配置修改
 ```

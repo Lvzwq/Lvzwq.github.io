@@ -6,12 +6,16 @@ comments: true
 categories: Zookeeper
 ---
 
+<!--more-->
 
 ##环境安装
 ### java环境
 ```sh
 yum install java-1.8.0-openjdk-headless.x86_64
 ```
+
+
+
 ###下载zookeeper安装包
 ```sh
 wget http://mirrors.cnnic.cn/apache/zookeeper/zookeeper-3.4.9/zookeeper-3.4.9.tar.gz

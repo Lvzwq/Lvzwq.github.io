@@ -5,8 +5,13 @@ date: 2017-04-25 00:54:14 +0800
 comments: true
 categories: Java
 ---
+
+<!--more-->
+
 ## 方法一
 参考: [java实现字符串转换成可执行代码](http://wiselyman.iteye.com/blog/1677444)
+
+
 
 使用commons的jexl包
 
