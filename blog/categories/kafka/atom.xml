@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Kafka | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/kafka/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-06T17:22:26+08:00</updated>
+  <updated>2017-05-06T19:00:14+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -19,6 +19,9 @@
     <updated>2017-04-25T00:58:41+08:00</updated>
     <id>http://lvzwq.github.io/blog/2017/04/25/kafkaji-qun-da-jian</id>
     <content type="html"><![CDATA[<p>参考:<a href="http://www.jianshu.com/p/dc4770fc34b6">kafka环境搭建2-broker集群+zookeeper集群</a></p>
+
+<!--more-->
+
 
 <h3>首先搭建zk集群</h3>
 

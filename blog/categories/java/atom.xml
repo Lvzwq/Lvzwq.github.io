@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-06T17:22:26+08:00</updated>
+  <updated>2017-05-06T19:00:14+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -18,7 +18,10 @@
     <link href="http://lvzwq.github.io/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/"/>
     <updated>2017-04-25T00:54:14+08:00</updated>
     <id>http://lvzwq.github.io/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma</id>
-    <content type="html"><![CDATA[<h2>方法一</h2>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<h2>方法一</h2>
 
 <p>参考: <a href="http://wiselyman.iteye.com/blog/1677444">java实现字符串转换成可执行代码</a></p>
 

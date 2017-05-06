@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Mac | 闲散记事]]></title>
+  <link href="http://lvzwq.github.io/blog/categories/mac/atom.xml" rel="self"/>
+  <link href="http://lvzwq.github.io/"/>
+  <updated>2017-05-06T19:00:14+08:00</updated>
+  <id>http://lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Mac使用Octopress搭建博客]]></title>
+    <link href="http://lvzwq.github.io/blog/2016/12/04/macshi-yong-octopressda-jian-bo-ke/"/>
+    <updated>2016-12-04T08:22:05+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2016/12/04/macshi-yong-octopressda-jian-bo-ke</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>一、搭建环境</p>
+
+<ul>
+<li><p>安装<code>homebrew</code>
+<code>
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+</code></p></li>
+<li><p>使用<code>homebrew</code>升级新版本ruby替换系统自带<code>ruby</code><br/>
+<code>
+brew install ruby
+</code></p></li>
+<li>升级<code>gem</code>版本<br/>
+<code>
+gem update  --system 2.6.6
+</code></li>
+<li>安装<code>bundler</code><br/>
+<code>
+sudo gem install bundler
+</code></li>
+<li>升级<code>rake</code>版本
+<code>
+boundle update rake
+</code></li>
+</ul>
+
+
+<p>二、在本地启动博客服务</p>
+
+<ul>
+<li>安装博客所需要的<code>ruby</code>依赖<br/>
+<code>
+bundler install
+</code></li>
+<li>安装默认主题和配置<br/>
+<code>
+rake install
+</code></li>
+<li>编译markdown文件，生成静态文件<br/>
+<code>
+rake generate
+</code></li>
+<li><p>本地预览<br/>
+<code>
+rake preview
+</code></p></li>
+<li><p>新建文章
+<code>
+rake new_post
+Enter a title for your post:
+</code></p></li>
+</ul>
+
+
+<p>三、将本地博客上传至<code>GitPage</code>
+<code>
+rake generate
+rake deploy
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

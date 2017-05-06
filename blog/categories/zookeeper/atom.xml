@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Zookeeper | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/zookeeper/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-06T17:22:26+08:00</updated>
+  <updated>2017-05-06T19:00:14+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -18,7 +18,10 @@
     <link href="http://lvzwq.github.io/blog/2017/04/13/zookeeperji-qun-da-jian/"/>
     <updated>2017-04-13T21:25:29+08:00</updated>
     <id>http://lvzwq.github.io/blog/2017/04/13/zookeeperji-qun-da-jian</id>
-    <content type="html"><![CDATA[<h2>环境安装</h2>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<h2>环境安装</h2>
 
 <h3>java环境</h3>
 
