@@ -2,11 +2,11 @@
 #      Main Configs       #
 # ----------------------- #
 
-url: http://yoursite.com
-title: My Octopress Blog
+url: http://lvzwq.github.io
+title: 闲散记事
 subtitle: A blogging framework for hackers.
-author: Your Name
-simple_search: https://www.google.com/search
+author: Lvzwq
+simple_search: https://www.baidu.com/s?wd=
 description:
 
 # Default date format is "ordinal" (resulting in "July 22nd 2007")
