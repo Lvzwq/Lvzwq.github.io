@@ -1,0 +1,565 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>SQLAlchemy(二) --- ORM - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
+
+  
+  <meta name="description" content="SQLAlchemy ORM提供了一个连接数据库表和用户自定义Python类的方法。 定义一个映射(Mapping) 类的映射使用已经在基类中定义的声明式系统,这个基类(base class)维护了一个和这个基类相关的数据表的对应关系, 这就是所谓的declarative base class &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-er-orm/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
+  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">-->
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>Note.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">SQLAlchemy(二) --- ORM</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-10-31T19:34:33+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>7:34 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><!--more-->
+
+
+<p><code>SQLAlchemy ORM</code>提供了一个连接数据库表和用户自定义<code>Python</code>类的方法。</p>
+
+<h3>定义一个映射(Mapping)</h3>
+
+<p>类的映射使用已经在基类中定义的声明式系统,这个基类(<code>base class</code>)维护了一个和这个基类相关的数据表的对应关系, 这就是所谓的<code>declarative base class</code>。
+我们的应用在一般在导入的模块中将只有一个这个基类的实例。我们使用<code>declarative_base()</code>创建这个基类的实例。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.ext.declarative</span> <span class="kn">import</span> <span class="n">declarative_base</span>
+</span><span class='line'><span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>有了这个基类我们可以定义任何数量的映射类。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s">&#39;users&#39;</span>
+</span><span class='line'>    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">gender</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="s">&#39;M&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class='line'>        <span class="k">return</span> <span class="s">&quot;&lt;User(name=&#39;</span><span class="si">%s</span><span class="s">&#39;, gender=&#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>                            <span class="bp">self</span><span class="o">.</span><span class="n">gender</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># 执行创建表的语句</span>
+</span><span class='line'><span class="n">Base</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>一个继承自<code>Base</code>的类至少有一个<code>__tablename__</code>属性，并且至少有一个含有主键(<code>primary key</code>)的<code>Column</code>。当一个类创建时， <code>Declarative</code> 将所有的<code>Column</code>类用特殊的Python属性访问器替代。</p>
+
+<h3>创建Session</h3>
+
+<p>ORM操作数据库的句柄就是<code>Session</code>.当我们启动我们的应用时，在<code>create_engine()</code>的同时，我们定义了一个<code>Session</code>类将作为一个创建<code>Session</code>实例的工厂。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">sessionmaker</span>
+</span><span class='line'><span class="n">Session</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果我们还没有<code>Engine</code>的实例，我们可以先创建Session，当创建Engine后再绑定。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">Session</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">()</span>
+</span><span class='line'><span class="n">Session</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当需要和数据库有一个会话时，可以初始化一个<code>Session</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>添加新的类</h3>
+
+<p>为了持久化<code>User</code>对象， 我们使用<code>add()</code>将它加入到<code>Session</code>中。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;zhangsan&quot;</span><span class="p">,</span> <span class="n">gender</span><span class="o">=</span><span class="s">&quot;M&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>此时，这个<code>user</code>实例是待定的(<code>pending</code>);不执行任何SQL也不代表数据库中的一行数据。当使用一个<code>flush</code>过程时，<code>Session</code>将执行SQL来持久化<code>user</code>。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">our_user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;zhangsan&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</span><span class='line'><span class="c"># 此时our_user 和 user是同一个对象</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>事实上，<code>Session</code>返回同一行(对象)就是我们刚刚在<code>Session</code>内部的类的字典持久化的对象，所以我们事实上获得的就是我们加入<code>Session</code>中的实例。</p>
+
+<p>我们需要告诉<code>Session</code>我们想要将所有的改变存入到数据库，提交事务。我们通过<code>commit()</code>来执行。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在执行<code>commit</code>之前，执行<code>query</code>后，即使<code>user</code>已经有了标识符<code>id</code>, 但是数据库中并没有提交数据，只有在<code>commit</code>之后才会提交数据。</p>
+
+<p>我们可以在数据提交<code>commit</code>之前调用事务的<code>rollback</code>来回滚之前的修改。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>查询<code>Query</code></h3>
+
+<p><code>Query</code>查询返回的是元组<code>tuples</code>,是<code>KeyedTuple</code>提供的类，并且更像一个原生的Python对象。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+</span><span class='line'>    <span class="k">print</span> <span class="n">row</span><span class="o">.</span><span class="n">User</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">name</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>filter()</code>方法通常接收的是Python操作符，而<code>filter_by()</code>方法使用关键字参数</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&quot;ed&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;ed&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通用的查询语句
+equals:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>not equals:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s">&#39;ed&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>LIKE:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%e</span><span class="s">d%&#39;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>IN:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">([</span><span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="s">&#39;wendy&#39;</span><span class="p">,</span> <span class="s">&#39;jack&#39;</span><span class="p">]))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># works with query objects too:</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">(</span>
+</span><span class='line'>        <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%e</span><span class="s">d%&#39;</span><span class="p">))</span>
+</span><span class='line'><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>NOT IN:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">~</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">([</span><span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="s">&#39;wendy&#39;</span><span class="p">,</span> <span class="s">&#39;jack&#39;</span><span class="p">]))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>IS NULL:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="bp">None</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># alternatively, if pep8/linters are a concern</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="bp">None</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>IS NOT NULL:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># alternatively, if pep8/linters are a concern</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="bp">None</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>AND:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># use and_()</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">and_</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">and_</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">fullname</span> <span class="o">==</span> <span class="s">&#39;Ed Jones&#39;</span><span class="p">))</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># or send multiple expressions to .filter()</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">fullname</span> <span class="o">==</span> <span class="s">&#39;Ed Jones&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># or chain multiple filter()/filter_by() calls</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">fullname</span> <span class="o">==</span> <span class="s">&#39;Ed Jones&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>OR:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">or_</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;wendy&#39;</span><span class="p">))</span>
+</span><span class='line'><span class="n">MATCH</span><span class="p">:</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;wendy&#39;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>返回列表<code>List</code>和标量<code>Scalar</code></h3>
+
+<p><code>all()</code>返回一个列表</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%e</span><span class="s">d&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>first()</code>使用限制，返回结果集的第一条作为<code>Scalar</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>one()</code> 如果返回结果集不止一个对象，将<code>raise</code>一个错误。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.orm.exc</span> <span class="kn">import</span> <span class="n">MultipleResultsFound</span>
+</span><span class='line'><span class="k">try</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">users</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+</span><span class='line'><span class="k">except</span> <span class="n">MultiResultsFound</span> <span class="n">e</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">print</span> <span class="n">e</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>没有数据返回时</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.orm.exc</span> <span class="kn">import</span> <span class="n">NoResultFound</span>
+</span><span class='line'><span class="k">try</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">users</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+</span><span class='line'><span class="k">except</span> <span class="n">NoResultFound</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">print</span> <span class="n">e</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>scalar()</code>调用<code>one()</code>方法，并且成功时返回第一列数据</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>使用文本SQL语句</h3>
+
+<p>文本字符串可以在查询中灵活使用，通过<code>text()</code>构建。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">text</span>
+</span><span class='line'><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s">&quot;id&gt;20&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</span><span class='line'>    <span class="k">print</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以绑定参数，使用<code>params()</code>方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s">&quot;id&lt;:value and name=:name&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">params</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">220</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;ed&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>计数方法<code>count()</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Usre</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%e</span><span class="s">d&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>也可以使用<code>func.count()</code>来计数</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">func</span>
+</span><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-10-31T19:34:33+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>7:34 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-er-orm/" data-via="" data-counturl="http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-er-orm/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/10/31/sqlalchemy-1/" title="Previous Post: SQLAlchemy(一)">&laquo; SQLAlchemy(一)</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/11/04/ios-tian-jia-toolbar/" title="Next Post: IOS 添加toolBar">IOS 添加toolBar &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Java 对字符串转为可执行代码</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/">MAC上不错的软件和自用的优秀Chrome插件</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/docker/'>docker (2)</a></li>
+<li class='category'><a href='/blog/categories/elasticsearch/'>elasticsearch (1)</a></li>
+<li class='category'><a href='/blog/categories/hadoop/'>hadoop (1)</a></li>
+<li class='category'><a href='/blog/categories/ios/'>ios (5)</a></li>
+<li class='category'><a href='/blog/categories/java/'>java (1)</a></li>
+<li class='category'><a href='/blog/categories/kafka/'>kafka (1)</a></li>
+<li class='category'><a href='/blog/categories/mac/'>mac (2)</a></li>
+<li class='category'><a href='/blog/categories/php/'>php (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (4)</a></li>
+<li class='category'><a href='/blog/categories/scala/'>scala (1)</a></li>
+<li class='category'><a href='/blog/categories/zookeeper/'>zookeeper (1)</a></li>
+
+  </ul>
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  <!--返回顶部开始-->
+<div id="full" style="width:0px; height:0px; position:fixed; right:180px; bottom:150px; z-index:100; text-align:center; background-color:transparent; cursor:pointer;">
+  <a href="#" onclick="goTop();return false;"><img src="/images/top.png" border=0 alt="返回顶部"></a>
+</div>
+<script src="/javascripts/top.js" type="text/javascript"></script>
+<!--返回顶部结束-->
+</body>
+</html>

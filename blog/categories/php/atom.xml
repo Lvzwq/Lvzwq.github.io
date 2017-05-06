@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Php | 闲散记事]]></title>
+  <link href="http://lvzwq.github.io/blog/categories/php/atom.xml" rel="self"/>
+  <link href="http://lvzwq.github.io/"/>
+  <updated>2017-05-07T00:15:13+08:00</updated>
+  <id>http://lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[YII2发送邮件]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/11/22/yii2fa-song-you-jian/"/>
+    <updated>2015-11-22T23:06:47+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/11/22/yii2fa-song-you-jian</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p><code>YII2</code>是<code>PHP</code>中一个比较流行的WEB框架。
+下面来讲一下在<code>YII2</code>中如何配置邮件服务。<code>YII2</code>中默认是使用<code>swiftmailer</code>来发送邮件的。
+如果<code>YII2</code>中没有这个扩展，可以使用以下方式安装
+<code>sh
+php composer.phar require --prefer-dist yiisoft/yii2-swiftmailer
+</code>
+或者添加以下代码到<code>composer.json</code>
+<code>
+"yiisoft/yii2-swiftmailer": "~2.0.0"
+</code>
+然后执行<code>composer install</code>命令更新扩展</p>
+
+<p>安装完之后，需要在<code>YII2</code>的配置文件中配置邮箱的基本信息
+在<code>config/web.php</code>中添加
+<code>Php
+'mailer' =&gt; [
+            'class' =&gt; 'yii\swiftmailer\Mailer',
+            'viewPath' =&gt; '@app/mail',  //配置邮件模板的位置
+            'transport' =&gt; [
+                'class' =&gt; 'Swift_SmtpTransport',
+                'host' =&gt; 'smtp.126.com',
+                'username' =&gt; 'xxuser@126.com',
+                'password' =&gt; 'xxpwd',
+                'port' =&gt; '465',
+                'encryption' =&gt; 'ssl',
+            ],
+            'useFileTransport' =&gt; false,
+            'messageConfig'=&gt; [
+                'charset'=&gt;'UTF-8',
+                'from'=&gt;['xxuser@126.com'=&gt;'admin']
+            ],
+        ],
+</code></p>
+
+<h2>简单的邮件</h2>
+
+<pre><code>Yii::$app-&gt;mailer-&gt;compose()
+     -&gt;setFrom('xxuser@126.com')
+     -&gt;setTo($mailTo)
+     -&gt;setTextBody('您好， 有邮件来访')   //发布纯文字文本
+     //-&gt;setHtmlBody("点击查看&lt;a href='zwq.bingyan.net'&gt;zwq.bingyan.net&lt;/a&gt;")    //发布可以带html标签的文本
+     -&gt;setSubject($subject)
+     -&gt;send();
+</code></pre>
+
+<h2>带有模板的邮件</h2>
+
+<pre><code> $mail = Yii::$app-&gt;mailer-&gt;compose('resetPassword', [ "id" =&gt; 123, "key" =&gt; "asdsfdgfrtryt124354"]);
+        $mail-&gt;setFrom(Yii::$app-&gt;params['adminEmail']);
+        $mail-&gt;setTo("xxuser@gmail.com");
+        $mail-&gt;setSubject("XX网 | 密码重置");
+        return $mail-&gt;send();
+</code></pre>
+
+<p>上面的代码说明，使用<code>resetPassword.php</code>这个模板,模板文件在刚才配置的<code>viewPath</code>这个目录下。
+另外这个模板默认是以一个公共的模板<code>layouts/html.php</code>配置的。发送带有模板的邮件是不需要调用<code>setTextBody</code>和<code>setHtmlBody</code>的。
+模板文件目录结构如下所示
+<code>
+-- mail/
+    -- layouts/
+        -- html.php
+    -- resetPassword.php
+</code>
+其中<code>html.php</code>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="o">?</span><span class="nx">php</span>
+</span><span class='line'><span class="k">use</span> <span class="nx">yii\helpers\Html</span><span class="p">;</span><span class="o">&lt;/</span><span class="nx">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;/&lt;</span><span class="nx">em</span><span class="o">&gt;</span> <span class="o">@</span><span class="k">var</span> <span class="nv">$this</span> <span class="nx">\yii\web\View</span> <span class="nx">view</span> <span class="nx">component</span> <span class="nx">instance</span> <span class="o">&lt;/</span><span class="nx">em</span><span class="o">&gt;/</span>
+</span><span class='line'><span class="o">/&lt;</span><span class="nx">em</span><span class="o">&gt;</span> <span class="o">@</span><span class="k">var</span> <span class="nv">$message</span> <span class="nx">\yii\mail\MessageInterface</span> <span class="nx">the</span> <span class="nx">message</span> <span class="nx">being</span> <span class="nx">composed</span> <span class="o">&lt;/</span><span class="nx">em</span><span class="o">&gt;/</span>
+</span><span class='line'><span class="o">/&lt;</span><span class="nx">em</span><span class="o">&gt;</span> <span class="o">@</span><span class="k">var</span> <span class="nv">$content</span> <span class="nx">string</span> <span class="nx">main</span> <span class="nx">view</span> <span class="nx">render</span> <span class="nx">result</span> <span class="o">&lt;/</span><span class="nx">em</span><span class="o">&gt;/</span>
+</span><span class='line'><span class="nv">$resetURL</span> <span class="o">=</span> <span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">urlManager</span><span class="o">-&gt;</span><span class="na">createAbsoluteUrl</span><span class="p">([</span><span class="o">&amp;</span><span class="nx">lsquo</span><span class="p">;</span><span class="nx">user</span><span class="o">/</span><span class="nx">activate</span><span class="o">&amp;</span><span class="nx">rsquo</span><span class="p">;]);</span>
+</span><span class='line'><span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'><span class="x">&amp;lt;?php $this-&gt;beginPage() ?&gt;</span>
+</span><span class='line'><span class="x">&amp;lt;!DOCTYPE html PUBLIC &amp;ldquo;-//W3C//DTD XHTML 1.0 Strict//EN&amp;rdquo; &amp;ldquo;&lt;a href=&quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&lt;/a&gt;&amp;rdquo;&gt;</span>
+</span><span class='line'><span class="x">&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</span>
+</span><span class='line'><span class="x">&lt;head&gt;</span>
+</span><span class='line'><span class="x">    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=</span><span class="cp">&lt;?</span><span class="o">=</span> <span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">charset</span> <span class="cp">?&gt;</span><span class="x">&amp;ldquo; /&gt;</span>
+</span><span class='line'><span class="x">    &lt;title&gt;&amp;lt;?= Html::encode($this-&gt;title) ?&gt;&lt;/title&gt;</span>
+</span><span class='line'><span class="x">    &amp;lt;?php $this-&gt;head() ?&gt;</span>
+</span><span class='line'><span class="x">&lt;/head&gt;</span>
+</span><span class='line'><span class="x">&lt;body&gt;</span>
+</span><span class='line'><span class="x">    &amp;lt;?php $this-&gt;beginBody() ?&gt;</span>
+</span><span class='line'><span class="x">    &amp;lt;?= $content ?&gt;</span>
+</span><span class='line'><span class="x">    &amp;lt;?php $this-&gt;endBody() ?&gt;</span>
+</span><span class='line'><span class="x">&lt;/body&gt;</span>
+</span><span class='line'><span class="x">&lt;/html&gt;</span>
+</span><span class='line'><span class="x">&amp;lt;?php $this-&gt;endPage() ?&gt;</span>
+</span><span class='line'><span class="x">&lt;code&gt;</span>
+</span><span class='line'><span class="x">`resetPassword.php`中</span>
+</span><span class='line'><span class="x">&lt;/code&gt;</span>
+</span><span class='line'><span class="x">&amp;lt;?php</span>
+</span><span class='line'><span class="x">use yii\helpers\Html;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;p&gt;$resetLink = Yii::$app-&gt;urlManager-&gt;createAbsoluteUrl([&amp;lsquo;user/activate&amp;rsquo;, &amp;lsquo;id&amp;rsquo; =&gt; $id, &amp;ldquo;key&amp;rdquo; =&gt; $key]);</span>
+</span><span class='line'><span class="x">?&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;p&gt;尊敬的用户&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;p&gt;您好!&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;p&gt;&lt;b&gt;请点击以下链接重置密码&lt;/b&gt;&lt;br&gt;</span>
+</span><span class='line'><span class="x">&lt;a href=&quot;</span><span class="cp">&lt;?</span><span class="o">=</span> <span class="nv">$resetLink</span> <span class="cp">?&gt;</span><span class="x">&amp;ldquo;&gt;&amp;lt;?= $resetLink ?&gt;&lt;/a&gt;</span>
+</span><span class='line'><span class="x">&lt;br&gt;&lt;br&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;p&gt;系统发信，请勿回复&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;pre&gt;&lt;code&gt;在`resetPassword.php`最后解析的`html`内容会替换到`html.php`中的`$content`.</span>
+</span><span class='line'><span class="x">在向模板中传递参数时，是以数组的形式传递的，如上`$id`, `$key`和`compose`中第二个参数保持一致。</span>
+</span><span class='line'>
+</span><span class='line'><span class="x">根据上面配置会生成</span>
+</span><span class='line'><span class="x">`http://www.example.com/user/activite?id=123&amp;amp;key=asdsfdgfrtryt124354`</span>
+</span><span class='line'><span class="x">这个链接不够友好，我们可以使Ta更加`Restful`</span>
+</span><span class='line'><span class="x">`http://www.example.com/user/activite/123/asdsfdgfrtryt124354`</span>
+</span><span class='line'><span class="x">这样需要在`config/web.php`中配置</span>
+</span><span class='line'><span class="x">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;p&gt;&amp;lsquo;urlManager&amp;rsquo; =&gt; [</span>
+</span><span class='line'><span class="x">            &amp;lsquo;showScriptName&amp;rsquo; =&gt; false,</span>
+</span><span class='line'><span class="x">            &amp;lsquo;enablePrettyUrl&amp;rsquo; =&gt; true,</span>
+</span><span class='line'><span class="x">            //&amp;lsquo;suffix&amp;rsquo; =&gt; &amp;lsquo;.htm&amp;rsquo;,</span>
+</span><span class='line'><span class="x">            &amp;lsquo;rules&amp;rsquo; =&gt; [</span>
+</span><span class='line'><span class="x">                &amp;ldquo;&amp;lt;controller:(user)&gt;/&amp;lt;action:(activate)&gt;/&amp;lt;id:\d+&gt;/&amp;lt;key:\w+&gt;&amp;rdquo; =&gt; &amp;lsquo;&lt;controller&gt;/&lt;action&gt;&amp;rsquo;,</span>
+</span><span class='line'><span class="x">            ],</span>
+</span><span class='line'><span class="x">        ],</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<p>更详细，请参考<a href="http://www.yiiframework.com/doc-2.0/ext-swiftmailer-index.html">官方教程</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[PHP7安装OpenSSL扩展]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/11/21/php7an-zhuang-opensslkuo-zhan/"/>
+    <updated>2015-11-21T23:05:31+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/11/21/php7an-zhuang-opensslkuo-zhan</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>因为项目中需要发邮件，使用了<code>ssl</code>加密，所以需要<code>PHP</code>对<code>OpenSSL</code>支持。没有这个扩展的话，会报这个错误。
+<code>
+Unable to find the socket transport “ssl” - did you forget to enable it when you configured PHP
+</code>
+首先查找PHP中是否已经有这个扩展，是否未加载成功。
+<code>
+$ php-config70 --extension-dir  
+/opt/local/lib/php70/extensions/no-debug-non-zts-20141001
+$ cd /opt/local/lib/php70/extensions/no-debug-non-zts-20141001
+</code></p>
+
+<p>如果没有安装，目录下一版没有<code>openssl.so</code>这个文件。一种简单的安装方法，是从<code>PHP</code>的源码重新编译这个扩展。
+到官网<a href="https://downloads.php.net/~ab/">https://downloads.php.net/~ab/</a>下载对应版本的<code>PHP7</code>源码.
+<code>
+$ wget https://downloads.php.net/~ab/php-7.0.0RC6.tar.gz
+$ tar zxvf php-7.0.0RC6.tar.gz
+$ cd php-7.0.0RC6/ext/openssl
+</code>
+在目录下下执行<code>phpize70</code>,会报错。提示使用绝对路径
+```
+$ /opt/local/bin/phpize70
+Cannot find config.m4  # 报错找不到文件</p>
+
+<h1>然后执行</h1>
+
+<p>$ mv config0.m4 config.m4</p>
+
+<h1>再次执行 /opt/local/bin/phpize70</h1>
+
+<p>Configuring for:
+PHP Api Version:         20131218
+Zend Module Api No:      20141001
+Zend Extension Api No:   320140815</p>
+
+<h2>编译安装,首先找到php-config70文件路径</h2>
+
+<p>$ where php-config70
+/opt/local/bin/php-config70
+$ ./configure &ndash;with-php-config=/opt/local/bin/php-config70
+$ sudo make &amp; make install
+<code>
+安装成功之后，出现
+</code>
+/bin/sh /Users/ilovey/Downloads/php-7.0.0RC6/ext/openssl/libtool &ndash;mode=install cp ./openssl.la /Users/ilovey/Downloads/php-7.0.0RC6/ext/openssl/modules
+cp ./.libs/openssl.so /Users/ilovey/Downloads/php-7.0.0RC6/ext/openssl/modules/openssl.so</p>
+
+<h2>cp ./.libs/openssl.lai /Users/ilovey/Downloads/php-7.0.0RC6/ext/openssl/modules/openssl.la</h2>
+
+<p>Libraries have been installed in:
+   /Users/ilovey/Downloads/php-7.0.0RC6/ext/openssl/modules</p>
+
+<p>If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the <code>-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the</code>DYLD_LIBRARY_PATH' environment variable
+     during execution</p>
+
+<p>See any operating system documentation about shared libraries for</p>
+
+<h2>more information, such as the ld(1) and ld.so(8) manual pages.</h2>
+
+<p>Installing shared extensions:     /opt/local/lib/php70/extensions/no-debug-non-zts-20141001/
+<code>``
+此时，会发现</code>/opt/local/lib/php70/extensions/no-debug-non-zts-20141001/<code>目录下多了个</code>openssl.so<code>的文件，我们让</code>PHP<code>将其加载就行.
+加载的方式有两种，一种直接在</code>php.ini<code>文件中添加</code>extension=openssl.so`</p>
+
+<p>另一种方式，查找到PHP配置文件目录
+<code>
+$ php-config70 --configure-options
+可以找到如下
+--with-config-file-scan-dir=/opt/local/var/db/php70
+</code>
+进入可以看到有数个<code>ini</code>文件。添加一个<code>openssl.ini</code>文件，并在其中添加<code>extension=openssl.so</code>.</p>
+
+<p>重启<code>php-fpm</code>,就可以看到扩展加载成功了。</p>
+
+<p>转载自<a href="http://www.52jscn.com/web/2013/05/4592.shtml">php开启openssl的方法</a></p>
+]]></content>
+  </entry>
+  
+</feed>

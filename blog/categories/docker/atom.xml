@@ -1,0 +1,764 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Docker | 闲散记事]]></title>
+  <link href="http://lvzwq.github.io/blog/categories/docker/atom.xml" rel="self"/>
+  <link href="http://lvzwq.github.io/"/>
+  <updated>2017-05-07T00:15:13+08:00</updated>
+  <id>http://lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Flask项目部署]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/12/25/flaskxiang-mu-bu-shu/"/>
+    <updated>2015-12-25T23:13:07+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/12/25/flaskxiang-mu-bu-shu</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<h2>使用<code>gunicorn</code>部署<code>Flask</code>项目</h2>
+
+<p>添加项目中使用到<code>python</code>第三方扩展，如果使用<code>virtualenv</code>的话，可以在虚拟环境中使用<code>pip freeze</code>命令直接导出。</p>
+
+<pre><code class="sh">pip freeze &gt; requirements.txt
+</code></pre>
+
+<p>如下是所需要的扩展。</p>
+
+<pre><code>Flask==0.10.1
+Jinja2==2.7.3
+PyYAML==3.11
+SQLAlchemy==1.0.4
+Werkzeug==0.9.6
+requests==2.2.1
+ConfigParser==3.5.0b2
+gunicorn==19.4.1
+uWSGI==2.0.11.2
+</code></pre>
+
+<p>可以先在本地搭建一下服务。使用<code>docker</code>的话，其实就是把这个服务放在一个容器中，使用一个端口与本机交互。
+<code>bash
+pip install -r requirements.txt  #安装扩展
+gunicorn -w 4 helper:app -b :8000  # 启动服务,服务端口为8000
+</code></p>
+
+<p><code>gunicorn</code>启动命令中, <code>-w 4</code>表示启动进程数量，<code>-b</code>表示绑定的主机和端口,默认是<code>127.0.0.1:8000</code>。详细的配置参考<a href="http://docs.gunicorn.org/en/latest/settings.html">http://docs.gunicorn.org/en/latest/settings.html</a>,
+其中<code>helper:app</code>分别表示<code>helper.py</code>中的<code>app</code>应用</p>
+
+<p><code>helper.py</code></p>
+
+<pre><code class="python">#!/usr/bin/env python
+# coding: utf-8
+from main import create_app
+app = create_app()
+app.debug = True
+# app.run(host="0.0.0.0", port=5000)
+</code></pre>
+
+<p>其中<code>create_app</code>已经初始化<code>Flask</code>配置了。</p>
+
+<h3>使用<code>gunicorn</code>过程中的注意事项:</h3>
+
+<ul>
+<li>要将<code>app.run()</code>注释掉。
+如果没有注释的话，会出现下面这种错误。</li>
+</ul>
+
+
+<pre><code>[2015-12-25 13:05:10 +0800] [51268] [INFO] Starting gunicorn 19.4.1
+[2015-12-25 13:05:10 +0800] [51268] [INFO] Listening at: http://0.0.0.0:8004 (51268)
+[2015-12-25 13:05:10 +0800] [51268] [INFO] Using worker: sync
+[2015-12-25 13:05:10 +0800] [51271] [INFO] Booting worker with pid: 51271
+ * Running on http://0.0.0.0:5000/
+ * Restarting with reloader
+[2015-12-25 13:05:11 +0800] [51272] [INFO] Starting gunicorn 19.4.1
+[2015-12-25 13:05:11 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+[2015-12-25 13:05:11 +0800] [51272] [ERROR] Retrying in 1 second.
+[2015-12-25 13:05:12 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+[2015-12-25 13:05:12 +0800] [51272] [ERROR] Retrying in 1 second.
+[2015-12-25 13:05:13 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+[2015-12-25 13:05:13 +0800] [51272] [ERROR] Retrying in 1 second.
+[2015-12-25 13:05:14 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+...
+</code></pre>
+
+<ul>
+<li>启动命令中使用<code>-b :8000</code>
+如果使用</li>
+</ul>
+
+
+<pre><code>gunicorn -w 4 -b 127.0.0.1:8000 helper:app
+</code></pre>
+
+<p>在浏览器中就只能通过<code>localhost:8000</code>或者<code>127.0.0.1:8000</code>访问了，而不能直接通过<code>ip</code>访问。
+应该设置为:</p>
+
+<pre><code>gunicorn -w 4 -b :8000 helper:app
+或者
+gunicorn -w 4 -b 0.0.0.0:8000 helper:app
+</code></pre>
+
+<p>现在开始将这个简单的项目部署到<code>docker</code>中,
+首先看项目目录结构</p>
+
+<pre><code>.
+├── README.md
+├── config
+│   ├── __init__.py
+│   └── helper.conf
+├── helper.py
+├── library
+│   ├── __init__.py
+│   ├── curl.py
+├── main
+│   ├── __init__.py
+│   ├── car.py
+├── static
+├── templates
+└── uwsgi.ini
+</code></pre>
+
+<ol>
+<li>添加<code>Dockerfile</code>文件
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cd /path/to/project
+</span><span class='line'>touch Dockerfile&lt;/li&gt;
+</span><span class='line'>&lt;/ol&gt;
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;添加以下内容&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;FROM daocloud.io/python:2.7
+</span><span class='line'>RUN mkdir /code
+</span><span class='line'>WORKDIR /code
+</span><span class='line'>ADD requirements.txt /code/requirements.txt
+</span><span class='line'>RUN pip install -r /code/requirements.txt
+</span><span class='line'>COPY . /code
+</span><span class='line'>COPY docker-entrypoint.sh docker-entrypoint.sh
+</span><span class='line'>RUN chmod +x docker-entrypoint.sh
+</span><span class='line'>EXPOSE 8000&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;CMD /code/docker-entrypoint.sh</span></code></pre></td></tr></table></div></figure>
+项目服务启动的端口为8000，所以暴露8000端口，供主机访问</p>
+
+<ol>
+<li>添加启动文件<code>docker-entrypoint.sh</code></li>
+</ol>
+
+
+<pre><code>#!/bin/sh
+/usr/local/bin/gunicorn -w 4 -b :8000 helper:app
+</code></pre>
+
+<ol>
+<li>将当前项目生成镜像</li>
+</ol>
+
+
+<pre><code>$ docker build -t helper .
+</code></pre>
+
+<ol>
+<li>使用生成的镜像启动容器</li>
+</ol>
+
+
+<pre><code>$ docker run -p 8090:8000 helper
+</code></pre>
+
+<p>可以加上<code>-d</code>参数使项目在后台运行。可以直接在浏览器中通过
+<code>http://主机ip:8090</code>访问项目了。之后可以直接设置<code>nginx</code>转发端口来绑定域名。</p>
+
+<h2>使用<code>uWSGI</code>来部署<code>Flask</code>项目</h2>
+
+<p><code>Centos</code>上安装<code>uWSGI</code></p>
+
+<pre><code>yum install -y python python-devel uwsgi-plugin-python
+pip install uwsgi
+</code></pre>
+
+<p>直接命令行启动服务</p>
+
+<pre><code>uwsgi --http-socket 0.0.0.0:8000 --plugins python -w helper:app
+或者
+uwsgi --http-socket 0.0.0.0:8000 --plugins python --module helper --callable app --master --processes 4 --enable-threads --threads 4
+</code></pre>
+
+<h3>使用<code>INI</code>配置文件, <code>helper.ini</code>如下</h3>
+
+<pre><code>[uwsgi]
+# uwsgi 启动时所使用的地址与端口
+socket = 0.0.0.0:8000
+# 或者
+http-socket = 0.0.0.0:8000
+
+# 指向网站目录
+chdir = /root/helper
+
+plugin = python
+
+# python 启动程序文件
+wsgi-file = helper.py
+
+# python 程序内用以启动的 app 变量名
+callable = app
+
+# 处理器数
+processes = 4
+
+# 线程数
+threads = 2
+</code></pre>
+
+<p>执行启动命令</p>
+
+<pre><code>uwsgi -i helper.ini
+</code></pre>
+
+<h3>使用<code>XML</code>配置文件</h3>
+
+<pre><code class="xml">&lt;?xml version="1.0"?&gt;
+&lt;uwsgi&gt;
+    &lt;chdir&gt;/root/helper&lt;/chdir&gt;
+    &lt;!-- 项目对应的文件夹 --&gt;
+    &lt;pythonpath&gt;/root/helper&lt;/pythonpath&gt; 
+    &lt;plugins&gt;python&lt;/plugins&gt;
+
+    &lt;!-- 对应helper.py --&gt;
+    &lt;module&gt;helper&lt;/module&gt; 
+    &lt;callable&gt;app&lt;/callable&gt;  
+    &lt;master/&gt;
+
+    &lt;socket&gt;/tmp/helper.sock&lt;/socket&gt;
+    &lt;!-- 或者使用 --&gt;
+    &lt;!-- &lt;http-socket&gt;0.0.0.0:8000&lt;/http-socket&gt; --&gt;
+
+    &lt;!-- 使用虚拟环境--&gt;
+    &lt;!-- &lt;virtualenv&gt;/root/helper/env/&lt;/virtualenv&gt; --&gt;
+    &lt;uid&gt;root&lt;/uid&gt;
+    &lt;gid&gt;root&lt;/gid&gt;
+    &lt;chmod-socket&gt;644&lt;/chmod-socket&gt;
+    &lt;chown-socket&gt;root&lt;/chown-socket&gt;
+    &lt;enable-threads&gt;true&lt;/enable-threads&gt;
+    &lt;processes&gt;4&lt;/processes&gt;
+    &lt;!-- 后台运行，打印日志 --&gt;
+    &lt;daemonize&gt;/root/helper/logs/%n.log&lt;/daemonize&gt;
+    &lt;memory-report/&gt;
+&lt;/uwsgi&gt;
+</code></pre>
+
+<p>执行启动命令</p>
+
+<pre><code>uwsgi -x helper.xml
+</code></pre>
+
+<h3>使用<code>uWSGI</code>注意事项</h3>
+
+<ol>
+<li>在<code>helper.py</code>中不要加<code>app.run()</code>
+如果加上<code>app.run()</code>,会出现以下错误<code>unable to load configuration from uwsgi</code></li>
+</ol>
+
+
+<pre><code>your mercy for graceful operations on workers is 60 seconds
+mapped 363840 bytes (355 KB) for 4 cores
+*** Operational MODE: preforking ***
+added /root/helper/ to pythonpath.
+ * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+unable to load configuration from uwsgi
+</code></pre>
+
+<p>另外，在<code>helper.py</code>中，在<code>if __name__ == '__main__':</code>中的内容不会加载。</p>
+
+<ol>
+<li>在配置内容中需要加上<code>uWSGI</code>对<code>Python</code>的支持</li>
+</ol>
+
+
+<pre><code>&lt;plugins&gt;python&lt;/plugins&gt;
+或者 ini文件中
+plugins = python
+</code></pre>
+
+<p>没有加上，可能会出现</p>
+
+<pre><code>unable to load app 0 (mountpoint='') (callable not found or import error)
+*** no app loaded. going in full dynamic mode ***
+*** uWSGI is running in multiple interpreter mode ***
+</code></pre>
+
+<p>但是有的时候，也说可以不用加上，这个视情况而定。
+还有一种情况，是出现<code>uWSGI</code>对<code>Python</code>的扩展没有安装，错误如下
+<code>
+[uWSGI] parsing config file uwsgi.xml
+!!! UNABLE to load uWSGI plugin: dlopen(./python_plugin.so, 10): image not found !!!
+</code>
+在<code>Centos</code>执行
+<code>
+yum install -y uwsgi-plugin-python
+</code></p>
+
+<ol>
+<li><a href="http://stackoverflow.com/questions/15878176/uwsgi-invalid-request-block-size"><code>invalid request block size: 21573 (max 4096)...skip</code></a>
+uWSGI日志如下
+<code>
+WSGI app 0 (mountpoint='') ready in 1 seconds on interpreter 0x1c32840 pid: 22461 (default app)
+mountpoint  already configured. skip.
+spawned uWSGI worker 1 (pid: 22461, cores: 2)
+spawned uWSGI worker 2 (pid: 22466, cores: 2)
+spawned uWSGI worker 3 (pid: 22467, cores: 2)
+spawned uWSGI worker 4 (pid: 22468, cores: 2)
+invalid request block size: 21573 (max 4096)...skip
+invalid request block size: 21573 (max 4096)...skip
+</code>
+这个是因为在<code>uWSGI</code>配置文件中，设置了<code>socket</code>配置项为<code>0.0.0.0:8000</code>或者<code>socket</code>为<code>/tmp/uwsgi.sock</code>， 这样设置是不能通过浏览器访问的，还需要绑定<code>nginx</code>转发。可以将<code>socket</code>改为
+<code>
+&lt;http-socket&gt;0.0.0.0:8000&lt;/http-socket&gt;
+</code></li>
+</ol>
+
+
+<p>这样可以直接通过<code>IP:8000</code>直接访问。</p>
+
+<h2>使用<code>nginx</code>代理</h2>
+
+<p>设置的是<code>socket</code>的话，<code>nginx</code>配置如下
+<code>
+server {
+        listen 80;
+        server_name www.example.com;
+        access_log /var/log/nginx/www.example.com/access.log;
+        error_log /var/log/nginx/www.example.com/error.log;
+        location / {
+                include uwsgi_params;
+                uwsgi_pass 0.0.0.0:8000;
+                # uwsgi_pass unix:/tmp/helper.sock;
+        }
+}
+</code>
+如果使用了<code>http-socket</code>的话，这种可以直接在浏览器中直接<code>IP</code>访问，可以直接设置代理。也可以把服务部署在<code>docker</code>中，使用上面的配置</p>
+
+<pre><code>server {
+    listen 80;
+    server_name www.example.com;
+    access_log /var/log/nginx/www.example.com/access.log;
+    error_log /var/log/nginx/www.example.com/error.log;
+
+    error_page   500 502 503 504  /50x.html;
+
+    location / {
+        proxy_pass              http://localhost:8090;
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_buffering off;
+        add_header X-Accel-Buffering no;
+    }
+}
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Centos上Docker初体验]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/12/24/centosshang-dockerchu-ti-yan/"/>
+    <updated>2015-12-24T23:10:21+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/12/24/centosshang-dockerchu-ti-yan</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>Docker 依赖64位Centos系统。Centos 7内核至少为3.10.
+通过<code>uname -r</code>查看内核版本，如果没有达到要求，可以参考<a href="http://dl528888.blog.51cto.com/2382721/1609850">Centos7升级内核到3.18的方法</a></p>
+
+<pre><code># 导入key
+rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+
+# 安装elrepo的yum源
+rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+
+# 安装内核
+yum --enablerepo=elrepo-kernel install  kernel-ml-devel kernel-ml -y
+
+# 查看内核版本
+awk -F\' '$1=="menuentry " {print $2}' /etc/grub2.cfg
+# 修改默认启动顺序
+grub2-set-default 0
+
+# 重启
+reboot
+</code></pre>
+
+<h3>Docker 入门</h3>
+
+<p>可以花几分钟看完这个<a href="http://dockerpool.com/static/books/docker_practice/introduction/what.html">Docker 简介</a>， 算对Docker有一个初步的认识了。</p>
+
+<p>先简要介绍Docker的几个指令。</p>
+
+<p><code>docker info</code>，查看docker 当前的运行状态</p>
+
+<pre><code>Containers: 1
+Images: 4
+Server Version: 1.9.1
+Storage Driver: aufs
+ Root Dir: /mnt/sda1/var/lib/docker/aufs
+ Backing Filesystem: extfs
+ Dirs: 6
+ Dirperm1 Supported: true
+Execution Driver: native-0.2
+Logging Driver: json-file
+Kernel Version: 4.1.13-boot2docker
+Operating System: Boot2Docker 1.9.1 (TCL 6.4.1); master : cef800b - Fri Nov 20 19:33:59 UTC 2015
+CPUs: 1
+Total Memory: 996.2 MiB
+Name: default
+ID: KJEU:PWWQ:O7P2:M7YY:KGMN:CCO5:Q3SO:YXLC:LXWY:PQ2R:QXMQ:ABAL
+.....
+</code></pre>
+
+<p><code>docker</code> 命令</p>
+
+<pre><code>Options:
+
+  --config=~/.docker              Location of client config files
+  -D, --debug=false               Enable debug mode
+  -H, --host=[]                   Daemon socket(s) to connect to
+  -h, --help=false                Print usage
+  -l, --log-level=info            Set the logging level
+  --tls=false                     Use TLS; implied by --tlsverify
+  --tlscacert=~/.docker/ca.pem    Trust certs signed only by this CA
+  --tlscert=~/.docker/cert.pem    Path to TLS certificate file
+  --tlskey=~/.docker/key.pem      Path to TLS key file
+  --tlsverify=false               Use TLS and verify the remote
+  -v, --version=false             Print version information and quit
+
+Commands:
+    attach    Attach to a running container
+    build     Build an image from a Dockerfile
+    commit    Create a new image from a container's changes
+    cp        Copy files/folders from a container to a HOSTDIR or to STDOUT
+    create    Create a new container
+    diff      Inspect changes on a container's filesystem
+    events    Get real time events from the server
+    exec      Run a command in a running container
+    export    Export a container's filesystem as a tar archive
+    history   Show the history of an image
+    images    List images
+    import    Import the contents from a tarball to create a filesystem image
+    info      Display system-wide information
+    inspect   Return low-level information on a container or image
+    kill      Kill a running container
+    load      Load an image from a tar archive or STDIN
+    login     Register or log in to a Docker registry
+    logout    Log out from a Docker registry
+    logs      Fetch the logs of a container
+    pause     Pause all processes within a container
+    port      List port mappings or a specific mapping for the CONTAINER
+    ps        List containers
+    pull      Pull an image or a repository from a registry
+    push      Push an image or a repository to a registry
+    rename    Rename a container
+    restart   Restart a running container
+    rm        Remove one or more containers
+    rmi       Remove one or more images
+    run       Run a command in a new container
+    save      Save an image(s) to a tar archive
+    search    Search the Docker Hub for images
+    start     Start one or more stopped containers
+    stats     Display a live stream of container(s) resource usage statistics
+    stop      Stop a running container
+    tag       Tag an image into a repository
+    top       Display the running processes of a container
+    unpause   Unpause all processes within a container
+    version   Show the Docker version information
+    wait      Block until a container stops, then print its exit code
+
+Run 'docker COMMAND --help' for more information on a command.
+</code></pre>
+
+<h4>创建容器</h4>
+
+<pre><code>$ docker run -i -t ubuntu /bin/bash
+Unable to find image 'ubuntu:latest' locally
+14dab3d40372: Download complete
+47d44cb6f252: Download complete
+245bcdbcd071: Download complete
+a57086046415: Download complete
+8031fc57486d: Download complete
+abe620e04d9d: Download complete
+Status: Downloaded newer image for docker.io/ubuntu:latest
+</code></pre>
+
+<p>该命令会使用<code>Ubuntu</code>的镜像创建一个新的容器。<code>-i</code>表示Keep STDIN open even if not attached。<code>-t</code>表示Allocate a pseudo-TTY，它告诉Docker为要创建的容器分配一个伪tty终端。这样，新创建的容器才能提供一个交互式shell。</p>
+
+<pre><code>root@b874901e2f5b:/#
+</code></pre>
+
+<p>容器的主机名就是容器的ID。当前处于容器内<code>shell</code>状态，输入<code>exit</code>可以退出容器，退出容器后，容器也就停止了。</p>
+
+<h4>查看容器和镜像</h4>
+
+<pre><code>$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+docker.io/centos    latest              14dab3d40372        5 days ago          194.7 MB
+docker.io/ubuntu    latest              d55e68e6cc9c        12 days ago         187.9 MB
+
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                     PORTS               NAMES
+8e24480e37b9        centos              "/bin/bash"         5 minutes ago       Exited (0) 2 minutes ago                       distracted_aryabhata
+b874901e2f5b        ubuntu              "/bin/bash"         33 hours ago        Exited (0) 7 minutes ago                       cocky_yonath
+</code></pre>
+
+<p>从该命令的输出结果中我们可以看到关于这个容器的很多有用信息：ID、用于创建该容器的镜像、容器最后执行的命令、创建时间以及容器的退出状态（在上面的例子中，退出状态是0，因为容器是通过正常的exit命令退出的）。我们还可以看到，每个容器都有一个名称。</p>
+
+<p><code>docker images</code> 会展示当前的所有基础镜像。<code>docker ps</code> 显示当前所有运行的容器，加上<code>-a</code>表示所有的容器。</p>
+
+<blockquote><p>有三种方式可以指代唯一容器：短UUID（如b874901e2f5b）、长UUID（如f7cbdac22a02e03c9438c729345e54db9d20cfa2ac1fc3494b6eb60872e74778）或者名称（如cocky_yonath）。</p></blockquote>
+
+<p><code>docker start containerID</code> 启动已经停止运行的容器
+<code>docker stop containerID</code> 停止正在运行的容器
+<code>docker pull ubuntu:latest</code>从远程仓库下载最新的Ubuntu版本镜像
+<code>docker attach containID</code> 附着到容器上。如果是容器镜像是系统，将进入容器<code>Shell</code>模式。</p>
+
+<h3>查看容器内容运行情况</h3>
+
+<p>我们可以用 <code>docker logs containerID</code>获取容器内部运行的日志。
+<code>
+$ docker logs 9a0f7279429b
+[23/Dec/2015 00:06:01]"GET /tree HTTP/1.1" 404 2083
+[23/Dec/2015 00:06:03]"GET /favicon.ico HTTP/1.1" 404 2104
+[23/Dec/2015 00:06:07]"GET / HTTP/1.1" 200 1176
+[23/Dec/2015 00:06:07]"GET /static/main.css HTTP/1.1" 200 55
+[23/Dec/2015 00:06:18]"GET / HTTP/1.1" 200 1176
+[23/Dec/2015 00:06:56]"GET / HTTP/1.1" 200 1176
+...
+</code>
+加上<code>-f</code>参数，监控<code>docker logs</code>日志。
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker logs -f 9a0f7279429b&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;docker logs &ndash;tail 10 9a0f7279429b 获取最后10行的日志</span></code></pre></td></tr></table></div></figure></p>
+
+<h3>查看容器内的进程</h3>
+
+<pre><code>docker top containerID
+</code></pre>
+
+<h3>在容器内部运行程序</h3>
+
+<pre><code>docker exec 57010f2568a2 mysql --version
+docker exec 57010f2568a2 echo "hello world"
+</code></pre>
+
+<h3>深入容器</h3>
+
+<p>我们可以用<code>docker inspect containerID</code>获取容器更多地信息。
+<code>docker inspect</code>命令会对容器进行详细的检查，然后返回其配置信息，包括名称、命令、网络配置以及很多有用的数据。
+<code>
+$ docker inspect 4220b7df2d23
+[
+{
+    "Id": "4220b7df2d23b23b3ecbab8ec86ad37b2f48d5830178b6353cd4fbbdab83bf58",
+    "Created": "2015-12-19T19:03:36.639252716Z",
+    "Path": "/bin/bash",
+    "Args": [],
+    "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 28778,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2015-12-23T02:45:56.725884626Z",
+        "FinishedAt": "2015-12-23T02:40:46.344221213Z"
+    },
+    "Image": "89d5d8e8bafb6e279fa70ea444260fa61cc7c5c7d93eff51002005c54a49c918",
+    ...
+</code>
+有选择地获取<code>docker inspect</code>中的<code>docker</code>容器信息。<code>-f</code>有选择获取信息。
+<code>
+docker inspect --format '' 4220b7df2d23
+docker inspect -f '' 4220b7df2d23
+</code></p>
+
+<h3>使用<code>docker-machine</code>来创建<code>Docker</code>(Mac &amp;&amp; WIN)</h3>
+
+<p><code>Docker</code>官方提供的部署工具。帮助用户快速在运行环境中创建虚拟机服务节点，在虚拟机中安装并配置<code>Docker</code>，最终帮助用户配置<code>Docker Client</code>，使得 <code>Docker Client</code> 有能力与虚拟机中的 Docker 建立通信。
+<code>
+docker-machine create -d virtualbox default
+</code>
+首先通过 <code>create</code> 命令创建一台名为 <code>default</code> 的 VirtualBox 虚拟机，并已经安装好了 <code>Docker</code>。
+激活虚拟机<code>default</code>的环境变量。
+<code>
+ eval "$(docker-machine env default)"
+</code></p>
+
+<p><code>docker-machine</code> 命令行
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>─$ docker-machine &ndash;help
+</span><span class='line'>Usage: docker-machine [OPTIONS] COMMAND [arg&hellip;]&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;Create and manage machines running Docker.&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;Version: 0.5.4, build 6643d0e&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;Author:
+</span><span class='line'>  Docker Machine Contributors - &lt;a href="https://github.com/docker/machine"&gt;https://github.com/docker/machine&lt;/a&gt;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;Options:
+</span><span class='line'>  &ndash;debug, -D                       Enable debug mode
+</span><span class='line'>  -s, &ndash;storage-path &ldquo;/Users/ilovey/.docker/machine&rdquo;    Configures storage path [$MACHINE_STORAGE_PATH]
+</span><span class='line'>  &ndash;tls-ca-cert                     CA to verify remotes against [$MACHINE_TLS_CA_CERT]
+</span><span class='line'>  &ndash;tls-ca-key                      Private key to generate certificates [$MACHINE_TLS_CA_KEY]
+</span><span class='line'>  &ndash;tls-client-cert                     Client cert to use for TLS [$MACHINE_TLS_CLIENT_CERT]
+</span><span class='line'>  &ndash;tls-client-key                  Private key used in client TLS auth [$MACHINE_TLS_CLIENT_KEY]
+</span><span class='line'>  &ndash;github-api-token                    Token to use for requests to the Github API [$MACHINE_GITHUB_API_TOKEN]
+</span><span class='line'>  &ndash;native-ssh                      Use the native (Go-based) SSH implementation. [$MACHINE_NATIVE_SSH]
+</span><span class='line'>  &ndash;bugsnag-api-token                   BugSnag API token for crash reporting [$MACHINE_BUGSNAG_API_TOKEN]
+</span><span class='line'>  &ndash;help, -h                        show help
+</span><span class='line'>  &ndash;version, -v                     print the version&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;Commands:
+</span><span class='line'>  active        Print which machine is active
+</span><span class='line'>  config        Print the connection config for machine
+</span><span class='line'>  create        Create a machine
+</span><span class='line'>  env           Display the commands to set up the environment for the Docker client
+</span><span class='line'>  inspect       Inspect information about a machine
+</span><span class='line'>  ip            Get the IP address of a machine
+</span><span class='line'>  kill          Kill a machine
+</span><span class='line'>  ls            List machines
+</span><span class='line'>  regenerate-certs  Regenerate TLS Certificates for a machine
+</span><span class='line'>  restart       Restart a machine
+</span><span class='line'>  rm            Remove a machine
+</span><span class='line'>  ssh           Log into or run a command on a machine with SSH.
+</span><span class='line'>  scp           Copy files between machines
+</span><span class='line'>  start         Start a machine
+</span><span class='line'>  status        Get the status of a machine
+</span><span class='line'>  stop          Stop a machine
+</span><span class='line'>  upgrade       Upgrade a machine to the latest version of Docker
+</span><span class='line'>  url           Get the URL of a machine
+</span><span class='line'>  version       Show the Docker Machine version or a machine docker version
+</span><span class='line'>  help          Shows a list of commands or help for one command&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;Run &lsquo;docker-machine COMMAND &ndash;help&rsquo; for more information on a command.</span></code></pre></td></tr></table></div></figure></p>
+
+<h4>查看当前正在运行的<code>Machine</code></h4>
+
+<pre><code>$ docker-machine ls
+NAME      ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER   ERRORS
+default   *        virtualbox   Running   tcp://192.168.99.100:2376           v1.9.1
+</code></pre>
+
+<h4>启动虚拟机<code>Machine</code></h4>
+
+<pre><code>docker-machine start default
+</code></pre>
+
+<h4>获取虚拟机<code>Machine</code>的<code>IP</code></h4>
+
+<pre><code>docker-machine ip default
+</code></pre>
+
+<h4>通过<code>SSH</code>进入到虚拟机</h4>
+
+<pre><code>$ docker-machine ssh default
+                        ##         .
+                  ## ## ##        ==
+               ## ## ## ## ##    ===
+           /"""""""""""""""""\___/ ===
+      ~~~ {~~ ~~~~ ~~~ ~~~~ ~~~ ~ /  ===- ~~~
+           \______ o           __/
+             \    \         __/
+              \____\_______/
+ _                 _   ____     _            _
+| |__   ___   ___ | |_|___ \ __| | ___   ___| | _____ _ __
+| '_ \ / _ \ / _ \| __| __) / _` |/ _ \ / __| |/ / _ \ '__|
+| |_) | (_) | (_) | |_ / __/ (_| | (_) | (__|   &lt;  __/ |
+|_.__/ \___/ \___/ \__|_____\__,_|\___/ \___|_|\_\___|_|
+Boot2Docker version 1.9.1, build master : cef800b - Fri Nov 20 19:33:59 UTC 2015
+Docker version 1.9.1, build a34a1d5
+docker@default:~$
+</code></pre>
+
+<h4>参考</h4>
+
+<p><a href="http://dl528888.blog.51cto.com/2382721/1609850">Centos7升级内核到3.18的方法</a>
+<a href="http://www.jianshu.com/p/26f15063de7d">迈出使用Docker的第一步，学习第一个Docker容器</a></p>
+]]></content>
+  </entry>
+  
+</feed>

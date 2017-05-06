@@ -1,0 +1,796 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Flask项目部署 - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
+
+  
+  <meta name="description" content="使用gunicorn部署Flask项目 添加项目中使用到python第三方扩展，如果使用virtualenv的话，可以在虚拟环境中使用pip freeze命令直接导出。 1
+pip freeze &gt; requirements.txt 如下是所需要的扩展。 1
+2
+3
+4
+5
+6
+7
+8
+9 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2015/12/25/flaskxiang-mu-bu-shu/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
+  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">-->
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>Note.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Flask项目部署</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-25T23:13:07+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:13 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><!--more-->
+
+
+<h2>使用<code>gunicorn</code>部署<code>Flask</code>项目</h2>
+
+<p>添加项目中使用到<code>python</code>第三方扩展，如果使用<code>virtualenv</code>的话，可以在虚拟环境中使用<code>pip freeze</code>命令直接导出。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>pip freeze &gt; requirements.txt
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如下是所需要的扩展。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">Flask</span><span class="o">==</span>0.10.1
+</span><span class='line'><span class="nv">Jinja2</span><span class="o">==</span>2.7.3
+</span><span class='line'><span class="nv">PyYAML</span><span class="o">==</span>3.11
+</span><span class='line'><span class="nv">SQLAlchemy</span><span class="o">==</span>1.0.4
+</span><span class='line'><span class="nv">Werkzeug</span><span class="o">==</span>0.9.6
+</span><span class='line'><span class="nv">requests</span><span class="o">==</span>2.2.1
+</span><span class='line'><span class="nv">ConfigParser</span><span class="o">==</span>3.5.0b2
+</span><span class='line'><span class="nv">gunicorn</span><span class="o">==</span>19.4.1
+</span><span class='line'><span class="nv">uWSGI</span><span class="o">==</span>2.0.11.2
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以先在本地搭建一下服务。使用<code>docker</code>的话，其实就是把这个服务放在一个容器中，使用一个端口与本机交互。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'>pip install -r requirements.txt  <span class="c">#安装扩展</span>
+</span><span class='line'>gunicorn -w <span class="m">4</span> helper:app -b :8000  <span class="c"># 启动服务,服务端口为8000</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>gunicorn</code>启动命令中, <code>-w 4</code>表示启动进程数量，<code>-b</code>表示绑定的主机和端口,默认是<code>127.0.0.1:8000</code>。详细的配置参考<a href="http://docs.gunicorn.org/en/latest/settings.html">http://docs.gunicorn.org/en/latest/settings.html</a>,
+其中<code>helper:app</code>分别表示<code>helper.py</code>中的<code>app</code>应用</p>
+
+<p><code>helper.py</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c">#!/usr/bin/env python</span>
+</span><span class='line'><span class="c"># coding: utf-8</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">main</span> <span class="kn">import</span> <span class="n">create_app</span>
+</span><span class='line'><span class="n">app</span> <span class="o">=</span> <span class="n">create_app</span><span class="p">()</span>
+</span><span class='line'><span class="n">app</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="bp">True</span>
+</span><span class='line'><span class="c"># app.run(host=&quot;0.0.0.0&quot;, port=5000)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中<code>create_app</code>已经初始化<code>Flask</code>配置了。</p>
+
+<h3>使用<code>gunicorn</code>过程中的注意事项:</h3>
+
+<ul>
+<li>要将<code>app.run()</code>注释掉。
+如果没有注释的话，会出现下面这种错误。</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">10</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51268</span><span class="p">]</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Starting</span> <span class="n">gunicorn</span> <span class="mf">19.4</span><span class="o">.</span><span class="mi">1</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">10</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51268</span><span class="p">]</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Listening</span> <span class="n">at</span><span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">8004</span> <span class="p">(</span><span class="mi">51268</span><span class="p">)</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">10</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51268</span><span class="p">]</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Using</span> <span class="n">worker</span><span class="p">:</span> <span class="n">sync</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">10</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51271</span><span class="p">]</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Booting</span> <span class="n">worker</span> <span class="k">with</span> <span class="n">pid</span><span class="p">:</span> <span class="mi">51271</span>
+</span><span class='line'> <span class="o">*</span> <span class="n">Running</span> <span class="n">on</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">5000</span><span class="o">/</span>
+</span><span class='line'> <span class="o">*</span> <span class="n">Restarting</span> <span class="k">with</span> <span class="n">reloader</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">11</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">INFO</span><span class="p">]</span> <span class="n">Starting</span> <span class="n">gunicorn</span> <span class="mf">19.4</span><span class="o">.</span><span class="mi">1</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">11</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">ERROR</span><span class="p">]</span> <span class="n">Connection</span> <span class="ow">in</span> <span class="n">use</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">11</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">ERROR</span><span class="p">]</span> <span class="n">Retrying</span> <span class="ow">in</span> <span class="mi">1</span> <span class="n">second</span><span class="o">.</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">12</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">ERROR</span><span class="p">]</span> <span class="n">Connection</span> <span class="ow">in</span> <span class="n">use</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">12</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">ERROR</span><span class="p">]</span> <span class="n">Retrying</span> <span class="ow">in</span> <span class="mi">1</span> <span class="n">second</span><span class="o">.</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">13</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">ERROR</span><span class="p">]</span> <span class="n">Connection</span> <span class="ow">in</span> <span class="n">use</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">13</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">ERROR</span><span class="p">]</span> <span class="n">Retrying</span> <span class="ow">in</span> <span class="mi">1</span> <span class="n">second</span><span class="o">.</span>
+</span><span class='line'><span class="p">[</span><span class="mi">2015</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">25</span> <span class="mi">13</span><span class="p">:</span><span class="mo">05</span><span class="p">:</span><span class="mi">14</span> <span class="o">+</span><span class="mi">0800</span><span class="p">]</span> <span class="p">[</span><span class="mi">51272</span><span class="p">]</span> <span class="p">[</span><span class="n">ERROR</span><span class="p">]</span> <span class="n">Connection</span> <span class="ow">in</span> <span class="n">use</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="mi">8000</span><span class="p">)</span>
+</span><span class='line'><span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>启动命令中使用<code>-b :8000</code>
+如果使用</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">gunicorn</span> <span class="o">-</span><span class="n">w</span> <span class="mi">4</span> <span class="o">-</span><span class="n">b</span> <span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span><span class="p">:</span><span class="mi">8000</span> <span class="n">helper</span><span class="p">:</span><span class="n">app</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在浏览器中就只能通过<code>localhost:8000</code>或者<code>127.0.0.1:8000</code>访问了，而不能直接通过<code>ip</code>访问。
+应该设置为:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">gunicorn</span> <span class="o">-</span><span class="n">w</span> <span class="mi">4</span> <span class="o">-</span><span class="n">b</span> <span class="p">:</span><span class="mi">8000</span> <span class="n">helper</span><span class="p">:</span><span class="n">app</span>
+</span><span class='line'><span class="err">或者</span>
+</span><span class='line'><span class="n">gunicorn</span> <span class="o">-</span><span class="n">w</span> <span class="mi">4</span> <span class="o">-</span><span class="n">b</span> <span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">8000</span> <span class="n">helper</span><span class="p">:</span><span class="n">app</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>现在开始将这个简单的项目部署到<code>docker</code>中,
+首先看项目目录结构</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">.</span>
+</span><span class='line'><span class="err">├──</span> <span class="n">README</span><span class="o">.</span><span class="n">md</span>
+</span><span class='line'><span class="err">├──</span> <span class="n">config</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">├──</span> <span class="n">__init__</span><span class="o">.</span><span class="n">py</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">└──</span> <span class="n">helper</span><span class="o">.</span><span class="n">conf</span>
+</span><span class='line'><span class="err">├──</span> <span class="n">helper</span><span class="o">.</span><span class="n">py</span>
+</span><span class='line'><span class="err">├──</span> <span class="n">library</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">├──</span> <span class="n">__init__</span><span class="o">.</span><span class="n">py</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">├──</span> <span class="n">curl</span><span class="o">.</span><span class="n">py</span>
+</span><span class='line'><span class="err">├──</span> <span class="n">main</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">├──</span> <span class="n">__init__</span><span class="o">.</span><span class="n">py</span>
+</span><span class='line'><span class="err">│  </span> <span class="err">├──</span> <span class="n">car</span><span class="o">.</span><span class="n">py</span>
+</span><span class='line'><span class="err">├──</span> <span class="n">static</span>
+</span><span class='line'><span class="err">├──</span> <span class="n">templates</span>
+</span><span class='line'><span class="err">└──</span> <span class="n">uwsgi</span><span class="o">.</span><span class="n">ini</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>添加<code>Dockerfile</code>文件</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">cd</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">project</span>
+</span><span class='line'><span class="n">touch</span> <span class="n">Dockerfile</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># 添加以下内容</span>
+</span><span class='line'><span class="n">FROM</span> <span class="n">daocloud</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">python</span><span class="p">:</span><span class="mf">2.7</span>
+</span><span class='line'><span class="n">RUN</span> <span class="n">mkdir</span> <span class="o">/</span><span class="n">code</span>
+</span><span class='line'><span class="n">WORKDIR</span> <span class="o">/</span><span class="n">code</span>
+</span><span class='line'><span class="n">ADD</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span> <span class="o">/</span><span class="n">code</span><span class="o">/</span><span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</span><span class='line'><span class="n">RUN</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="o">/</span><span class="n">code</span><span class="o">/</span><span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</span><span class='line'><span class="n">COPY</span> <span class="o">.</span> <span class="o">/</span><span class="n">code</span>
+</span><span class='line'><span class="n">COPY</span> <span class="n">docker</span><span class="o">-</span><span class="n">entrypoint</span><span class="o">.</span><span class="n">sh</span> <span class="n">docker</span><span class="o">-</span><span class="n">entrypoint</span><span class="o">.</span><span class="n">sh</span>
+</span><span class='line'><span class="n">RUN</span> <span class="n">chmod</span> <span class="o">+</span><span class="n">x</span> <span class="n">docker</span><span class="o">-</span><span class="n">entrypoint</span><span class="o">.</span><span class="n">sh</span>
+</span><span class='line'><span class="n">EXPOSE</span> <span class="mi">8000</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">CMD</span> <span class="o">/</span><span class="n">code</span><span class="o">/</span><span class="n">docker</span><span class="o">-</span><span class="n">entrypoint</span><span class="o">.</span><span class="n">sh</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>项目服务启动的端口为8000，所以暴露8000端口，供主机访问</p>
+
+<ol>
+<li>添加启动文件<code>docker-entrypoint.sh</code></li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c">#!/bin/sh</span>
+</span><span class='line'><span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">local</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">gunicorn</span> <span class="o">-</span><span class="n">w</span> <span class="mi">4</span> <span class="o">-</span><span class="n">b</span> <span class="p">:</span><span class="mi">8000</span> <span class="n">helper</span><span class="p">:</span><span class="n">app</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>将当前项目生成镜像</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="err">$</span> <span class="n">docker</span> <span class="n">build</span> <span class="o">-</span><span class="n">t</span> <span class="n">helper</span> <span class="o">.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li>使用生成的镜像启动容器</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="err">$</span> <span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">p</span> <span class="mi">8090</span><span class="p">:</span><span class="mi">8000</span> <span class="n">helper</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>可以加上<code>-d</code>参数使项目在后台运行。可以直接在浏览器中通过
+<code>http://主机ip:8090</code>访问项目了。之后可以直接设置<code>nginx</code>转发端口来绑定域名。</p>
+
+<h2>使用<code>uWSGI</code>来部署<code>Flask</code>项目</h2>
+
+<p><code>Centos</code>上安装<code>uWSGI</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">yum</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">python</span> <span class="n">python</span><span class="o">-</span><span class="n">devel</span> <span class="n">uwsgi</span><span class="o">-</span><span class="n">plugin</span><span class="o">-</span><span class="n">python</span>
+</span><span class='line'><span class="n">pip</span> <span class="n">install</span> <span class="n">uwsgi</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>直接命令行启动服务</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">uwsgi</span> <span class="o">--</span><span class="n">http</span><span class="o">-</span><span class="n">socket</span> <span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">8000</span> <span class="o">--</span><span class="n">plugins</span> <span class="n">python</span> <span class="o">-</span><span class="n">w</span> <span class="n">helper</span><span class="p">:</span><span class="n">app</span>
+</span><span class='line'><span class="err">或者</span>
+</span><span class='line'><span class="n">uwsgi</span> <span class="o">--</span><span class="n">http</span><span class="o">-</span><span class="n">socket</span> <span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">8000</span> <span class="o">--</span><span class="n">plugins</span> <span class="n">python</span> <span class="o">--</span><span class="n">module</span> <span class="n">helper</span> <span class="o">--</span><span class="nb">callable</span> <span class="n">app</span> <span class="o">--</span><span class="n">master</span> <span class="o">--</span><span class="n">processes</span> <span class="mi">4</span> <span class="o">--</span><span class="n">enable</span><span class="o">-</span><span class="n">threads</span> <span class="o">--</span><span class="n">threads</span> <span class="mi">4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>使用<code>INI</code>配置文件, <code>helper.ini</code>如下</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="p">[</span><span class="n">uwsgi</span><span class="p">]</span>
+</span><span class='line'><span class="c"># uwsgi 启动时所使用的地址与端口</span>
+</span><span class='line'><span class="n">socket</span> <span class="o">=</span> <span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">8000</span>
+</span><span class='line'><span class="c"># 或者</span>
+</span><span class='line'><span class="n">http</span><span class="o">-</span><span class="n">socket</span> <span class="o">=</span> <span class="mf">0.0</span><span class="o">.</span><span class="mf">0.0</span><span class="p">:</span><span class="mi">8000</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># 指向网站目录</span>
+</span><span class='line'><span class="n">chdir</span> <span class="o">=</span> <span class="o">/</span><span class="n">root</span><span class="o">/</span><span class="n">helper</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">plugin</span> <span class="o">=</span> <span class="n">python</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># python 启动程序文件</span>
+</span><span class='line'><span class="n">wsgi</span><span class="o">-</span><span class="nb">file</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">py</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># python 程序内用以启动的 app 变量名</span>
+</span><span class='line'><span class="nb">callable</span> <span class="o">=</span> <span class="n">app</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># 处理器数</span>
+</span><span class='line'><span class="n">processes</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span class='line'>
+</span><span class='line'><span class="c"># 线程数</span>
+</span><span class='line'><span class="n">threads</span> <span class="o">=</span> <span class="mi">2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>执行启动命令</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">uwsgi</span> <span class="o">-</span><span class="n">i</span> <span class="n">helper</span><span class="o">.</span><span class="n">ini</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>使用<code>XML</code>配置文件</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot;?&gt;</span>
+</span><span class='line'><span class="nt">&lt;uwsgi&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;chdir&gt;</span>/root/helper<span class="nt">&lt;/chdir&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- 项目对应的文件夹 --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;pythonpath&gt;</span>/root/helper<span class="nt">&lt;/pythonpath&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;plugins&gt;</span>python<span class="nt">&lt;/plugins&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c">&lt;!-- 对应helper.py --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;module&gt;</span>helper<span class="nt">&lt;/module&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;callable&gt;</span>app<span class="nt">&lt;/callable&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;master/&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;socket&gt;</span>/tmp/helper.sock<span class="nt">&lt;/socket&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- 或者使用 --&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- &lt;http-socket&gt;0.0.0.0:8000&lt;/http-socket&gt; --&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c">&lt;!-- 使用虚拟环境--&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- &lt;virtualenv&gt;/root/helper/env/&lt;/virtualenv&gt; --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;uid&gt;</span>root<span class="nt">&lt;/uid&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;gid&gt;</span>root<span class="nt">&lt;/gid&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;chmod-socket&gt;</span>644<span class="nt">&lt;/chmod-socket&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;chown-socket&gt;</span>root<span class="nt">&lt;/chown-socket&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;enable-threads&gt;</span>true<span class="nt">&lt;/enable-threads&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;processes&gt;</span>4<span class="nt">&lt;/processes&gt;</span>
+</span><span class='line'>    <span class="c">&lt;!-- 后台运行，打印日志 --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;daemonize&gt;</span>/root/helper/logs/%n.log<span class="nt">&lt;/daemonize&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;memory-report/&gt;</span>
+</span><span class='line'><span class="nt">&lt;/uwsgi&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>执行启动命令</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>uwsgi -x helper.xml
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>使用<code>uWSGI</code>注意事项</h3>
+
+<ol>
+<li>在<code>helper.py</code>中不要加<code>app.run()</code>
+如果加上<code>app.run()</code>,会出现以下错误<code>unable to load configuration from uwsgi</code></li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>your mercy for graceful operations on workers is 60 seconds
+</span><span class='line'>mapped 363840 bytes (355 KB) for 4 cores
+</span><span class='line'>*** Operational MODE: preforking ***
+</span><span class='line'>added /root/helper/ to pythonpath.
+</span><span class='line'> * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+</span><span class='line'> * Restarting with stat
+</span><span class='line'>unable to load configuration from uwsgi
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>另外，在<code>helper.py</code>中，在<code>if __name__ == '__main__':</code>中的内容不会加载。</p>
+
+<ol>
+<li>在配置内容中需要加上<code>uWSGI</code>对<code>Python</code>的支持</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;plugins&gt;</span>python<span class="nt">&lt;/plugins&gt;</span>
+</span><span class='line'>或者 ini文件中
+</span><span class='line'>plugins = python
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>没有加上，可能会出现</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>unable to load app 0 (mountpoint=&#39;&#39;) (callable not found or import error)
+</span><span class='line'>*** no app loaded. going in full dynamic mode ***
+</span><span class='line'>*** uWSGI is running in multiple interpreter mode ***
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>但是有的时候，也说可以不用加上，这个视情况而定。
+还有一种情况，是出现<code>uWSGI</code>对<code>Python</code>的扩展没有安装，错误如下</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>[uWSGI] parsing config file uwsgi.xml
+</span><span class='line'>!!! UNABLE to load uWSGI plugin: dlopen(./python_plugin.so, 10): image not found !!!
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在<code>Centos</code>执行</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>yum install -y uwsgi-plugin-python
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ol>
+<li><a href="http://stackoverflow.com/questions/15878176/uwsgi-invalid-request-block-size"><code>invalid request block size: 21573 (max 4096)...skip</code></a>
+uWSGI日志如下</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>WSGI app 0 (mountpoint=&#39;&#39;) ready in 1 seconds on interpreter 0x1c32840 pid: 22461 (default app)
+</span><span class='line'>mountpoint  already configured. skip.
+</span><span class='line'>spawned uWSGI worker 1 (pid: 22461, cores: 2)
+</span><span class='line'>spawned uWSGI worker 2 (pid: 22466, cores: 2)
+</span><span class='line'>spawned uWSGI worker 3 (pid: 22467, cores: 2)
+</span><span class='line'>spawned uWSGI worker 4 (pid: 22468, cores: 2)
+</span><span class='line'>invalid request block size: 21573 (max 4096)...skip
+</span><span class='line'>invalid request block size: 21573 (max 4096)...skip
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个是因为在<code>uWSGI</code>配置文件中，设置了<code>socket</code>配置项为<code>0.0.0.0:8000</code>或者<code>socket</code>为<code>/tmp/uwsgi.sock</code>， 这样设置是不能通过浏览器访问的，还需要绑定<code>nginx</code>转发。可以将<code>socket</code>改为</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;http-socket&gt;</span>0.0.0.0:8000<span class="nt">&lt;/http-socket&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这样可以直接通过<code>IP:8000</code>直接访问。</p>
+
+<h2>使用<code>nginx</code>代理</h2>
+
+<p>设置的是<code>socket</code>的话，<code>nginx</code>配置如下</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>server {
+</span><span class='line'>        listen 80;
+</span><span class='line'>        server_name www.example.com;
+</span><span class='line'>        access_log /var/log/nginx/www.example.com/access.log;
+</span><span class='line'>        error_log /var/log/nginx/www.example.com/error.log;
+</span><span class='line'>        location / {
+</span><span class='line'>                include uwsgi_params;
+</span><span class='line'>                uwsgi_pass 0.0.0.0:8000;
+</span><span class='line'>              # uwsgi_pass unix:/tmp/helper.sock;
+</span><span class='line'>        }
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果使用了<code>http-socket</code>的话，这种可以直接在浏览器中直接<code>IP</code>访问，可以直接设置代理。也可以把服务部署在<code>docker</code>中，使用上面的配置</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>server {
+</span><span class='line'>    listen 80;
+</span><span class='line'>    server_name www.example.com;
+</span><span class='line'>    access_log /var/log/nginx/www.example.com/access.log;
+</span><span class='line'>    error_log /var/log/nginx/www.example.com/error.log;
+</span><span class='line'>
+</span><span class='line'>    error_page   500 502 503 504  /50x.html;
+</span><span class='line'>
+</span><span class='line'>    location / {
+</span><span class='line'>        proxy_pass              http://localhost:8090;
+</span><span class='line'>        proxy_set_header        Host $host;
+</span><span class='line'>        proxy_set_header        X-Forwarded-Proto $scheme;
+</span><span class='line'>        proxy_set_header        X-Real-IP $remote_addr;
+</span><span class='line'>        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+</span><span class='line'>        proxy_buffering off;
+</span><span class='line'>        add_header X-Accel-Buffering no;
+</span><span class='line'>    }
+</span><span class='line'>}
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-25T23:13:07+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:13 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/docker/'>docker</a>, <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2015/12/25/flaskxiang-mu-bu-shu/" data-via="" data-counturl="http://lvzwq.github.io/blog/2015/12/25/flaskxiang-mu-bu-shu/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/24/centosshang-dockerchu-ti-yan/" title="Previous Post: Centos上Docker初体验">&laquo; Centos上Docker初体验</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/" title="Next Post: MAC上不错的软件和自用的优秀Chrome插件">MAC上不错的软件和自用的优秀Chrome插件 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Java 对字符串转为可执行代码</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/">MAC上不错的软件和自用的优秀Chrome插件</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/docker/'>docker (2)</a></li>
+<li class='category'><a href='/blog/categories/elasticsearch/'>elasticsearch (1)</a></li>
+<li class='category'><a href='/blog/categories/hadoop/'>hadoop (1)</a></li>
+<li class='category'><a href='/blog/categories/ios/'>ios (5)</a></li>
+<li class='category'><a href='/blog/categories/java/'>java (1)</a></li>
+<li class='category'><a href='/blog/categories/kafka/'>kafka (1)</a></li>
+<li class='category'><a href='/blog/categories/mac/'>mac (2)</a></li>
+<li class='category'><a href='/blog/categories/php/'>php (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (4)</a></li>
+<li class='category'><a href='/blog/categories/scala/'>scala (1)</a></li>
+<li class='category'><a href='/blog/categories/zookeeper/'>zookeeper (1)</a></li>
+
+  </ul>
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  <!--返回顶部开始-->
+<div id="full" style="width:0px; height:0px; position:fixed; right:180px; bottom:150px; z-index:100; text-align:center; background-color:transparent; cursor:pointer;">
+  <a href="#" onclick="goTop();return false;"><img src="/images/top.png" border=0 alt="返回顶部"></a>
+</div>
+<script src="/javascripts/top.js" type="text/javascript"></script>
+<!--返回顶部结束-->
+</body>
+</html>

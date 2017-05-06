@@ -1,0 +1,789 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Centos上Docker初体验 - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
+
+  
+  <meta name="description" content="Docker 依赖64位Centos系统。Centos 7内核至少为3.10.
+通过uname -r查看内核版本，如果没有达到要求，可以参考Centos7升级内核到3.18的方法 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+# 导入key
+rpm -- &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2015/12/24/centosshang-dockerchu-ti-yan/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
+  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">-->
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>Note.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Centos上Docker初体验</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-24T23:10:21+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>24</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:10 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><!--more-->
+
+
+<p>Docker 依赖64位Centos系统。Centos 7内核至少为3.10.
+通过<code>uname -r</code>查看内核版本，如果没有达到要求，可以参考<a href="http://dl528888.blog.51cto.com/2382721/1609850">Centos7升级内核到3.18的方法</a></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'># 导入key
+</span><span class='line'>rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+</span><span class='line'>
+</span><span class='line'># 安装elrepo的yum源
+</span><span class='line'>rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+</span><span class='line'>
+</span><span class='line'># 安装内核
+</span><span class='line'>yum --enablerepo=elrepo-kernel install  kernel-ml-devel kernel-ml -y
+</span><span class='line'>
+</span><span class='line'># 查看内核版本
+</span><span class='line'>awk -F\' '$1=="menuentry " {print $2}' /etc/grub2.cfg
+</span><span class='line'># 修改默认启动顺序
+</span><span class='line'>grub2-set-default 0
+</span><span class='line'>
+</span><span class='line'># 重启
+</span><span class='line'>reboot</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Docker 入门</h3>
+
+<p>可以花几分钟看完这个<a href="http://dockerpool.com/static/books/docker_practice/introduction/what.html">Docker 简介</a>， 算对Docker有一个初步的认识了。</p>
+
+<p>先简要介绍Docker的几个指令。</p>
+
+<p><code>docker info</code>，查看docker 当前的运行状态</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Containers: 1
+</span><span class='line'>Images: 4
+</span><span class='line'>Server Version: 1.9.1
+</span><span class='line'>Storage Driver: aufs
+</span><span class='line'> Root Dir: /mnt/sda1/var/lib/docker/aufs
+</span><span class='line'> Backing Filesystem: extfs
+</span><span class='line'> Dirs: 6
+</span><span class='line'> Dirperm1 Supported: true
+</span><span class='line'>Execution Driver: native-0.2
+</span><span class='line'>Logging Driver: json-file
+</span><span class='line'>Kernel Version: 4.1.13-boot2docker
+</span><span class='line'>Operating System: Boot2Docker 1.9.1 (TCL 6.4.1); master : cef800b - Fri Nov 20 19:33:59 UTC 2015
+</span><span class='line'>CPUs: 1
+</span><span class='line'>Total Memory: 996.2 MiB
+</span><span class='line'>Name: default
+</span><span class='line'>ID: KJEU:PWWQ:O7P2:M7YY:KGMN:CCO5:Q3SO:YXLC:LXWY:PQ2R:QXMQ:ABAL
+</span><span class='line'>.....</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>docker</code> 命令</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Options:
+</span><span class='line'>
+</span><span class='line'>  --config=~/.docker              Location of client config files
+</span><span class='line'>  -D, --debug=false               Enable debug mode
+</span><span class='line'>  -H, --host=[]                   Daemon socket(s) to connect to
+</span><span class='line'>  -h, --help=false                Print usage
+</span><span class='line'>  -l, --log-level=info            Set the logging level
+</span><span class='line'>  --tls=false                     Use TLS; implied by --tlsverify
+</span><span class='line'>  --tlscacert=~/.docker/ca.pem    Trust certs signed only by this CA
+</span><span class='line'>  --tlscert=~/.docker/cert.pem    Path to TLS certificate file
+</span><span class='line'>  --tlskey=~/.docker/key.pem      Path to TLS key file
+</span><span class='line'>  --tlsverify=false               Use TLS and verify the remote
+</span><span class='line'>  -v, --version=false             Print version information and quit
+</span><span class='line'>
+</span><span class='line'>Commands:
+</span><span class='line'>    attach    Attach to a running container
+</span><span class='line'>    build     Build an image from a Dockerfile
+</span><span class='line'>    commit    Create a new image from a container's changes
+</span><span class='line'>    cp        Copy files/folders from a container to a HOSTDIR or to STDOUT
+</span><span class='line'>    create    Create a new container
+</span><span class='line'>    diff      Inspect changes on a container's filesystem
+</span><span class='line'>    events    Get real time events from the server
+</span><span class='line'>    exec      Run a command in a running container
+</span><span class='line'>    export    Export a container's filesystem as a tar archive
+</span><span class='line'>    history   Show the history of an image
+</span><span class='line'>    images    List images
+</span><span class='line'>    import    Import the contents from a tarball to create a filesystem image
+</span><span class='line'>    info      Display system-wide information
+</span><span class='line'>    inspect   Return low-level information on a container or image
+</span><span class='line'>    kill      Kill a running container
+</span><span class='line'>    load      Load an image from a tar archive or STDIN
+</span><span class='line'>    login     Register or log in to a Docker registry
+</span><span class='line'>    logout    Log out from a Docker registry
+</span><span class='line'>    logs      Fetch the logs of a container
+</span><span class='line'>    pause     Pause all processes within a container
+</span><span class='line'>    port      List port mappings or a specific mapping for the CONTAINER
+</span><span class='line'>    ps        List containers
+</span><span class='line'>    pull      Pull an image or a repository from a registry
+</span><span class='line'>    push      Push an image or a repository to a registry
+</span><span class='line'>    rename    Rename a container
+</span><span class='line'>    restart   Restart a running container
+</span><span class='line'>    rm        Remove one or more containers
+</span><span class='line'>    rmi       Remove one or more images
+</span><span class='line'>    run       Run a command in a new container
+</span><span class='line'>    save      Save an image(s) to a tar archive
+</span><span class='line'>    search    Search the Docker Hub for images
+</span><span class='line'>    start     Start one or more stopped containers
+</span><span class='line'>    stats     Display a live stream of container(s) resource usage statistics
+</span><span class='line'>    stop      Stop a running container
+</span><span class='line'>    tag       Tag an image into a repository
+</span><span class='line'>    top       Display the running processes of a container
+</span><span class='line'>    unpause   Unpause all processes within a container
+</span><span class='line'>    version   Show the Docker version information
+</span><span class='line'>    wait      Block until a container stops, then print its exit code
+</span><span class='line'>
+</span><span class='line'>Run 'docker COMMAND --help' for more information on a command.</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>创建容器</h4>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ docker run -i -t ubuntu /bin/bash
+</span><span class='line'>Unable to find image 'ubuntu:latest' locally
+</span><span class='line'>14dab3d40372: Download complete
+</span><span class='line'>47d44cb6f252: Download complete
+</span><span class='line'>245bcdbcd071: Download complete
+</span><span class='line'>a57086046415: Download complete
+</span><span class='line'>8031fc57486d: Download complete
+</span><span class='line'>abe620e04d9d: Download complete
+</span><span class='line'>Status: Downloaded newer image for docker.io/ubuntu:latest</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该命令会使用<code>Ubuntu</code>的镜像创建一个新的容器。<code>-i</code>表示Keep STDIN open even if not attached。<code>-t</code>表示Allocate a pseudo-TTY，它告诉Docker为要创建的容器分配一个伪tty终端。这样，新创建的容器才能提供一个交互式shell。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>root@b874901e2f5b:/#</span></code></pre></td></tr></table></div></figure>
+
+
+<p>容器的主机名就是容器的ID。当前处于容器内<code>shell</code>状态，输入<code>exit</code>可以退出容器，退出容器后，容器也就停止了。</p>
+
+<h4>查看容器和镜像</h4>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ docker images
+</span><span class='line'>REPOSITORY          TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+</span><span class='line'>docker.io/centos    latest              14dab3d40372        5 days ago          194.7 MB
+</span><span class='line'>docker.io/ubuntu    latest              d55e68e6cc9c        12 days ago         187.9 MB
+</span><span class='line'>
+</span><span class='line'>$ docker ps -a
+</span><span class='line'>CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                     PORTS               NAMES
+</span><span class='line'>8e24480e37b9        centos              "/bin/bash"         5 minutes ago       Exited (0) 2 minutes ago                       distracted_aryabhata
+</span><span class='line'>b874901e2f5b        ubuntu              "/bin/bash"         33 hours ago        Exited (0) 7 minutes ago                       cocky_yonath</span></code></pre></td></tr></table></div></figure>
+
+
+<p>从该命令的输出结果中我们可以看到关于这个容器的很多有用信息：ID、用于创建该容器的镜像、容器最后执行的命令、创建时间以及容器的退出状态（在上面的例子中，退出状态是0，因为容器是通过正常的exit命令退出的）。我们还可以看到，每个容器都有一个名称。</p>
+
+<p><code>docker images</code> 会展示当前的所有基础镜像。<code>docker ps</code> 显示当前所有运行的容器，加上<code>-a</code>表示所有的容器。</p>
+
+<blockquote><p>有三种方式可以指代唯一容器：短UUID（如b874901e2f5b）、长UUID（如f7cbdac22a02e03c9438c729345e54db9d20cfa2ac1fc3494b6eb60872e74778）或者名称（如cocky_yonath）。</p></blockquote>
+
+<p><code>docker start containerID</code> 启动已经停止运行的容器
+<code>docker stop containerID</code> 停止正在运行的容器
+<code>docker pull ubuntu:latest</code>从远程仓库下载最新的Ubuntu版本镜像
+<code>docker attach containID</code> 附着到容器上。如果是容器镜像是系统，将进入容器<code>Shell</code>模式。</p>
+
+<h3>查看容器内容运行情况</h3>
+
+<p>我们可以用 <code>docker logs containerID</code>获取容器内部运行的日志。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ docker logs 9a0f7279429b
+</span><span class='line'>[23/Dec/2015 00:06:01]"GET /tree HTTP/1.1" 404 2083
+</span><span class='line'>[23/Dec/2015 00:06:03]"GET /favicon.ico HTTP/1.1" 404 2104
+</span><span class='line'>[23/Dec/2015 00:06:07]"GET / HTTP/1.1" 200 1176
+</span><span class='line'>[23/Dec/2015 00:06:07]"GET /static/main.css HTTP/1.1" 200 55
+</span><span class='line'>[23/Dec/2015 00:06:18]"GET / HTTP/1.1" 200 1176
+</span><span class='line'>[23/Dec/2015 00:06:56]"GET / HTTP/1.1" 200 1176
+</span><span class='line'>...</span></code></pre></td></tr></table></div></figure>
+
+
+<p>加上<code>-f</code>参数，监控<code>docker logs</code>日志。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker logs -f 9a0f7279429b
+</span><span class='line'>
+</span><span class='line'>docker logs --tail 10 9a0f7279429b 获取最后10行的日志</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>查看容器内的进程</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker top containerID</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>在容器内部运行程序</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker exec 57010f2568a2 mysql --version
+</span><span class='line'>docker exec 57010f2568a2 echo "hello world"</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>深入容器</h3>
+
+<p>我们可以用<code>docker inspect containerID</code>获取容器更多地信息。
+<code>docker inspect</code>命令会对容器进行详细的检查，然后返回其配置信息，包括名称、命令、网络配置以及很多有用的数据。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ docker inspect 4220b7df2d23
+</span><span class='line'>[
+</span><span class='line'>{
+</span><span class='line'>    "Id": "4220b7df2d23b23b3ecbab8ec86ad37b2f48d5830178b6353cd4fbbdab83bf58",
+</span><span class='line'>    "Created": "2015-12-19T19:03:36.639252716Z",
+</span><span class='line'>    "Path": "/bin/bash",
+</span><span class='line'>    "Args": [],
+</span><span class='line'>    "State": {
+</span><span class='line'>        "Status": "running",
+</span><span class='line'>        "Running": true,
+</span><span class='line'>        "Paused": false,
+</span><span class='line'>        "Restarting": false,
+</span><span class='line'>        "OOMKilled": false,
+</span><span class='line'>        "Dead": false,
+</span><span class='line'>        "Pid": 28778,
+</span><span class='line'>        "ExitCode": 0,
+</span><span class='line'>        "Error": "",
+</span><span class='line'>        "StartedAt": "2015-12-23T02:45:56.725884626Z",
+</span><span class='line'>        "FinishedAt": "2015-12-23T02:40:46.344221213Z"
+</span><span class='line'>    },
+</span><span class='line'>    "Image": "89d5d8e8bafb6e279fa70ea444260fa61cc7c5c7d93eff51002005c54a49c918",
+</span><span class='line'>    ...</span></code></pre></td></tr></table></div></figure>
+
+
+<p>有选择地获取<code>docker inspect</code>中的<code>docker</code>容器信息。<code>-f</code>有选择获取信息。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker inspect --format '' 4220b7df2d23
+</span><span class='line'>docker inspect -f '' 4220b7df2d23</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>使用<code>docker-machine</code>来创建<code>Docker</code>(Mac &amp;&amp; WIN)</h3>
+
+<p><code>Docker</code>官方提供的部署工具。帮助用户快速在运行环境中创建虚拟机服务节点，在虚拟机中安装并配置<code>Docker</code>，最终帮助用户配置<code>Docker Client</code>，使得 <code>Docker Client</code> 有能力与虚拟机中的 Docker 建立通信。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker-machine create -d virtualbox default</span></code></pre></td></tr></table></div></figure>
+
+
+<p>首先通过 <code>create</code> 命令创建一台名为 <code>default</code> 的 VirtualBox 虚拟机，并已经安装好了 <code>Docker</code>。
+激活虚拟机<code>default</code>的环境变量。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> eval "$(docker-machine env default)"</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>docker-machine</code> 命令行</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>─$ docker-machine --help
+</span><span class='line'>Usage: docker-machine [OPTIONS] COMMAND [arg...]
+</span><span class='line'>
+</span><span class='line'>Create and manage machines running Docker.
+</span><span class='line'>
+</span><span class='line'>Version: 0.5.4, build 6643d0e
+</span><span class='line'>
+</span><span class='line'>Author:
+</span><span class='line'>  Docker Machine Contributors - &lt;https://github.com/docker/machine&gt;
+</span><span class='line'>
+</span><span class='line'>Options:
+</span><span class='line'>  --debug, -D                     Enable debug mode
+</span><span class='line'>  -s, --storage-path "/Users/ilovey/.docker/machine"  Configures storage path [$MACHINE_STORAGE_PATH]
+</span><span class='line'>  --tls-ca-cert                   CA to verify remotes against [$MACHINE_TLS_CA_CERT]
+</span><span class='line'>  --tls-ca-key                        Private key to generate certificates [$MACHINE_TLS_CA_KEY]
+</span><span class='line'>  --tls-client-cert                   Client cert to use for TLS [$MACHINE_TLS_CLIENT_CERT]
+</span><span class='line'>  --tls-client-key                    Private key used in client TLS auth [$MACHINE_TLS_CLIENT_KEY]
+</span><span class='line'>  --github-api-token                  Token to use for requests to the Github API [$MACHINE_GITHUB_API_TOKEN]
+</span><span class='line'>  --native-ssh                        Use the native (Go-based) SSH implementation. [$MACHINE_NATIVE_SSH]
+</span><span class='line'>  --bugsnag-api-token                     BugSnag API token for crash reporting [$MACHINE_BUGSNAG_API_TOKEN]
+</span><span class='line'>  --help, -h                      show help
+</span><span class='line'>  --version, -v                       print the version
+</span><span class='line'>
+</span><span class='line'>Commands:
+</span><span class='line'>  active      Print which machine is active
+</span><span class='line'>  config      Print the connection config for machine
+</span><span class='line'>  create      Create a machine
+</span><span class='line'>  env         Display the commands to set up the environment for the Docker client
+</span><span class='line'>  inspect     Inspect information about a machine
+</span><span class='line'>  ip          Get the IP address of a machine
+</span><span class='line'>  kill            Kill a machine
+</span><span class='line'>  ls          List machines
+</span><span class='line'>  regenerate-certs    Regenerate TLS Certificates for a machine
+</span><span class='line'>  restart     Restart a machine
+</span><span class='line'>  rm          Remove a machine
+</span><span class='line'>  ssh         Log into or run a command on a machine with SSH.
+</span><span class='line'>  scp         Copy files between machines
+</span><span class='line'>  start           Start a machine
+</span><span class='line'>  status      Get the status of a machine
+</span><span class='line'>  stop            Stop a machine
+</span><span class='line'>  upgrade     Upgrade a machine to the latest version of Docker
+</span><span class='line'>  url         Get the URL of a machine
+</span><span class='line'>  version     Show the Docker Machine version or a machine docker version
+</span><span class='line'>  help            Shows a list of commands or help for one command
+</span><span class='line'>
+</span><span class='line'>Run 'docker-machine COMMAND --help' for more information on a command.</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>查看当前正在运行的<code>Machine</code></h4>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ docker-machine ls
+</span><span class='line'>NAME      ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER   ERRORS
+</span><span class='line'>default   *        virtualbox   Running   tcp://192.168.99.100:2376           v1.9.1</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>启动虚拟机<code>Machine</code></h4>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker-machine start default</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>获取虚拟机<code>Machine</code>的<code>IP</code></h4>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>docker-machine ip default</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>通过<code>SSH</code>进入到虚拟机</h4>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ docker-machine ssh default
+</span><span class='line'>                        ##         .
+</span><span class='line'>                  ## ## ##        ==
+</span><span class='line'>               ## ## ## ## ##    ===
+</span><span class='line'>           /"""""""""""""""""\___/ ===
+</span><span class='line'>      ~~~ {~~ ~~~~ ~~~ ~~~~ ~~~ ~ /  ===- ~~~
+</span><span class='line'>           \______ o           __/
+</span><span class='line'>             \    \         __/
+</span><span class='line'>              \____\_______/
+</span><span class='line'> _                 _   ____     _            _
+</span><span class='line'>| |__   ___   ___ | |_|___ \ __| | ___   ___| | _____ _ __
+</span><span class='line'>| '_ \ / _ \ / _ \| __| __) / _` |/ _ \ / __| |/ / _ \ '__|
+</span><span class='line'>| |_) | (_) | (_) | |_ / __/ (_| | (_) | (__|   &lt;  __/ |
+</span><span class='line'>|_.__/ \___/ \___/ \__|_____\__,_|\___/ \___|_|\_\___|_|
+</span><span class='line'>Boot2Docker version 1.9.1, build master : cef800b - Fri Nov 20 19:33:59 UTC 2015
+</span><span class='line'>Docker version 1.9.1, build a34a1d5
+</span><span class='line'>docker@default:~$</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>参考</h4>
+
+<p><a href="http://dl528888.blog.51cto.com/2382721/1609850">Centos7升级内核到3.18的方法</a>
+<a href="http://www.jianshu.com/p/26f15063de7d">迈出使用Docker的第一步，学习第一个Docker容器</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-24T23:10:21+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>24</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:10 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/docker/'>docker</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2015/12/24/centosshang-dockerchu-ti-yan/" data-via="" data-counturl="http://lvzwq.github.io/blog/2015/12/24/centosshang-dockerchu-ti-yan/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/17/iosdong-hua-zhi-core-animationji-chu/" title="Previous Post: IOS动画之Core Animation基础">&laquo; IOS动画之Core Animation基础</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/12/25/flaskxiang-mu-bu-shu/" title="Next Post: Flask项目部署">Flask项目部署 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Java 对字符串转为可执行代码</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/">MAC上不错的软件和自用的优秀Chrome插件</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/docker/'>docker (2)</a></li>
+<li class='category'><a href='/blog/categories/elasticsearch/'>elasticsearch (1)</a></li>
+<li class='category'><a href='/blog/categories/hadoop/'>hadoop (1)</a></li>
+<li class='category'><a href='/blog/categories/ios/'>ios (5)</a></li>
+<li class='category'><a href='/blog/categories/java/'>java (1)</a></li>
+<li class='category'><a href='/blog/categories/kafka/'>kafka (1)</a></li>
+<li class='category'><a href='/blog/categories/mac/'>mac (2)</a></li>
+<li class='category'><a href='/blog/categories/php/'>php (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (4)</a></li>
+<li class='category'><a href='/blog/categories/scala/'>scala (1)</a></li>
+<li class='category'><a href='/blog/categories/zookeeper/'>zookeeper (1)</a></li>
+
+  </ul>
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  <!--返回顶部开始-->
+<div id="full" style="width:0px; height:0px; position:fixed; right:180px; bottom:150px; z-index:100; text-align:center; background-color:transparent; cursor:pointer;">
+  <a href="#" onclick="goTop();return false;"><img src="/images/top.png" border=0 alt="返回顶部"></a>
+</div>
+<script src="/javascripts/top.js" type="text/javascript"></script>
+<!--返回顶部结束-->
+</body>
+</html>

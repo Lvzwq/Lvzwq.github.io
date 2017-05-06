@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python2中的编码错误 - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
+
+  
+  <meta name="description" content="Python2中常出现的编码问题 UnicodeDecodeError: 'ascii' codec can't decode byte 0xe5 in position 4: ordinal not in range(128) 对中文字符串解码出错
+虽然可以在代码头部加入以下代码解决 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
+  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">-->
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>Note.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python2中的编码错误</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-10-31T17:22:55+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>5:22 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><!--more-->
+
+
+
+
+<h3>Python2中常出现的编码问题</h3>
+
+
+
+
+<pre><code>UnicodeDecodeError: 'ascii' codec can't decode byte 0xe5 in position 4: ordinal not in range(128)
+</code></pre>
+
+
+<p>对中文字符串解码出错
+虽然可以在代码头部加入以下代码解决</p>
+
+<pre><code>import sys
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+</code></pre>
+
+
+<p>但是这种方式已经不推荐使用了<a href="http://stackoverflow.com/questions/3828723/why-we-need-sys-setdefaultencodingutf-8-in-a-py-script">[详细阅读]</a>。<br/>
+所以推荐使用以下方式(Python2默认的字符串编码是<code>str</code>)<br/>
+<code>xxx.decode(&ldquo;utf-8&rdquo;)</code><br/>
+或者在你需要使用中文的地方前面加上<code>u</code>.</p>
+
+<blockquote>
+  这种错误通常发生在以某种编码("<code>ascii</code>")解码一个<code>str</code>类型的字符串时.因为编码映射仅仅只能支持一部分<code>str</code>类型的字符串到<code>unicode</code>字符串, 一个非法的<code>str</code>类型的序列将会导致编码<code>decode()</code>失败。 <a href="https://wiki.python.org/moin/UnicodeDecodeError">[详细阅读]</a>
+</blockquote>
+
+
+<p>如<code>str</code>字符串<code>\x81</code>就不能转化为<code>unicode</code>对应的字符串</p>
+
+<pre><code>&gt;&gt;&gt; "x81".decode("utf-8")
+Traceback (most recent call last):
+  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
+  File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/encodings/utf_8.py", line 16, in decode
+    return codecs.utf_8_decode(input, errors, True)
+UnicodeDecodeError: 'utf8' codec can't decode byte 0x81 in position 0: invalid start byte
+</code></pre>
+
+
+<p>另一种情况的解码错误</p>
+
+<blockquote>
+  自相矛盾的是，<code>UnicodeDecodeError</code>也可能发生在编码<code>__encoding__</code>时。
+  原因是编码函数<code>encode()</code>通常情况下需要一个<code>unicode</code>类型的字符串作为参数。但是实际传过来的是一个<code>str</code>类型的参数。<code>encode()</code>函数将这个参数向上转换"<code>up-convert</code>"为<code>unicode</code>类型，然后再将转化为他们自己的编码。这也会出现这样的向上转换"<code>up-convertion</code>"的时候，系统默认选择一个<code>ascii</code>解码器, 解码器中没有这个<code>str</code>类型的<code>unicode</code>编码,  。因此这是在一个编码器<code>encoder</code>中出现解码失败的情况。
+</blockquote>
+
+
+<p>如<code>str</code>类型的<code>\xd0\x91</code>在encode()时就会出现<code>UnicodeDecodeError</code>错误</p>
+
+<pre><code>&gt;&gt;&gt; "xd0x91".encode("utf-8")
+Traceback (most recent call last):
+  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
+</code></pre>
+
+
+<p>在这个过程中发生了两件事情。首先<code>\xd0\x91</code>是python默认的<code>str</code>类型的字符串，而编码<code>encode</code>需要一个<code>unicode</code>类型的字符串，所以在编码<code>encode</code>之前，先转化为<code>unicode</code>,而执行的是<code>&ldquo;\xd0\x91&rdquo;.decode(&ldquo;ascii&rdquo;)</code>, 所以会出现上面的错误。</p>
+
+<pre><code>&gt;&gt;&gt; "xd0x91".decode("ascii")
+Traceback (most recent call last):
+  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
+&gt;&gt;&gt; # 而如果使用utf-8 转码的话就可以正常执行
+&gt;&gt;&gt; "xd0x91".decode("utf-8")
+u'u0411'
+</code></pre>
+
+
+
+
+<h3>总结</h3>
+
+
+<p>所以出现上面的<code>UnicodeDecodeError</code>错误时，可以不使用系统的<code>ascii</code>编码解码，自己使用<code>utf-8</code>解码就可以解决问题,即<code>xx.decode(&ldquo;utf-8&rdquo;)</code>。但是如果<code>str</code>类型的字符串非常特殊，如第一种例子中的<code>\x81</code>的话就直接无法转码了。所以最好的方法还是将一个字符串定义为<code>unicode</code>类型。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-10-31T17:22:55+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>5:22 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu/" data-via="" data-counturl="http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/09/04/macshi-yong-octopressda-jian-bo-ke/" title="Previous Post: Mac使用Octopress搭建博客">&laquo; Mac使用Octopress搭建博客</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/10/31/sqlalchemy-1/" title="Next Post: SQLAlchemy(一)">SQLAlchemy(一) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Java 对字符串转为可执行代码</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/">MAC上不错的软件和自用的优秀Chrome插件</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/docker/'>docker (2)</a></li>
+<li class='category'><a href='/blog/categories/elasticsearch/'>elasticsearch (1)</a></li>
+<li class='category'><a href='/blog/categories/hadoop/'>hadoop (1)</a></li>
+<li class='category'><a href='/blog/categories/ios/'>ios (5)</a></li>
+<li class='category'><a href='/blog/categories/java/'>java (1)</a></li>
+<li class='category'><a href='/blog/categories/kafka/'>kafka (1)</a></li>
+<li class='category'><a href='/blog/categories/mac/'>mac (2)</a></li>
+<li class='category'><a href='/blog/categories/php/'>php (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (4)</a></li>
+<li class='category'><a href='/blog/categories/scala/'>scala (1)</a></li>
+<li class='category'><a href='/blog/categories/zookeeper/'>zookeeper (1)</a></li>
+
+  </ul>
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  <!--返回顶部开始-->
+<div id="full" style="width:0px; height:0px; position:fixed; right:180px; bottom:150px; z-index:100; text-align:center; background-color:transparent; cursor:pointer;">
+  <a href="#" onclick="goTop();return false;"><img src="/images/top.png" border=0 alt="返回顶部"></a>
+</div>
+<script src="/javascripts/top.js" type="text/javascript"></script>
+<!--返回顶部结束-->
+</body>
+</html>

@@ -1,0 +1,1293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Ios | 闲散记事]]></title>
+  <link href="http://lvzwq.github.io/blog/categories/ios/atom.xml" rel="self"/>
+  <link href="http://lvzwq.github.io/"/>
+  <updated>2017-05-07T00:15:13+08:00</updated>
+  <id>http://lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[IOS动画之Core Animation基础]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/12/17/iosdong-hua-zhi-core-animationji-chu/"/>
+    <updated>2015-12-17T23:08:04+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/12/17/iosdong-hua-zhi-core-animationji-chu</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>首先附上一张从网上找到的<code>Core Animation</code>的结构图。
+<img src="http://7xig7d.com1.z0.glb.clouddn.com/zwq/core_annimation.jpg" alt="Core Animaion" /></p>
+
+<p><strong>准备</strong>: 使用<code>Core Animation</code>制作动画需要引入<code>QuartzCore.framework</code>库，并在制作动画的地方引入<code>#import &lt;QuartzCore/QuartzCore.h&gt;</code></p>
+
+<h3><code>CABasicAnimation</code>(关键帧动画)</h3>
+
+<p>所谓关键帧动画，就是将<code>Layer</code>的属性作为<code>KeyPath</code>来注册，指定动画的起始帧和结束帧，然后自动计算和实现中间的过渡动画的一种动画方式。
+<code>objective-c
+CABasicAnimation *animation = [CABasicAnimation animation];
+animation.keyPath = @"position.x";
+animation.duration = 1;
+animation.fromValue = @77;
+animation.toValue = @455;
+animation.repeatCount = 1;
+animation.beginTime = CACurrentMediaTime() + 0.5;
+animation.autoreverses = YES;
+[layer addAnimation:animation forKey:@"basic"];
+</code>
+动画属性参数说明:</p>
+
+<ul>
+<li><code>keyPath</code>：动画的运动属性。</li>
+</ul>
+
+
+<p>常见的支持有: <a href="https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/CoreAnimation_guide/Key-ValueCodingExtensions/Key-ValueCodingExtensions.html">见官方文档</a></p>
+
+<blockquote><p>平移:
+- <code>position</code>(点到点坐标)<br/>
+- <code>position.x</code>或者<code>transform.translation.x</code>(x坐标方向的移动)
+- <code>position.y</code>或者<code>transform.translation.y</code>(y坐标方向的移动)
+缩放:<code>scale</code>
+旋转:<code>rotation</code>
+- <code>transform.rotation.x</code>(绕x坐标轴旋转)
+- <code>transform.rotation.y</code>(绕y坐标轴旋转)
+<code>
+animation.keyPath = @"position";
+animation.keyPath = @"transform.scale"
+animation.keyPath = @"transform.rotation.y"
+</code></p></blockquote>
+
+<ul>
+<li><code>duration</code>： 动画持续时间,以秒为单位</li>
+<li><code>fromValue</code>： 动画的开始状态(绝对定位)</li>
+<li><code>toValue</code>：动画的结束状态(绝对定位)</li>
+<li><code>byValue</code>：动画的相对结束位置(相对定位)。</li>
+</ul>
+
+
+<p>动画中<code>fromValue</code> -> <code>toValue</code>表示从开始位置到结束位置(绝对位置)，也可以设定从当前位置到加上<code>byValue</code>(相对位置)。注意 <code>fromValue</code>、<code>toValue</code>和<code>byValue</code>是<code>id</code>类型，如果是基本类型的话，需要转化为OC对应的类类型@。
+<code>
+animation.fromValue = [NSNumber numberWithFloat:50.0];
+animation.toValue = @500.0;
+animation.byValue = [NSValue valueWithCGPoint:CGPointMake(300, 300)];
+</code>
+- <code>repeatCount</code>:表示动画重复次数。默认为0，指定为<code>HUGE_VALF</code>， 永久执行.
+- <code>autoreverses</code>:动画结束之后是否执行逆动画。
+- <code>beginTime</code>:指定动画执行的时间。如果需要动画延迟，可以加上<code>CACurrentMediaTime()+ 延迟的秒数</code>。
+- <code>timingFunction</code>: 设定动画的速度变化。
+<code>
+animation.timingFunction =  [CAMediaTimingFunction functionWithName: kCAMediaTimingFunctionEaseInEaseOut]; //先加速后减速
+</code></p>
+
+<h6>动画结束之后，动画界面又恢复动画前的状态。要想保持动画后的状态，可以有以下两种方式</h6>
+
+<p><strong>方法一(推荐)</strong>
+这种方式有局限性，适用于消失效果的动画。
+<code>
+layer.position = CGPointMake(455, 61);
+</code>
+<strong>方法二(通用)</strong>
+可以添加以下两行代码
+<code>
+animation.fillMode = kCAFillModeForward;
+animation.removedOnCompletion = NO;
+</code>
+默认动画执行结束之后，就从渲染树<code>render tree</code>中移除,设置<code>removedOnCompletion</code>为<code>NO</code>,保留渲染后的动画。</p>
+
+<h3><code>CAKeyframeAnimation</code>组合动画</h3>
+
+<p><code>CABasicAnimation</code>动画是一次执行单一效果的动画,<code>CAKeyframeAnimation</code>可以在一次动作中执行多种效果。</p>
+
+<pre><code>//为动画图形运动划定运动路线
+//定义动画贝塞尔曲线路径
+UIBezierPath *path = [UIBezierPath bezierPath]; 
+//定义起点
+[path moveToPoint:CGPointMake(50, 150)]; 
+//结束点、中间点
+[path addQuadCurveToPoint:CGPointMake(270, 300) controlPoint:CGPointMake(150, 20)];
+//定义2个路径点
+//[path addCurveToPoint:CGPointMake(50, 500) controlPoint1: CGPointMake(350, 400) controlPoint2:CGPointMake(100, 450)];
+
+CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"position"];
+animation.path = path.CGPath; //设置路径
+animation.rotationMode = kCAAnimationRotateAuto;
+
+//放大
+CABasicAnimation *expandAnimation = [CABasicAnimation animationWithKeyPath:@"transform.scale"];
+expandAnimation.duration = 0.5f;
+expandAnimation.fromValue = [NSNumber numberWithFloat:1];
+expandAnimation.toValue = [NSNumber numberWithFloat:2.0f];
+expandAnimation.timingFunction=[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn];
+
+//缩小
+CABasicAnimation *narrowAnimation = [CABasicAnimation animationWithKeyPath:@"transform.scale"];
+narrowAnimation.beginTime = 0.5;
+narrowAnimation.fromValue = [NSNumber numberWithFloat:2.0f];
+narrowAnimation.duration = 1.5f;
+narrowAnimation.toValue = [NSNumber numberWithFloat:0.5f];
+narrowAnimation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+
+//添加动画集
+CAAnimationGroup *groups = [CAAnimationGroup animation];
+groups.animations = @[animation,expandAnimation,narrowAnimation];
+groups.duration = 2.0f;
+groups.removedOnCompletion = NO;
+groups.fillMode = kCAFillModeForwards;
+groups.delegate = self;
+[layer addAnimation:groups forKey:@"group"];
+</code></pre>
+
+<h3>监听动画执行开始和结束的状态</h3>
+
+<p>指定委托对象，实现委托方法
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>animation.delegate = self; // 指定委托对象&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;pragma mark CAAnimation Delegate&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;ul&gt;
+</span><span class='line'>&lt;li&gt;&lt;p&gt;(void)animationDidStart:(CAAnimation *)anim{
+</span><span class='line'>  NSLog(@&ldquo;动画启动&rdquo;);
+</span><span class='line'>}&lt;/p&gt;&lt;/li&gt;
+</span><span class='line'>&lt;li&gt;&lt;p&gt;(void)animationDidStop:(CAAnimation *)anim finished:(BOOL)flag{
+</span><span class='line'>  NSLog(@&ldquo;动画结束&rdquo;);
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p></li>
+</ul>
+
+
+<h3>IOS 动画效果的开源库</h3>
+
+<ul>
+<li><a href="https://github.com/robb/RBBAnimation">RBBAnimation</a></li>
+<li><a href="https://github.com/CanvasPod/Canvas">Canvas</a></li>
+<li><a href="https://github.com/facebook/pop">Facebook pop</a></li>
+<li><a href="https://github.com/schneiderandre/popping">popping</a></li>
+</ul>
+
+
+<h4>参考:</h4>
+
+<ul>
+<li><a href="https://www.objc.io/issues/12-animations/animations-explained/">Animations Explained</a> / <a href="http://objccn.io/issue-12-1/">中文翻译</a></li>
+<li><a href="http://blog.csdn.net/iosevanhuang/article/details/14488239">CSDN博客 - CABasicAnimation的基本使用方法（移动·旋转·放大·缩小）</a></li>
+</ul>
+
+
+<h4>深入理解</h4>
+
+<ul>
+<li><a href="https://www.objc.io/issues/12-animations/animations-explained/#further-reading">Further Reading</a></li>
+<li><a href="http://www.raywenderlich.com/50197/uikit-dynamics-tutorial">UIKit Dynamics</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[[转载]Objective-C编码规范]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/11/14/zhuan-zai-objective-cbian-ma-gui-fan/"/>
+    <updated>2015-11-14T22:54:19+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/11/14/zhuan-zai-objective-cbian-ma-gui-fan</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>转载自<a href="https://github.com/samlaudev/Objective-C-Coding-Style">https://github.com/samlaudev/Objective-C-Coding-Style</a></p>
+
+<p>这篇编码风格指南概括了raywenderlich.com的编码规范，可能有些删减或修改。</p>
+
+<h2>介绍</h2>
+
+<p>我们制定Objective-C编码规范的原因是我们能够在我们的书，教程和初学者工具包的代码保持优雅和一致。即使我们有很多不同的作者来完成不同的书籍。</p>
+
+<p>这里编码规范有可能与你看到的其他Objective-C编码规范不同，因为它主要是为了打印和web的易读性。</p>
+
+<h2>关于作者</h2>
+
+<p>这编码规范的创建是由很多来自raywenderlich.com团队成员在Nicholas Waynik的带领下共同完成的。团队成员有：<a href="https://github.com/moayes">Soheil Moayedi Azarpour</a>, <a href="https://github.com/ricardo-rendoncepeda">Ricardo Rendon Cepeda</a>, <a href="https://github.com/tdahbura">Tony Dahbura</a>, <a href="https://github.com/ColinEberhardt">Colin Eberhardt</a>, <a href="https://github.com/mattjgalloway">Matt Galloway</a>, <a href="https://github.com/gregheo">Greg Heo</a>, <a href="https://github.com/hollance">Matthijs Hollemans</a>, <a href="https://github.com/elephantronic">Christopher LaPollo</a>, <a href="https://github.com/casademora">Saul Mora</a>, <a href="https://github.com/macandyp">Andy Pereira</a>, <a href="https://github.com/micpringle">Mic Pringle</a>, <a href="https://github.com/pietrorea">Pietro Rea</a>, <a href="https://github.com/funkyboy">Cesare Rocchi</a>, <a href="https://github.com/icanzilb">Marin Todorov</a>, <a href="https://github.com/ndubbs">Nicholas Waynik</a>和<a href="https://github.com/raywenderlich">Ray Wenderlich</a></p>
+
+<p>我们也非常感谢<a href="https://github.com/NYTimes/objective-c-style-guide">New York Times</a> 和<a href="https://github.com/RobotsAndPencils/objective-c-style-guide">Robots &amp; Pencils'</a>Objective-C编码规范的作者。这两个编码规范为本指南的创建提供很好的起点。</p>
+
+<h2>背景</h2>
+
+<p>这里有些关于编码风格Apple官方文档，如果有些东西没有提及，可以在以下文档来查找更多细节：</p>
+
+<ul>
+<li><a href="http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjectiveC/Introduction/introObjectiveC.html">The Objective-C Programming Language</a></li>
+<li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/CocoaFundamentals/Introduction/Introduction.html">Cocoa Fundamentals Guide</a></li>
+<li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/CodingGuidelines/CodingGuidelines.html">Coding Guidelines for Cocoa</a></li>
+<li><a href="http://developer.apple.com/library/ios/#documentation/iphone/conceptual/iphoneosprogrammingguide/Introduction/Introduction.html">iOS App Programming Guide</a></li>
+</ul>
+
+
+<h2>目录</h2>
+
+<ul>
+<li><a href="#language">语言</a></li>
+<li><a href="#code-organization">代码组织</a></li>
+<li><a href="#spacing">空格</a></li>
+<li><a href="#comments">注释</a></li>
+<li><a href="#naming">命名</a>
+
+<ul>
+<li><a href="#underscores">下划线</a></li>
+</ul>
+</li>
+<li><a href="#methods">方法</a></li>
+<li><a href="#variables">变量</a></li>
+<li><a href="#property-attributes">属性特性</a></li>
+<li><a href="#dot-notation-syntax">点符号语法</a></li>
+<li><a href="#literals">字面值</a></li>
+<li><a href="#constants">常量</a></li>
+<li><a href="#enumerated-types">枚举类型</a></li>
+<li><a href="#case-statements">Case语句</a></li>
+<li><a href="#private-properties">私有属性</a></li>
+<li><a href="#booleans">布尔值</a></li>
+<li><a href="#conditionals">条件语句</a>
+
+<ul>
+<li><a href="#ternary-operator">三元操作符</a></li>
+</ul>
+</li>
+<li><a href="#init-methods">Init方法</a></li>
+<li><a href="#class-constructor-methods">类构造方法</a></li>
+<li><a href="#cgrect-functions">CGRect函数</a></li>
+<li><a href="#golden-path">黄金路径</a></li>
+<li><a href="#error-handling">错误处理</a></li>
+<li><a href="#singletons">单例模式</a></li>
+<li><a href="#line-breaks">换行符</a></li>
+<li><a href="#xcode-project">Xcode工程</a></li>
+</ul>
+
+
+<p><b id="language"></b></p>
+
+<h2>语言</h2>
+
+<p>应该使用US英语.</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">UIColor *myColor = [UIColor whiteColor];
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">UIColor *myColour = [UIColor whiteColor];
+</code></pre>
+
+<p><b id="code-organization"></b></p>
+
+<h2>代码组织</h2>
+
+<p>在函数分组和protocol/delegate实现中使用<code>#pragma mark -</code>来分类方法，要遵循以下一般结构：</p>
+
+<pre><code class="objc">#pragma mark - Lifecycle
+- (instancetype)init {}
+- (void)dealloc {}
+- (void)viewDidLoad {}
+- (void)viewWillAppear:(BOOL)animated {}
+- (void)didReceiveMemoryWarning {}
+
+#pragma mark - Custom Accessors
+- (void)setCustomProperty:(id)value {}
+- (id)customProperty {}
+
+#pragma mark - IBActions/Event Response
+- (IBAction)submitData:(id)sender {}
+- (void)someButtonDidPressed:(UIButton*)button
+
+#pragma mark - Protocol conformance
+#pragma mark - UITextFieldDelegate
+#pragma mark - UITableViewDataSource
+#pragma mark - UITableViewDelegate
+
+#pragma mark - Public
+- (void)publicMethod {}
+
+#pragma mark - Private
+- (void)privateMethod {}
+
+#pragma mark - NSCopying
+- (id)copyWithZone:(NSZone *)zone {}
+
+#pragma mark - NSObject
+- (NSString *)description {}
+</code></pre>
+
+<p><b id="spacing"></b></p>
+
+<h2>空格</h2>
+
+<ul>
+<li>缩进使用<strong>4</strong>个空格，确保在Xcode偏好设置来设置。(raywenderlich.com使用<strong>2</strong>个空格)</li>
+<li>方法大括号和其他大括号(<code>if</code>/<code>else</code>/<code>switch</code>/<code>while</code> 等.)总是在同一行语句打开但在新行中关闭。</li>
+</ul>
+
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">if (user.isHappy) {
+    //Do something
+} else {
+    //Do something else
+}
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">if (user.isHappy)
+{
+  //Do something
+}
+else {
+  //Do something else
+}
+</code></pre>
+
+<ul>
+<li>在方法之间应该有且只有一行，这样有利于在视觉上更清晰和更易于组织。在方法内的空白应该分离功能，但通常都抽离出来成为一个新方法。</li>
+<li>优先使用auto-synthesis。但如果有必要，<code>@synthesize</code> 和 <code>@dynamic</code>应该在实现中每个都声明新的一行。</li>
+<li>应该避免以冒号对齐的方式来调用方法。因为有时方法签名可能有3个以上的冒号和冒号对齐会使代码更加易读。请<strong>不要</strong>这样做，尽管冒号对齐的方法包含代码块，因为Xcode的对齐方式令它难以辨认。</li>
+</ul>
+
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">// blocks are easily readable
+[UIView animateWithDuration:1.0 animations:^{
+  // something
+} completion:^(BOOL finished) {
+  // something
+}];
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">// colon-aligning makes the block indentation hard to read
+[UIView animateWithDuration:1.0
+                 animations:^{
+                     // something
+                 }
+                 completion:^(BOOL finished) {
+                     // something
+                 }];
+</code></pre>
+
+<p><b id="comments"></b></p>
+
+<h2>注释</h2>
+
+<p>当需要注释时，注释应该用来解释这段特殊代码<strong>为什么</strong>要这样做。任何被使用的注释都必须保持最新或被删除。</p>
+
+<p>一般都避免使用块注释，因为代码尽可能做到自解释，只有当断断续续或几行代码时才需要注释。<em>例外：这不应用在生成文档的注释</em></p>
+
+<p><b id="naming"></b></p>
+
+<h2>命名</h2>
+
+<p>Apple命名规则尽可能坚持，特别是与这些相关的<a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html">memory management rules</a> (<a href="http://stackoverflow.com/a/2865194/340508">NARC</a>)。</p>
+
+<p>长的，描述性的方法和变量命名是好的。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">UIButton *settingsButton;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">UIButton *setBut;
+</code></pre>
+
+<p>三个字符前缀应该经常用在类和常量命名，但在Core Data的实体名中应被忽略。对于官方的raywenderlich.com书、初学者工具包或教程，前缀'RWT'应该被使用。</p>
+
+<p>常量应该使用驼峰式命名规则，所有的单词首字母大写和加上与类名有关的前缀。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">static NSTimeInterval const RWTTutorialViewControllerNavigationFadeAnimationDuration = 0.3;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">static NSTimeInterval const fadetime = 1.7;
+</code></pre>
+
+<p>属性也是使用驼峰式，但首单词的首字母小写。对属性使用auto-synthesis，而不是手动编写@ synthesize语句，除非你有一个好的理由。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">@property (strong, nonatomic) NSString *descriptiveVariableName;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">id varnm;
+</code></pre>
+
+<p><b id="underscores"></b></p>
+
+<h3>下划线</h3>
+
+<p>当使用属性时，实例变量应该使用<code>self.</code>来访问和改变。这就意味着所有属性将会视觉效果不同，因为它们前面都有<code>self.</code>。</p>
+
+<p>但有一个特例：在初始化方法里，实例变量(例如，_variableName)应该直接被使用来避免getters/setters潜在的副作用。</p>
+
+<p>局部变量不应该包含下划线。</p>
+
+<p><b id="methods"></b></p>
+
+<h2>方法</h2>
+
+<p>在方法签名中，应该在方法类型(-/+ 符号)之后有一个空格。在方法各个段之间应该也有一个空格(符合Apple的风格)。在参数之前应该包含一个具有描述性的关键字来描述参数。</p>
+
+<p>&ldquo;and"这个词的用法应该保留。它不应该用于多个参数来说明，就像<code>initWithWidth:height</code>以下这个例子：</p>
+
+<p><strong>应该:</strong>
+<code>objc
+- (void)setExampleText:(NSString *)text image:(UIImage *)image;
+- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;
+- (id)viewWithTag:(NSInteger)tag;
+- (instancetype)initWithWidth:(CGFloat)width height:(CGFloat)height;
+</code></p>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">-(void)setT:(NSString *)text i:(UIImage *)image;
+- (void)sendAction:(SEL)aSelector :(id)anObject :(BOOL)flag;
+- (id)taggedView:(NSInteger)tag;
+- (instancetype)initWithWidth:(CGFloat)width andHeight:(CGFloat)height;
+- (instancetype)initWith:(int)width and:(int)height;  // Never do this.
+</code></pre>
+
+<p><b id="variables"></b></p>
+
+<h2>变量</h2>
+
+<p>变量尽量以描述性的方式来命名。单个字符的变量命名应该尽量避免，除了在<code>for()</code>循环。</p>
+
+<p>星号表示变量是指针。例如， <code>NSString *text</code> 既不是 <code>NSString* text</code> 也不是 <code>NSString * text</code>，除了一些特殊情况下常量。</p>
+
+<p><a href="#private-properties">私有变量</a> 应该尽可能代替实例变量的使用。尽管使用实例变量是一种有效的方式，但更偏向于使用属性来保持代码一致性。</p>
+
+<p>通过使用'back'属性(_variable，变量名前面有下划线)直接访问实例变量应该尽量避免，除了在初始化方法(<code>init</code>, <code>initWithCoder:</code>, 等…)，<code>dealloc</code> 方法和自定义的setters和getters。想了解关于如何在初始化方法和dealloc直接使用Accessor方法的更多信息，查看<a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmPractical.html#//apple_ref/doc/uid/TP40004447-SW6">这里</a></p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">@interface RWTTutorial : NSObject
+
+@property (strong, nonatomic) NSString *tutorialName;
+
+@end
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">@interface RWTTutorial : NSObject {
+  NSString *tutorialName;
+}
+</code></pre>
+
+<p><b id="property-attributes"></b></p>
+
+<h2>属性特性</h2>
+
+<p>所有属性特性应该显式地列出来，有助于新手阅读代码。属性特性的顺序应该是storage、atomicity，与在Interface Builder连接UI元素时自动生成代码一致。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">@property (weak, nonatomic) IBOutlet UIView *containerView;
+@property (strong, nonatomic) NSString *tutorialName;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">@property (nonatomic, weak) IBOutlet UIView *containerView;
+@property (nonatomic) NSString *tutorialName;
+</code></pre>
+
+<p>NSString应该使用<code>copy</code> 而不是 <code>strong</code>的属性特性。</p>
+
+<p>为什么？即使你声明一个<code>NSString</code>的属性，有人可能传入一个<code>NSMutableString</code>的实例，然后在你没有注意的情况下修改它。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">@property (copy, nonatomic) NSString *tutorialName;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">@property (strong, nonatomic) NSString *tutorialName;
+</code></pre>
+
+<p><b id="dot-notation-syntax"></b></p>
+
+<h2>点符号语法</h2>
+
+<p>点语法是一种很方便封装访问方法调用的方式。当你使用点语法时，通过使用getter或setter方法，属性仍然被访问或修改。想了解更多，阅读<a href="https://developer.apple.com/library/ios/documentation/cocoa/conceptual/ProgrammingWithObjectiveC/EncapsulatingData/EncapsulatingData.html">这里</a></p>
+
+<p>点语法应该<strong>总是</strong>被用来访问和修改属性，因为它使代码更加简洁。[]符号更偏向于用在其他例子。</p>
+
+<p><strong>应该:</strong>
+<code>objc
+NSInteger arrayCount = [self.array count];
+view.backgroundColor = [UIColor orangeColor];
+[UIApplication sharedApplication].delegate;
+</code></p>
+
+<p><strong>不应该:</strong>
+<code>objc
+NSInteger arrayCount = self.array.count;
+[view setBackgroundColor:[UIColor orangeColor]];
+UIApplication.sharedApplication.delegate;
+</code></p>
+
+<p><b id="literals"></b></p>
+
+<h2>字面值</h2>
+
+<p><code>NSString</code>, <code>NSDictionary</code>, <code>NSArray</code>, 和 <code>NSNumber</code>的字面值应该在创建这些类的不可变实例时被使用。请特别注意<code>nil</code>值不能传入<code>NSArray</code>和<code>NSDictionary</code>字面值，因为这样会导致crash。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">NSArray *names = @[@"Brian", @"Matt", @"Chris", @"Alex", @"Steve", @"Paul"];
+NSDictionary *productManagers = @{@"iPhone": @"Kate", @"iPad": @"Kamal", @"Mobile Web": @"Bill"};
+NSNumber *shouldUseLiterals = @YES;
+NSNumber *buildingStreetNumber = @10018;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">NSArray *names = [NSArray arrayWithObjects:@"Brian", @"Matt", @"Chris", @"Alex", @"Steve", @"Paul", nil];
+NSDictionary *productManagers = [NSDictionary dictionaryWithObjectsAndKeys: @"Kate", @"iPhone", @"Kamal", @"iPad", @"Bill", @"Mobile Web", nil];
+NSNumber *shouldUseLiterals = [NSNumber numberWithBool:YES];
+NSNumber *buildingStreetNumber = [NSNumber numberWithInteger:10018];
+</code></pre>
+
+<p><b id="constants"></b></p>
+
+<h2>常量</h2>
+
+<p>常量是容易重复被使用和无需通过查找和代替就能快速修改值。常量应该使用<code>static</code>来声明而不是使用<code>#define</code>，除非显式地使用宏。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">static NSString * const RWTAboutViewControllerCompanyName = @"RayWenderlich.com";
+
+static CGFloat const RWTImageThumbnailHeight = 50.0;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">#define CompanyName @"RayWenderlich.com"
+
+#define thumbnailHeight 2
+</code></pre>
+
+<p><b id="enumerated-types"></b></p>
+
+<h2>枚举类型</h2>
+
+<p>当使用<code>enum</code>时，推荐使用新的固定基本类型规格，因为它有更强的类型检查和代码补全。现在SDK有一个宏<code>NS_ENUM()</code>来帮助和鼓励你使用固定的基本类型。</p>
+
+<p><strong>例如:</strong></p>
+
+<pre><code class="objc">typedef NS_ENUM(NSInteger, RWTLeftMenuTopItemType) {
+  RWTLeftMenuTopItemMain,
+  RWTLeftMenuTopItemShows,
+  RWTLeftMenuTopItemSchedule
+};
+</code></pre>
+
+<p>你也可以显式地赋值(展示旧的k-style常量定义)：</p>
+
+<pre><code class="objc">typedef NS_ENUM(NSInteger, RWTGlobalConstants) {
+  RWTPinSizeMin = 1,
+  RWTPinSizeMax = 5,
+  RWTPinCountMin = 100,
+  RWTPinCountMax = 500,
+};
+</code></pre>
+
+<p>旧的k-style常量定义应该<strong>避免</strong>除非编写Core Foundation C的代码。</p>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">enum GlobalConstants {
+  kMaxPinSize = 5,
+  kMaxPinCount = 500,
+};
+</code></pre>
+
+<p><b id="case-statements"></b></p>
+
+<h2>Case语句</h2>
+
+<p>大括号在case语句中并不是必须的，除非编译器强制要求。当一个case语句包含多行代码时，大括号应该加上。</p>
+
+<pre><code class="objc">switch (condition) {
+  case 1:
+    // ...
+    break;
+  case 2: {
+    // ...
+    // Multi-line example using braces
+    break;
+  }
+  case 3:
+    // ...
+    break;
+  default: 
+    // ...
+    break;
+}
+</code></pre>
+
+<p>有很多次，当相同代码被多个cases使用时，一个fall-through应该被使用。一个fall-through就是在case最后移除'break'语句，这样就能够允许执行流程跳转到下一个case值。为了代码更加清晰，一个fall-through需要注释一下。</p>
+
+<pre><code class="objc">switch (condition) {
+  case 1:
+    // ** fall-through! **
+  case 2:
+    // code executed for values 1 and 2
+    break;
+  default: 
+    // ...
+    break;
+}
+</code></pre>
+
+<p>当在switch使用枚举类型时，'default'是不需要的。例如：</p>
+
+<pre><code class="objc">RWTLeftMenuTopItemType menuType = RWTLeftMenuTopItemMain;
+
+switch (menuType) {
+  case RWTLeftMenuTopItemMain:
+    // ...
+    break;
+  case RWTLeftMenuTopItemShows:
+    // ...
+    break;
+  case RWTLeftMenuTopItemSchedule:
+    // ...
+    break;
+}
+</code></pre>
+
+<p><b id="private-properties"></b></p>
+
+<h2>私有属性</h2>
+
+<p>私有属性应该在类的实现文件中的类扩展(匿名分类)中声明，命名分类(比如<code>RWTPrivate</code>或<code>private</code>)应该从不使用除非是扩展其他类。匿名分类应该通过使用<headerfile>+Private.h文件的命名规则暴露给测试。</p>
+
+<p><strong>例如:</strong></p>
+
+<pre><code class="objc">@interface RWTDetailViewController ()
+
+@property (strong, nonatomic) GADBannerView *googleAdView;
+@property (strong, nonatomic) ADBannerView *iAdView;
+@property (strong, nonatomic) UIWebView *adXWebView;
+
+@end
+</code></pre>
+
+<p><b id="booleans"></b></p>
+
+<h2>布尔值</h2>
+
+<p>Objective-C使用<code>YES</code>和<code>NO</code>。因为<code>true</code>和<code>false</code>应该只在CoreFoundation，C或C++代码使用。既然<code>nil</code>解析成<code>NO</code>，所以没有必要在条件语句比较。不要拿某样东西直接与<code>YES</code>比较，因为<code>YES</code>被定义为1和一个<code>BOOL</code>能被设置为8位。</p>
+
+<p>这是为了在不同文件保持一致性和在视觉上更加简洁而考虑。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">if (someObject) {}
+if (![anotherObject boolValue]) {}
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">if (someObject == nil) {}
+if ([anotherObject boolValue] == NO) {}
+if (isAwesome == YES) {} // Never do this.
+if (isAwesome == true) {} // Never do this.
+</code></pre>
+
+<p>如果<code>BOOL</code>属性的名字是一个形容词，属性就能忽略"is"前缀，但要指定get访问器的惯用名称。例如：</p>
+
+<pre><code class="objc">@property (assign, getter=isEditable) BOOL editable;
+</code></pre>
+
+<p>文字和例子从这里引用<a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/CodingGuidelines/Articles/NamingIvarsAndTypes.html#//apple_ref/doc/uid/20001284-BAJGIIJE">Cocoa Naming Guidelines</a></p>
+
+<p><b id="conditionals"></b></p>
+
+<h2>条件语句</h2>
+
+<p>条件语句主体为了防止出错应该使用大括号包围，即使条件语句主体能够不用大括号编写(如，只用一行代码)。这些错误包括添加第二行代码和期望它成为if语句；还有，<a href="http://programmers.stackexchange.com/a/16530">even more dangerous defect</a>可能发生在if语句里面一行代码被注释了，然后下一行代码不知不觉地成为if语句的一部分。除此之外，这种风格与其他条件语句的风格保持一致，所以更加容易阅读。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">if (!error) {
+  return success;
+}
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">if (!error)
+  return success;
+</code></pre>
+
+<p>或</p>
+
+<pre><code class="objc">if (!error) return success;
+</code></pre>
+
+<p><b id="ternary-operator"></b></p>
+
+<h3>三元操作符</h3>
+
+<p>当需要提高代码的清晰性和简洁性时，三元操作符<code>?:</code>才会使用。单个条件求值常常需要它。多个条件求值时，如果使用<code>if</code>语句或重构成实例变量时，代码会更加易读。一般来说，最好使用三元操作符是在根据条件来赋值的情况下。</p>
+
+<p>Non-boolean的变量与某东西比较，加上括号()会提高可读性。如果被比较的变量是boolean类型，那么就不需要括号。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">NSInteger value = 5;
+result = (value != 0) ? x : y;
+
+BOOL isHorizontal = YES;
+result = isHorizontal ? x : y;
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">result = a &gt; b ? x = c &gt; d ? c : d : y;
+</code></pre>
+
+<p><b id="init-methods"></b></p>
+
+<h2>Init方法</h2>
+
+<p>Init方法应该遵循Apple生成代码模板的命名规则。返回类型应该使用<code>instancetype</code>而不是<code>id</code></p>
+
+<pre><code class="objc">- (instancetype)init {
+  self = [super init];
+  if (self) {
+    // ...
+  }
+  return self;
+}
+</code></pre>
+
+<p>查看关于instancetype的文章<a href="#class-constructor-methods">Class Constructor Methods</a></p>
+
+<p><b id="class-constructor-methods"></b></p>
+
+<h2>类构造方法</h2>
+
+<p>当类构造方法被使用时，它应该返回类型是<code>instancetype</code>而不是<code>id</code>。这样确保编译器正确地推断结果类型。</p>
+
+<pre><code class="objc">@interface Airplane
++ (instancetype)airplaneWithType:(RWTAirplaneType)type;
+@end
+</code></pre>
+
+<p>关于更多instancetype信息，请查看<a href="http://nshipster.com/instancetype/">NSHipster.com</a></p>
+
+<p><b id="cgrect-functions"></b></p>
+
+<h2>CGRect函数</h2>
+
+<p>当访问<code>CGRect</code>里的<code>x</code>, <code>y</code>, <code>width</code>, 或 <code>height</code>时，应该使用<a href="http://developer.apple.com/library/ios/#documentation/graphicsimaging/reference/CGGeometry/Reference/reference.html"><code>CGGeometry</code>函数</a>而不是直接通过结构体来访问。引用Apple的<code>CGGeometry</code>:</p>
+
+<blockquote><p>在这个参考文档中所有的函数，接受CGRect结构体作为输入，在计算它们结果时隐式地标准化这些rectangles。因此，你的应用程序应该避免直接访问和修改保存在CGRect数据结构中的数据。相反，使用这些函数来操纵rectangles和获取它们的特性。</p></blockquote>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">CGRect frame = self.view.frame;
+
+CGFloat x = CGRectGetMinX(frame);
+CGFloat y = CGRectGetMinY(frame);
+CGFloat width = CGRectGetWidth(frame);
+CGFloat height = CGRectGetHeight(frame);
+CGRect frame = CGRectMake(0.0, 0.0, width, height);
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">CGRect frame = self.view.frame;
+
+CGFloat x = frame.origin.x;
+CGFloat y = frame.origin.y;
+CGFloat width = frame.size.width;
+CGFloat height = frame.size.height;
+CGRect frame = (CGRect){ .origin = CGPointZero, .size = frame.size };
+</code></pre>
+
+<p><b id="golden-path"></b></p>
+
+<h2>黄金路径</h2>
+
+<p>当使用条件语句编码时，左手边的代码应该是"golden" 或 &ldquo;happy"路径。也就是不要嵌套<code>if</code>语句，多个返回语句也是OK。</p>
+
+<p><strong>应该:</strong></p>
+
+<pre><code class="objc">- (void)someMethod {
+  if (![someOther boolValue]) {
+    return;
+  }
+
+  //Do something important
+}
+</code></pre>
+
+<p><strong>不应该:</strong></p>
+
+<pre><code class="objc">- (void)someMethod {
+  if ([someOther boolValue]) {
+    //Do something important
+  }
+}
+</code></pre>
+
+<p><b id="error-handling"></b></p>
+
+<h2>错误处理</h2>
+
+<p>当方法通过引用来返回一个错误参数，判断返回值而不是错误变量。</p>
+
+<p><strong>应该:</strong>
+<code>objc
+NSError *error;
+if (![self trySomethingWithError:&amp;error]) {
+  // Handle Error
+}
+</code></p>
+
+<p><strong>不应该:</strong>
+<code>objc
+NSError *error;
+[self trySomethingWithError:&amp;error];
+if (error) {
+  // Handle Error
+}
+</code></p>
+
+<p>在成功的情况下，有些Apple的APIs记录垃圾值(garbage values)到错误参数(如果non-NULL)，那么判断错误值会导致false负值和crash。</p>
+
+<p><b id="singletons"></b></p>
+
+<h2>单例模式</h2>
+
+<p>单例对象应该使用线程安全模式来创建共享实例。</p>
+
+<pre><code class="objc">+ (instancetype)sharedInstance {
+  static id sharedInstance = nil;
+
+  static dispatch_once_t onceToken;
+  dispatch_once(&amp;onceToken, ^{
+    sharedInstance = [[self alloc] init];
+  });
+
+  return sharedInstance;
+}
+</code></pre>
+
+<p>这会防止<a href="http://cocoasamurai.blogspot.com/2011/04/singletons-your-doing-them-wrong.html">possible and sometimes prolific crashes</a>.</p>
+
+<p><b id="line-breaks"></b></p>
+
+<h2>换行符</h2>
+
+<p>换行符是一个很重要的主题，因为它的风格指南主要为了打印和网上的可读性。</p>
+
+<p>例如:</p>
+
+<pre><code class="objc">self.productsRequest = [[SKProductsRequest alloc] initWithProductIdentifiers:productIdentifiers];
+</code></pre>
+
+<p>一行很长的代码应该分成两行代码，下一行用两个空格隔开。</p>
+
+<pre><code class="objc">self.productsRequest = [[SKProductsRequest alloc] 
+  initWithProductIdentifiers:productIdentifiers];
+</code></pre>
+
+<p><b id="xcode-project"></b></p>
+
+<h2>Xcode工程</h2>
+
+<p>物理文件应该与Xcode工程文件保持同步来避免文件扩张。任何Xcode分组的创建应该在文件系统的文件体现。代码不仅是根据<strong>类型</strong>来分组，而且还可以根据<strong>功能</strong>来分组，这样代码更加清晰。</p>
+
+<p>尽可能在target的Build Settings打开"Treat Warnings as Errors，和启用以下<a href="http://boredzo.org/blog/archives/2009-11-07/warnings">additional warnings</a>。如果你需要忽略特殊的警告，使用 <a href="http://clang.llvm.org/docs/UsersManual.html#controlling-diagnostics-via-pragmas">Clang&rsquo;s pragma feature</a>。</p>
+
+<h1>其他Objective-C编码规范</h1>
+
+<p>如果我们的编码规范不符合你的口味，可以查看其他的编码规范：</p>
+
+<ul>
+<li><a href="https://github.com/RobotsAndPencils/objective-c-style-guide">Robots &amp; Pencils</a></li>
+<li><a href="https://github.com/NYTimes/objective-c-style-guide">New York Times</a></li>
+<li><a href="http://google-styleguide.googlecode.com/svn/trunk/objcguide.xml">Google</a></li>
+<li><a href="https://github.com/github/objective-c-conventions">GitHub</a></li>
+<li><a href="https://trac.adium.im/wiki/CodingStyle">Adium</a></li>
+<li><a href="https://gist.github.com/soffes/812796">Sam Soffes</a></li>
+<li><a href="http://cocoadevcentral.com/articles/000082.php">CocoaDevCentral</a></li>
+<li><a href="http://lukeredpath.co.uk/blog/my-objective-c-style-guide.html">Luke Redpath</a></li>
+<li><a href="http://www.cimgf.com/zds-code-style-guide/">Marcus Zarra</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[AFNetWorking发送JSON数据到服务器]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/11/11/afnetworkingfa-song-jsonshu-ju-dao-fu-wu-qi/"/>
+    <updated>2015-11-11T15:58:48+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/11/11/afnetworkingfa-song-jsonshu-ju-dao-fu-wu-qi</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>一般来说，客户端都是发送字典形式的数据到服务器来获得资源，而服务器一般以<code>JSON</code>格式数据返回。
+现在需求是客户端发起POST请求，发送<code>JSON</code>格式的数据到服务器获取资源。
+用<code>Python</code>脚本模拟如下</p>
+
+<pre><code class="python">#!/usr/bin/python
+# coding: utf-8
+
+import requests
+import json
+
+post_url = "http://api.tuicool.com/api/login.json"
+headers = {
+    "User-Agent": "iOS/iphone5/2.13.1",
+    "Host": "api.tuicool.com",
+    "Accept-Language": "zh-CN",
+    "Authorization": "Basic MC4wLjAuMDp0dWljb29s",
+    "Content-Type": "application/json"
+}
+
+form_data = {
+    "email": "xx@qq.com",
+    "password": "qwertasdfg"
+}
+
+json_str = json.dumps(form_data)
+print json_str
+
+s = requests.session()
+s.headers = headers
+response = s.post(post_url, data=json_str, headers=headers)
+print response.text
+</code></pre>
+
+<p><code>Objective-C</code>中<code>NSURLRequest</code>中有一个<code>HTTPBody</code>刚好满足这个需求。</p>
+
+<pre><code class="objective-c">- (void)loginWithEmail:(NSString *)email Password:(NSString *)password andBlock:(void (^)(id responseObject, NSError *error))block{
+    static NSString *loginURL = @"http://api.tuicool.com/api/login.json";
+    //转化为json字符串
+    NSDictionary *params = [NSDictionary dictionaryWithObjectsAndKeys:email, @"email", password, @"password", nil];
+    NSData *data = [NSJSONSerialization dataWithJSONObject:params options:NSJSONWritingPrettyPrinted error:nil];
+    [self defaultHTTPHeader];
+
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:[NSURL URLWithString:loginURL]];
+    [request setAllHTTPHeaderFields:[self.requestSerializer HTTPRequestHeaders]];
+    [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+    request.HTTPBody = data;
+    request.HTTPMethod = @"POST";
+
+    AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation * _Nonnull operation, id  _Nonnull responseObject) {
+        NSLog(@"response = %@", responseObject);
+    } failure:^(AFHTTPRequestOperation * _Nonnull operation, NSError * _Nonnull error) {
+        NSLog(@"error=%@", error);
+        block(operation, error);
+    }];
+
+    [self.operationQueue addOperation:operation];
+}
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[UITableViewCell滚动时内容重复]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/11/04/uitableviewcellgun-dong-shi-nei-rong-zhong-fu/"/>
+    <updated>2015-11-04T22:53:13+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/11/04/uitableviewcellgun-dong-shi-nei-rong-zhong-fu</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>在使用UITableView表格布局时，出现了表格Cell在滚动之后，内容被覆盖的现象。如图</p>
+
+<p><a href="http://zwq.bingyan.net/wp-content/uploads/2015/11/屏幕快照-2015-11-01-15.58.31.png"><img class="alignnone size-medium wp-image-118" src="http://zwq.bingyan.net/wp-content/uploads/2015/11/屏幕快照-2015-11-01-15.58.31-163x300.png" alt="屏幕快照 2015-11-01 15.58.31" width="163" height="300" /></a></p>
+
+<p>代码如下:
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+</pre></td><td class='code'><pre><code class='Objective-C'><span class='line'><span class="p">-</span> <span class="p">(</span><span class="bp">UITableViewCell</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="p">)</span><span class="nf">tableView:</span><span class="p">(</span><span class="bp">UITableView</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="p">)</span><span class="nv">tableView</span> <span class="nf">cellForRowAtIndexPath:</span><span class="p">(</span><span class="bp">NSIndexPath</span> <span class="o">*</span><span class="p">)</span><span class="nv">indexPath</span><span class="p">{</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">if</span> <span class="p">(</span><span class="n">indexPath</span><span class="p">.</span><span class="n">section</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'><span class="k">static</span> <span class="bp">NSString</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">cellIdentify</span> <span class="o">=</span> <span class="p">@</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">DefaultSitesCell</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;;</span>
+</span><span class='line'><span class="bp">UITableViewCell</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">cell</span> <span class="o">=</span> <span class="p">[</span><span class="n">tableView</span> <span class="nl">dequeueReusableCellWithIdentifier</span><span class="p">:</span><span class="n">cellIdentify</span><span class="p">];</span>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="n">cell</span> <span class="o">==</span> <span class="nb">nil</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'><span class="n">cell</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UITableViewCell</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithStyle</span><span class="p">:</span><span class="n">UITableViewCellStyleDefault</span> <span class="nl">reuseIdentifier</span><span class="p">:</span><span class="n">cellIdentify</span><span class="p">];</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="bp">NSInteger</span> <span class="n">row</span> <span class="o">=</span> <span class="n">indexPath</span><span class="p">.</span><span class="n">row</span><span class="p">;</span>
+</span><span class='line'><span class="bp">NSDictionary</span> <span class="o">*</span><span class="n">sites</span> <span class="o">=</span> <span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="n">listData</span> <span class="nl">objectAtIndex</span><span class="p">:</span><span class="n">row</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="bp">UILabel</span> <span class="o">*</span><span class="n">siteName</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UILabel</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+</span><span class='line'><span class="n">siteName</span><span class="p">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">CGRectMake</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">44</span><span class="p">);</span>
+</span><span class='line'><span class="n">siteName</span><span class="p">.</span><span class="n">text</span> <span class="o">=</span> <span class="p">[</span><span class="n">sites</span> <span class="nl">objectForKey</span><span class="p">:@</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">name</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;];</span>
+</span><span class='line'><span class="p">[</span><span class="n">cell</span><span class="p">.</span><span class="n">contentView</span> <span class="nl">addSubview</span><span class="p">:</span><span class="n">siteName</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="bp">UIImageView</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">imageV</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIImageView</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+</span><span class='line'><span class="n">imageV</span><span class="p">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">CGRectMake</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">);</span>
+</span><span class='line'><span class="n">imageV</span><span class="p">.</span><span class="n">layer</span><span class="p">.</span><span class="n">cornerRadius</span> <span class="o">=</span> <span class="mi">15</span><span class="p">;</span>
+</span><span class='line'><span class="p">[</span><span class="n">imageV</span> <span class="nl">sd_setImageWithURL</span><span class="p">:[</span><span class="bp">NSURL</span> <span class="nl">URLWithString</span><span class="p">:[</span><span class="n">sites</span> <span class="nl">objectForKey</span><span class="p">:@</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">image</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;]]</span>
+</span><span class='line'><span class="nl">placeholderImage</span><span class="p">:[</span><span class="bp">UIImage</span> <span class="nl">imageNamed</span><span class="p">:@</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">placeholder_icon</span><span class="p">.</span><span class="n">png</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;]];</span>
+</span><span class='line'><span class="p">[</span><span class="n">cell</span><span class="p">.</span><span class="n">contentView</span> <span class="nl">addSubview</span><span class="p">:</span><span class="n">imageV</span><span class="p">];</span>
+</span><span class='line'><span class="k">return</span> <span class="n">cell</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span><span class="k">else</span> <span class="p">{</span>
+</span><span class='line'><span class="k">static</span> <span class="bp">NSString</span> <span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="n">addedCellIdentify</span> <span class="o">=</span> <span class="p">@</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">AddedSitesCell</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;;</span>
+</span><span class='line'><span class="bp">UITableViewCell</span> <span class="o">*</span><span class="n">cell</span> <span class="o">=</span> <span class="p">[</span><span class="n">tableView</span> <span class="nl">dequeueReusableCellWithIdentifier</span><span class="p">:</span><span class="n">addedCellIdentify</span><span class="p">];</span>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="n">cell</span> <span class="o">==</span> <span class="nb">nil</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'><span class="n">cell</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UITableViewCell</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithStyle</span><span class="p">:</span><span class="n">UITableViewCellStyleDefault</span> <span class="nl">reuseIdentifier</span><span class="p">:</span><span class="n">addedCellIdentify</span><span class="p">];</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="n">cell</span><span class="p">.</span><span class="n">textLabel</span><span class="p">.</span><span class="n">text</span> <span class="o">=</span> <span class="p">@</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">+</span> <span class="err">订阅更多站点</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;;</span>
+</span><span class='line'><span class="n">cell</span><span class="p">.</span><span class="n">textLabel</span><span class="p">.</span><span class="n">frame</span> <span class="o">=</span> <span class="n">cell</span><span class="p">.</span><span class="n">frame</span><span class="p">;</span>
+</span><span class='line'><span class="n">cell</span><span class="p">.</span><span class="n">textLabel</span><span class="p">.</span><span class="n">textAlignment</span> <span class="o">=</span> <span class="n">NSTextAlignmentCenter</span><span class="p">;</span>
+</span><span class='line'><span class="k">return</span> <span class="n">cell</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="err">``</span>
+</span><span class='line'><span class="err">出现这种情况源于</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">UITableViewCell</span><span class="err">`的重用机制</span><span class="p">.</span>
+</span><span class='line'><span class="err">借用网上的解释</span><span class="o">:</span> <span class="o">&lt;</span><span class="n">a</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;http://www.cocoachina.com/bbs/read.php?tid-144611.html&quot;</span><span class="o">&gt;</span><span class="err">重用实现分析</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">ul</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">查看</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">UITableView</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">头文件，会找到</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">NSArray</span><span class="o">*</span> <span class="n">visiableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，和</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">NSMutableArray</span><span class="o">*</span> <span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">两个结构。</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">visiableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">内保存当前显示的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">保存可重用的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">TableView</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">显示之初，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">为空，那么</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">tableView</span> <span class="nl">dequeueReusableCellWithIdentifier</span><span class="p">:</span><span class="n">CellIdentifier</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">返回</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="nb">nil</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">。开始的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">都是通过</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="p">[[</span><span class="bp">UITableViewCell</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithStyle</span><span class="p">:</span><span class="n">UITableViewCellStyleDefault</span> <span class="nl">reuseIdentifier</span><span class="p">:</span><span class="n">CellIdentifier</span><span class="p">]</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">来创建，而且</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cellForRowAtIndexPath</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">只是调用最大显示</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">数的次数。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">ul</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">比如：有</span><span class="mi">100</span><span class="err">条数据，</span><span class="n">iPhone</span><span class="err">一屏最多显示</span><span class="mi">10</span><span class="err">个</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">。程序最开始显示</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">TableView</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">的情况是：</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">ul</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">用</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="p">[[</span><span class="bp">UITableViewCell</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithStyle</span><span class="p">:</span><span class="n">UITableViewCellStyleDefault</span> <span class="nl">reuseIdentifier</span><span class="p">:</span><span class="n">CellIdentifier</span><span class="p">]</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">创建</span><span class="mi">10</span><span class="err">次</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，并给</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">指定同样的重用标识</span><span class="p">(</span><span class="err">当然，可以为不同显示类型的</span><span class="n">cell</span><span class="err">指定不同的标识</span><span class="p">)</span><span class="err">。并且</span><span class="mi">10</span><span class="err">个</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">全部都加入到</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">visiableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">数组，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">为空。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">向下拖动</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">tableView</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，当</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell1</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">完全移出屏幕，并且</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell11</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="p">(</span><span class="err">它也是</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">alloc</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">出来的，原因同上</span><span class="p">)</span><span class="err">完全显示出来的时候。</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell11</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">加入到</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">visiableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell1</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">移出</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">visiableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell1</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">加入到</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">li</span><span class="o">&gt;&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">接着向下拖动</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">tableView</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，因为</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">中已经有值，所以，当需要显示新的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cellForRowAtIndexPath</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">再次被调用的时候，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">tableView</span> <span class="nl">dequeueReusableCellWithIdentifier</span><span class="p">:</span><span class="n">CellIdentifier</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，返回</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell1</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">。</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell1</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">加入到</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">visiableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell1</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">移出</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">；</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell2</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">移出</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">visiableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">cell2</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">加入到</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">。之后再需要显示的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">Cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">就可以正常重用了。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">ul</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">理解了原理，解决这个问题的方法就有很多了。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h4</span><span class="o">&gt;</span><span class="err">去掉重用机制</span><span class="o">&lt;/</span><span class="n">h4</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">每次都新建一个新的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">UITableViewCel</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">·</span><span class="p">,</span> <span class="err">这样可以解决问题，但是对于内存和性能要求高的应用就不适合了。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h4</span><span class="o">&gt;</span><span class="err">自定义</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">UITableViewCell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">h4</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">这个方法是非常好的，推荐使用。但是我的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">Cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">非常简单，自定义的话，感觉还是有点麻烦了。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h4</span><span class="o">&gt;</span><span class="err">去掉之前的内容，添加新的内容</span><span class="o">&lt;/</span><span class="n">h4</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">因为每次从</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">reusableTableCells</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">中取出的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">Cell</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">中</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">contentView</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">都不为空，所以继续添加，就会出现内容覆盖的现象。</span>
+</span><span class='line'><span class="err">添加这一行</span><span class="p">,</span> <span class="err">删除之前</span><span class="n">cell</span><span class="err">中的内容</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="p">[</span><span class="n">cell</span><span class="p">.</span><span class="n">contentView</span><span class="p">.</span><span class="n">subviews</span> <span class="nl">makeObjectsPerformSelector</span><span class="p">:</span><span class="k">@selector</span><span class="p">(</span><span class="n">removeFromSuperview</span><span class="p">)];</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="err">或者</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="k">for</span> <span class="p">(</span><span class="bp">UIView</span> <span class="o">*</span><span class="n">view</span> <span class="k">in</span> <span class="n">cell</span><span class="p">.</span><span class="n">contentView</span><span class="p">.</span><span class="n">subviews</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'><span class="p">[</span><span class="n">view</span> <span class="n">removeFromSuperview</span><span class="p">];</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h4</span><span class="o">&gt;</span><span class="err">使用不同的重用标识符</span><span class="o">&lt;/</span><span class="n">h4</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">NSString</span> <span class="o">*</span><span class="n">CellIdentifier</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSString</span> <span class="nl">stringWithFormat</span><span class="p">:</span><span class="s">@&quot;%d,%d&quot;</span><span class="p">,</span><span class="n">indexPath</span><span class="p">.</span><span class="n">section</span><span class="p">,</span><span class="n">indexPath</span><span class="p">.</span><span class="n">row</span><span class="p">];</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">这种方法也值得争议</span><span class="p">,</span><span class="err">因为也没有完全利用重用机制。</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'><span class="p">]]</span><span class="o">&gt;&lt;/</span><span class="n">content</span><span class="o">&gt;</span>
+</span><span class='line'>  <span class="o">&lt;/</span><span class="n">entry</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="o">&lt;</span><span class="n">entry</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="o">&lt;</span><span class="n">title</span> <span class="n">type</span><span class="o">=</span><span class="s">&quot;html&quot;</span><span class="o">&gt;&lt;!</span><span class="p">[</span><span class="n">CDATA</span><span class="p">[</span><span class="n">IOS</span> <span class="err">添加</span><span class="n">toolBar</span><span class="p">]]</span><span class="o">&gt;&lt;/</span><span class="n">title</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="o">&lt;</span><span class="n">link</span> <span class="n">href</span><span class="o">=</span><span class="s">&quot;http://lvzwq.github.io/blog/2015/11/04/ios-tian-jia-toolbar/&quot;</span><span class="o">/&gt;</span>
+</span><span class='line'>    <span class="o">&lt;</span><span class="n">updated</span><span class="o">&gt;</span><span class="mi">2015</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mo">04</span><span class="nl">T19</span><span class="p">:</span><span class="mi">34</span><span class="o">:</span><span class="mi">33</span><span class="o">+</span><span class="mi">08</span><span class="o">:</span><span class="mo">00</span><span class="o">&lt;/</span><span class="n">updated</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="o">&lt;</span><span class="kt">id</span><span class="o">&gt;</span><span class="nl">http</span><span class="p">:</span><span class="c1">//lvzwq.github.io/blog/2015/11/04/ios-tian-jia-toolbar&lt;/id&gt;</span>
+</span><span class='line'>    <span class="o">&lt;</span><span class="n">content</span> <span class="n">type</span><span class="o">=</span><span class="s">&quot;html&quot;</span><span class="o">&gt;&lt;!</span><span class="p">[</span><span class="n">CDATA</span><span class="p">[</span><span class="o">&lt;!--</span><span class="n">more</span><span class="o">--&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">UIToolBar</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">是</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">UINavigationController</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">中的一个</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">Bar</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，默认是隐藏的。设置</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">UINavigationController</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">的</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">toolbarHidden</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">属性可显示</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">UIToolBar</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="err">也可以不用直接使用</span><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="bp">UINavigationController</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="err">，直接新建，如下</span>
+</span></code></pre></td></tr></table></div></figure>objective-c
+- (void)addToolBar{
+    self.toolBar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, DeviceHeight - 40, DeviceWidth, 40.0f)];
+    UIImage <em>back = [UIImage imageNamed:@&ldquo;Left&rdquo;];
+    UIBarButtonItem </em>item1 = [[UIBarButtonItem alloc] initWithImage:back
+                                                              style:UIBarButtonItemStyleBordered
+                                                             target:self
+                                                             action:@selector(dismissController)];
+    item1.tintColor = [UIColor greenColor];</p>
+
+<pre><code>UIImage *star = [UIImage imageNamed:@"Star"];
+UIBarButtonItem *item2 = [[UIBarButtonItem alloc] initWithImage:star
+                                                          style:UIBarButtonItemStylePlain
+                                                         target:self
+                                                         action:@selector(starArticle)];
+item2.tintColor = [UIColor greenColor];
+
+UIImage *share = [UIImage imageNamed:@"Share"];
+UIBarButtonItem *item3 = [[UIBarButtonItem alloc] initWithImage:share
+                                                          style:UIBarButtonItemStylePlain
+                                                         target:self
+                                                         action:@selector(shareArticle)];
+item3.tintColor = [UIColor greenColor];
+
+UIImage *comment = [UIImage imageNamed:@"Bubble"];
+UIBarButtonItem *item4 = [[UIBarButtonItem alloc] initWithImage:comment
+                                                          style:UIBarButtonItemStylePlain
+                                                         target:self
+                                                         action:@selector(commentArticle)];
+item4.tintColor = [UIColor greenColor];
+
+UIImage *more = [UIImage imageNamed:@"Star"];
+UIBarButtonItem *item5 = [[UIBarButtonItem alloc] initWithImage:more
+                                                              style:UIBarButtonItemStylePlain
+                                                             target:self
+                                                             action:@selector(more)];
+item5.tintColor = [UIColor greenColor];
+
+UIBarButtonItem *item = [[UIBarButtonItem alloc]
+                          initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                          target:nil
+                          action:nil];
+
+
+[self.toolBar setItems:[NSArray arrayWithObjects:item1, item, item2, item, item3, item, item4, item, item5, nil]];
+[self.view addSubview:self.toolBar];
+</code></pre>
+
+<p>}</p>
+
+<p><code>``
+加一个</code>item<code>是为了均匀分布</code>toolbar`上的空间。</p>
+]]></content>
+  </entry>
+  
+</feed>

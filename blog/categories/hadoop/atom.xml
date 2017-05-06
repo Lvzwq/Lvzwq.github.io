@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Hadoop | 闲散记事]]></title>
+  <link href="http://lvzwq.github.io/blog/categories/hadoop/atom.xml" rel="self"/>
+  <link href="http://lvzwq.github.io/"/>
+  <updated>2017-05-07T00:15:13+08:00</updated>
+  <id>http://lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Linux上Hadoop安装配置]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/11/11/linuxshang-hadoopan-zhuang-pei-zhi/"/>
+    <updated>2015-11-11T22:56:40+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/11/11/linuxshang-hadoopan-zhuang-pei-zhi</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p>准备工作
+安装<code>java</code>, 设置java环境</p>
+
+<h2>下载<code>Hadoop</code></h2>
+
+<pre><code class="sh">wget http://mirror.bit.edu.cn/apache/hadoop/common/hadoop-2.6.2/hadoop-2.6.2.tar.gz
+tar -zxvf  hadoop-2.6.2.tar.gz
+cd hadoop-2.6.2
+</code></pre>
+
+<h2>修改<code>etc/hadoop/hadoop-env.sh</code></h2>
+
+<p>将<code>export JAVA_HOME=${JAVA_HOME}</code>修改为系统中对应的<code>Java</code>环境<code>export JAVA_HOME=/root/jdk1.7.0_79</code></p>
+
+<h2>伪分布式模式安装</h2>
+
+<p>Hadoop可以在单节点上以伪分布式模式运行，是以不同的Java进程模拟分布式运行中的各类节点(NameNode、DataNode、)。</p>
+
+<h3>配置<code>Hadoop</code></h3>
+
+<p>修改以下文件
+<code>core-site.xml</code>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="ni">&amp;lt;</span>?xml version=<span class="ni">&amp;ldquo;</span>1.0<span class="ni">&amp;rdquo;</span> encoding=<span class="ni">&amp;ldquo;</span>UTF-8<span class="ni">&amp;rdquo;</span>?&gt;
+</span><span class='line'><span class="ni">&amp;lt;</span>?xml-stylesheet type=<span class="ni">&amp;ldquo;</span>text/xsl<span class="ni">&amp;rdquo;</span> href=<span class="ni">&amp;ldquo;</span>configuration.xsl<span class="ni">&amp;rdquo;</span>?&gt;<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">&lt;!-- Put site-specific property overrides in this file. --&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;&lt;configuration&gt;</span>
+</span><span class='line'><span class="nt">&lt;property&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;name&gt;</span>fs.default.name<span class="nt">&lt;/name&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;value&gt;</span>hdfs://iZ28jq7frf7Z:9000<span class="nt">&lt;/value&gt;</span> <span class="c">&lt;!--value中为hostname--&gt;</span>
+</span><span class='line'><span class="nt">&lt;/property&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;&lt;property&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;name&gt;</span>hadoop.tmp.dir<span class="nt">&lt;/name&gt;</span>
+</span><span class='line'>   <span class="nt">&lt;value&gt;</span>/root/hadoop/hadooptmpdir<span class="nt">&lt;/value&gt;</span>
+</span><span class='line'><span class="nt">&lt;/property&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;&lt;property&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;name&gt;</span>dfs.name.dir<span class="nt">&lt;/name&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;value&gt;</span>/root/hadoop/dfsnamedir<span class="nt">&lt;/value&gt;</span>
+</span><span class='line'><span class="nt">&lt;/property&gt;</span>
+</span><span class='line'><span class="nt">&lt;/configuration&gt;</span>
+</span><span class='line'><span class="nt">&lt;code&gt;</span>
+</span><span class='line'>`hdfs-site.xml`
+</span><span class='line'><span class="nt">&lt;/code&gt;</span>xml
+</span><span class='line'><span class="ni">&amp;lt;</span>?xml version=<span class="ni">&amp;ldquo;</span>1.0<span class="ni">&amp;rdquo;</span> encoding=<span class="ni">&amp;ldquo;</span>UTF-8<span class="ni">&amp;rdquo;</span>?&gt;
+</span><span class='line'><span class="ni">&amp;lt;</span>?xml-stylesheet type=<span class="ni">&amp;ldquo;</span>text/xsl<span class="ni">&amp;rdquo;</span> href=<span class="ni">&amp;ldquo;</span>configuration.xsl<span class="ni">&amp;rdquo;</span>?&gt;<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">&lt;!-- Put site-specific property overrides in this file. --&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;&lt;configuration&gt;</span>
+</span><span class='line'><span class="nt">&lt;property&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;name&gt;</span>dfs.replication<span class="nt">&lt;/name&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;value&gt;</span>1<span class="nt">&lt;/value&gt;</span>
+</span><span class='line'><span class="nt">&lt;/property&gt;</span>
+</span><span class='line'><span class="nt">&lt;/configuration&gt;</span>
+</span><span class='line'><span class="nt">&lt;code&gt;</span>
+</span><span class='line'>生成`mapred-site.xml`配置文件。`cp mapred-site.xml.template mapred-site.xml`
+</span><span class='line'><span class="nt">&lt;/code&gt;</span>
+</span><span class='line'><span class="ni">&amp;lt;</span>?xml version=<span class="ni">&amp;ldquo;</span>1.0<span class="ni">&amp;rdquo;</span>?&gt;
+</span><span class='line'><span class="ni">&amp;lt;</span>?xml-stylesheet type=<span class="ni">&amp;ldquo;</span>text/xsl<span class="ni">&amp;rdquo;</span> href=<span class="ni">&amp;ldquo;</span>configuration.xsl<span class="ni">&amp;rdquo;</span>?&gt;<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">&lt;!-- Put site-specific property overrides in this file. --&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;&lt;configuration&gt;</span>
+</span><span class='line'><span class="nt">&lt;property&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;name&gt;</span>mapred.job.tracker<span class="nt">&lt;/name&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;value&gt;</span>iZ28jq7frf7Z:9001<span class="nt">&lt;/value&gt;</span>
+</span><span class='line'><span class="nt">&lt;/property&gt;</span>
+</span><span class='line'><span class="nt">&lt;/configuration&gt;</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<h3>设置免密码<code>SSH</code></h3>
+
+<pre><code class="sh">ssh-keygen -t rsa
+cp id_rsa.pub authorized_keys
+</code></pre>
+
+<h3>启动<code>Hadoop</code></h3>
+
+<p>格式化分布式文件系统
+<code>sh
+bin/hadoop namenode -format
+</code>
+启动<code>Hadoop</code>守护进程
+<code>bash
+sbin/start-all.sh
+或者
+start-dfs.sh
+start-yarn.sh
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

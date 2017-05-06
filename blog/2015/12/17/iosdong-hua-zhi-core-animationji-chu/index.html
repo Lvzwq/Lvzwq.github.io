@@ -1,0 +1,475 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>IOS动画之Core Animation基础 - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
+
+  
+  <meta name="description" content="首先附上一张从网上找到的Core Animation的结构图。 准备: 使用Core Animation制作动画需要引入QuartzCore.framework库，并在制作动画的地方引入#import &lt;QuartzCore/QuartzCore.h&gt; &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2015/12/17/iosdong-hua-zhi-core-animationji-chu/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
+  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">-->
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>Note.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">IOS动画之Core Animation基础</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-17T23:08:04+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:08 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><!--more-->
+
+
+<p>首先附上一张从网上找到的<code>Core Animation</code>的结构图。
+<img src="http://7xig7d.com1.z0.glb.clouddn.com/zwq/core_annimation.jpg" alt="Core Animaion" /></p>
+
+<p><strong>准备</strong>: 使用<code>Core Animation</code>制作动画需要引入<code>QuartzCore.framework</code>库，并在制作动画的地方引入<code>#import &lt;QuartzCore/QuartzCore.h&gt;</code></p>
+
+<h3><code>CABasicAnimation</code>(关键帧动画)</h3>
+
+<p>所谓关键帧动画，就是将<code>Layer</code>的属性作为<code>KeyPath</code>来注册，指定动画的起始帧和结束帧，然后自动计算和实现中间的过渡动画的一种动画方式。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="bp">CABasicAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="bp">CABasicAnimation</span> <span class="n">animation</span><span class="p">];</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">keyPath</span> <span class="o">=</span> <span class="s">@&quot;position.x&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="mi">@77</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="mi">@455</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">repeatCount</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">beginTime</span> <span class="o">=</span> <span class="n">CACurrentMediaTime</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">autoreverses</span> <span class="o">=</span> <span class="nb">YES</span><span class="p">;</span>
+</span><span class='line'><span class="p">[</span><span class="n">layer</span> <span class="nl">addAnimation</span><span class="p">:</span><span class="n">animation</span> <span class="nl">forKey</span><span class="p">:</span><span class="s">@&quot;basic&quot;</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>动画属性参数说明:</p>
+
+<ul>
+<li><code>keyPath</code>：动画的运动属性。</li>
+</ul>
+
+
+<p>常见的支持有: <a href="https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/CoreAnimation_guide/Key-ValueCodingExtensions/Key-ValueCodingExtensions.html">见官方文档</a></p>
+
+<blockquote><p>平移:
+- <code>position</code>(点到点坐标)<br/>
+- <code>position.x</code>或者<code>transform.translation.x</code>(x坐标方向的移动)
+- <code>position.y</code>或者<code>transform.translation.y</code>(y坐标方向的移动)
+缩放:<code>scale</code>
+旋转:<code>rotation</code>
+- <code>transform.rotation.x</code>(绕x坐标轴旋转)
+- <code>transform.rotation.y</code>(绕y坐标轴旋转)</p></blockquote>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">keyPath</span> <span class="o">=</span> <span class="s">@&quot;position&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">keyPath</span> <span class="o">=</span> <span class="s">@&quot;transform.scale&quot;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">keyPath</span> <span class="o">=</span> <span class="s">@&quot;transform.rotation.y&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>duration</code>： 动画持续时间,以秒为单位</li>
+<li><code>fromValue</code>： 动画的开始状态(绝对定位)</li>
+<li><code>toValue</code>：动画的结束状态(绝对定位)</li>
+<li><code>byValue</code>：动画的相对结束位置(相对定位)。</li>
+</ul>
+
+
+<p>动画中<code>fromValue</code> -> <code>toValue</code>表示从开始位置到结束位置(绝对位置)，也可以设定从当前位置到加上<code>byValue</code>(相对位置)。注意 <code>fromValue</code>、<code>toValue</code>和<code>byValue</code>是<code>id</code>类型，如果是基本类型的话，需要转化为OC对应的类类型@。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSNumber</span> <span class="nl">numberWithFloat</span><span class="p">:</span><span class="mf">50.0</span><span class="p">];</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="mf">@500.0</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">byValue</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSValue</span> <span class="nl">valueWithCGPoint</span><span class="p">:</span><span class="n">CGPointMake</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">300</span><span class="p">)];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>repeatCount</code>:表示动画重复次数。默认为0，指定为<code>HUGE_VALF</code>， 永久执行.</li>
+<li><code>autoreverses</code>:动画结束之后是否执行逆动画。</li>
+<li><code>beginTime</code>:指定动画执行的时间。如果需要动画延迟，可以加上<code>CACurrentMediaTime()+ 延迟的秒数</code>。</li>
+<li><code>timingFunction</code>: 设定动画的速度变化。</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span>  <span class="p">[</span><span class="bp">CAMediaTimingFunction</span> <span class="nl">functionWithName</span><span class="p">:</span> <span class="n">kCAMediaTimingFunctionEaseInEaseOut</span><span class="p">];</span> <span class="c1">//先加速后减速</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h6>动画结束之后，动画界面又恢复动画前的状态。要想保持动画后的状态，可以有以下两种方式</h6>
+
+<p><strong>方法一(推荐)</strong>
+这种方式有局限性，适用于消失效果的动画。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="n">layer</span><span class="p">.</span><span class="n">position</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">455</span><span class="p">,</span> <span class="mi">61</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>方法二(通用)</strong>
+可以添加以下两行代码</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">fillMode</span> <span class="o">=</span> <span class="n">kCAFillModeForward</span><span class="p">;</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">removedOnCompletion</span> <span class="o">=</span> <span class="nb">NO</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>默认动画执行结束之后，就从渲染树<code>render tree</code>中移除,设置<code>removedOnCompletion</code>为<code>NO</code>,保留渲染后的动画。</p>
+
+<h3><code>CAKeyframeAnimation</code>组合动画</h3>
+
+<p><code>CABasicAnimation</code>动画是一次执行单一效果的动画,<code>CAKeyframeAnimation</code>可以在一次动作中执行多种效果。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="c1">//为动画图形运动划定运动路线</span>
+</span><span class='line'><span class="c1">//定义动画贝塞尔曲线路径</span>
+</span><span class='line'><span class="bp">UIBezierPath</span> <span class="o">*</span><span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIBezierPath</span> <span class="n">bezierPath</span><span class="p">];</span>
+</span><span class='line'><span class="c1">//定义起点</span>
+</span><span class='line'><span class="p">[</span><span class="n">path</span> <span class="nl">moveToPoint</span><span class="p">:</span><span class="n">CGPointMake</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">150</span><span class="p">)];</span>
+</span><span class='line'><span class="c1">//结束点、中间点</span>
+</span><span class='line'><span class="p">[</span><span class="n">path</span> <span class="nl">addQuadCurveToPoint</span><span class="p">:</span><span class="n">CGPointMake</span><span class="p">(</span><span class="mi">270</span><span class="p">,</span> <span class="mi">300</span><span class="p">)</span> <span class="nl">controlPoint</span><span class="p">:</span><span class="n">CGPointMake</span><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="mi">20</span><span class="p">)];</span>
+</span><span class='line'><span class="c1">//定义2个路径点</span>
+</span><span class='line'><span class="c1">//[path addCurveToPoint:CGPointMake(50, 500) controlPoint1: CGPointMake(350, 400) controlPoint2:CGPointMake(100, 450)];</span>
+</span><span class='line'>
+</span><span class='line'><span class="bp">CAKeyframeAnimation</span> <span class="o">*</span><span class="n">animation</span> <span class="o">=</span> <span class="p">[</span><span class="bp">CAKeyframeAnimation</span> <span class="nl">animationWithKeyPath</span><span class="p">:</span><span class="s">@&quot;position&quot;</span><span class="p">];</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">.</span><span class="bp">CGPath</span><span class="p">;</span> <span class="c1">//设置路径</span>
+</span><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">rotationMode</span> <span class="o">=</span> <span class="n">kCAAnimationRotateAuto</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">//放大</span>
+</span><span class='line'><span class="bp">CABasicAnimation</span> <span class="o">*</span><span class="n">expandAnimation</span> <span class="o">=</span> <span class="p">[</span><span class="bp">CABasicAnimation</span> <span class="nl">animationWithKeyPath</span><span class="p">:</span><span class="s">@&quot;transform.scale&quot;</span><span class="p">];</span>
+</span><span class='line'><span class="n">expandAnimation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">0.5f</span><span class="p">;</span>
+</span><span class='line'><span class="n">expandAnimation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSNumber</span> <span class="nl">numberWithFloat</span><span class="p">:</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'><span class="n">expandAnimation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSNumber</span> <span class="nl">numberWithFloat</span><span class="p">:</span><span class="mf">2.0f</span><span class="p">];</span>
+</span><span class='line'><span class="n">expandAnimation</span><span class="p">.</span><span class="n">timingFunction</span><span class="o">=</span><span class="p">[</span><span class="bp">CAMediaTimingFunction</span> <span class="nl">functionWithName</span><span class="p">:</span><span class="n">kCAMediaTimingFunctionEaseIn</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">//缩小</span>
+</span><span class='line'><span class="bp">CABasicAnimation</span> <span class="o">*</span><span class="n">narrowAnimation</span> <span class="o">=</span> <span class="p">[</span><span class="bp">CABasicAnimation</span> <span class="nl">animationWithKeyPath</span><span class="p">:</span><span class="s">@&quot;transform.scale&quot;</span><span class="p">];</span>
+</span><span class='line'><span class="n">narrowAnimation</span><span class="p">.</span><span class="n">beginTime</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">;</span>
+</span><span class='line'><span class="n">narrowAnimation</span><span class="p">.</span><span class="n">fromValue</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSNumber</span> <span class="nl">numberWithFloat</span><span class="p">:</span><span class="mf">2.0f</span><span class="p">];</span>
+</span><span class='line'><span class="n">narrowAnimation</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">1.5f</span><span class="p">;</span>
+</span><span class='line'><span class="n">narrowAnimation</span><span class="p">.</span><span class="n">toValue</span> <span class="o">=</span> <span class="p">[</span><span class="bp">NSNumber</span> <span class="nl">numberWithFloat</span><span class="p">:</span><span class="mf">0.5f</span><span class="p">];</span>
+</span><span class='line'><span class="n">narrowAnimation</span><span class="p">.</span><span class="n">timingFunction</span> <span class="o">=</span> <span class="p">[</span><span class="bp">CAMediaTimingFunction</span> <span class="nl">functionWithName</span><span class="p">:</span><span class="n">kCAMediaTimingFunctionEaseOut</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">//添加动画集</span>
+</span><span class='line'><span class="bp">CAAnimationGroup</span> <span class="o">*</span><span class="n">groups</span> <span class="o">=</span> <span class="p">[</span><span class="bp">CAAnimationGroup</span> <span class="n">animation</span><span class="p">];</span>
+</span><span class='line'><span class="n">groups</span><span class="p">.</span><span class="n">animations</span> <span class="o">=</span> <span class="l">@[</span><span class="n">animation</span><span class="p">,</span><span class="n">expandAnimation</span><span class="p">,</span><span class="n">narrowAnimation</span><span class="l">]</span><span class="p">;</span>
+</span><span class='line'><span class="n">groups</span><span class="p">.</span><span class="n">duration</span> <span class="o">=</span> <span class="mf">2.0f</span><span class="p">;</span>
+</span><span class='line'><span class="n">groups</span><span class="p">.</span><span class="n">removedOnCompletion</span> <span class="o">=</span> <span class="nb">NO</span><span class="p">;</span>
+</span><span class='line'><span class="n">groups</span><span class="p">.</span><span class="n">fillMode</span> <span class="o">=</span> <span class="n">kCAFillModeForwards</span><span class="p">;</span>
+</span><span class='line'><span class="n">groups</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="nb">self</span><span class="p">;</span>
+</span><span class='line'><span class="p">[</span><span class="n">layer</span> <span class="nl">addAnimation</span><span class="p">:</span><span class="n">groups</span> <span class="nl">forKey</span><span class="p">:</span><span class="s">@&quot;group&quot;</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>监听动画执行开始和结束的状态</h3>
+
+<p>指定委托对象，实现委托方法</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="n">animation</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="nb">self</span><span class="p">;</span> <span class="c1">// 指定委托对象 </span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#pragma mark CAAnimation Delegate</span>
+</span><span class='line'><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">animationDidStart:</span><span class="p">(</span><span class="bp">CAAnimation</span> <span class="o">*</span><span class="p">)</span><span class="nv">anim</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;动画启动&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">animationDidStop:</span><span class="p">(</span><span class="bp">CAAnimation</span> <span class="o">*</span><span class="p">)</span><span class="nv">anim</span> <span class="nf">finished:</span><span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nv">flag</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;动画结束&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>IOS 动画效果的开源库</h3>
+
+<ul>
+<li><a href="https://github.com/robb/RBBAnimation">RBBAnimation</a></li>
+<li><a href="https://github.com/CanvasPod/Canvas">Canvas</a></li>
+<li><a href="https://github.com/facebook/pop">Facebook pop</a></li>
+<li><a href="https://github.com/schneiderandre/popping">popping</a></li>
+</ul>
+
+
+<h4>参考:</h4>
+
+<ul>
+<li><a href="https://www.objc.io/issues/12-animations/animations-explained/">Animations Explained</a> / <a href="http://objccn.io/issue-12-1/">中文翻译</a></li>
+<li><a href="http://blog.csdn.net/iosevanhuang/article/details/14488239">CSDN博客 - CABasicAnimation的基本使用方法（移动·旋转·放大·缩小）</a></li>
+</ul>
+
+
+<h4>深入理解</h4>
+
+<ul>
+<li><a href="https://www.objc.io/issues/12-animations/animations-explained/#further-reading">Further Reading</a></li>
+<li><a href="http://www.raywenderlich.com/50197/uikit-dynamics-tutorial">UIKit Dynamics</a></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-17T23:08:04+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:08 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ios/'>ios</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2015/12/17/iosdong-hua-zhi-core-animationji-chu/" data-via="" data-counturl="http://lvzwq.github.io/blog/2015/12/17/iosdong-hua-zhi-core-animationji-chu/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/11/22/yii2fa-song-you-jian/" title="Previous Post: YII2发送邮件">&laquo; YII2发送邮件</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/12/24/centosshang-dockerchu-ti-yan/" title="Next Post: Centos上Docker初体验">Centos上Docker初体验 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Java 对字符串转为可执行代码</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/">MAC上不错的软件和自用的优秀Chrome插件</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/docker/'>docker (2)</a></li>
+<li class='category'><a href='/blog/categories/elasticsearch/'>elasticsearch (1)</a></li>
+<li class='category'><a href='/blog/categories/hadoop/'>hadoop (1)</a></li>
+<li class='category'><a href='/blog/categories/ios/'>ios (5)</a></li>
+<li class='category'><a href='/blog/categories/java/'>java (1)</a></li>
+<li class='category'><a href='/blog/categories/kafka/'>kafka (1)</a></li>
+<li class='category'><a href='/blog/categories/mac/'>mac (2)</a></li>
+<li class='category'><a href='/blog/categories/php/'>php (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (4)</a></li>
+<li class='category'><a href='/blog/categories/scala/'>scala (1)</a></li>
+<li class='category'><a href='/blog/categories/zookeeper/'>zookeeper (1)</a></li>
+
+  </ul>
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  <!--返回顶部开始-->
+<div id="full" style="width:0px; height:0px; position:fixed; right:180px; bottom:150px; z-index:100; text-align:center; background-color:transparent; cursor:pointer;">
+  <a href="#" onclick="goTop();return false;"><img src="/images/top.png" border=0 alt="返回顶部"></a>
+</div>
+<script src="/javascripts/top.js" type="text/javascript"></script>
+<!--返回顶部结束-->
+</body>
+</html>

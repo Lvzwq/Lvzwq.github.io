@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Mac | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/mac/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-06T19:41:41+08:00</updated>
+  <updated>2017-05-07T00:15:13+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -14,10 +14,180 @@
 
   
   <entry>
+    <title type="html"><![CDATA[MAC上不错的软件和自用的优秀Chrome插件]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/"/>
+    <updated>2015-12-26T23:38:06+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<h2><code>Chrome</code>上推荐使用的插件</h2>
+
+<p><code>WEB前端助手(FeHelper)</code> 一个格式化json格式的软件，功能非常强大，可以加密，时间戳转化等等。<br/>
+<code>json-handle</code> 一款处理<code>json</code>格式的插件，自动识别<code>json</code>格式，并格式化 <br/>
+<code>vimlum</code>在chrome上使用vim快捷键，其中尤其是F键特别好使<br/>
+<code>postman</code> 一款模拟http请求的插件<br/>
+<code>markdown here</code> 将markdown语法的文本转化成markdown的效果的插件<br/>
+<code>有道词典</code>快速划词翻译的插件<br/>
+<code>Live http headers</code>查看http请求的信息的插件<br/>
+<code>AdBlock</code> 一款拦截广告的软件<br/>
+<code>马克飞象</code> 一个使用markdown语法的文本编辑器，推荐使用，并且可以同步到印象笔记，但是需要付费<br/>
+<code>Octotree</code> 一个将github项目生成目录树的插件，推荐使用。<br/>
+<code>Pocket</code> 一个快速保存网页的插件，结合<code>Pickpocket</code>会更加方便。<br/>
+<code>oneTab</code> 一个Chrome标签管理工具<br/>
+<code>Checker Plus for Gmail</code> 一个不用打开Gmail查看Gmail邮件的插件，使用谷歌邮箱作为常用邮箱推荐使用。<br/>
+<code>Checker Plus for Google Calendar</code> 将谷歌日历做成chrome上一个很方便的插件。<br/>
+<code>lastPass</code> 一个密码管理软件，如果嫌记忆密码麻烦，可以全部交给它。</p>
+
+<h2>MAC上一些经常使用的软件</h2>
+
+<h3>代码编辑(本人自己电脑上安装的)</h3>
+
+<ol>
+<li><code>Xcode</code>
+不解释，MAC上的神器</li>
+<li><code>Sublime Text</code></li>
+<li><code>Jetbrains</code>软件都非常优秀
+ <code>PyCharm</code>
+ <code>Phpstorm</code>
+ <code>Intellij IDEA</code>
+ <code>Clion</code></li>
+<li><code>Android Studio</code> 安卓开发的神器</li>
+<li><code>Atom</code> 外观十分漂亮，Github上有许多优秀的插件</li>
+<li><code>Eclipse</code> 开源IDE， 功能十分强大，不过MAC上我用的比较少。</li>
+<li><code>VS Code</code> 功能很强大，有着丰富的插件</li>
+</ol>
+
+
+<h3>命令行工具</h3>
+
+<p><code>iTerm2</code> 一个mac终端软件,比自带Terminal优秀许多</p>
+
+<h3>文档工具</h3>
+
+<p><code>Dash</code> 可以直接离线文档，随时查看,非常方便(推荐)
+<code>微软三件套Word、PPT、Excel</code>， 必备不解释
+<code>CAJViewerMac</code>  这个查看科学文献必备工具
+<code>CHM Reader</code> 查看chm格式的文档
+<code>kindle</code> 这个不解释</p>
+
+<h3>手势增强工具</h3>
+
+<p><code>BetterTouchTool</code> 这个软件也体现了mac上触摸板的强大。</p>
+
+<h3>翻墙上网</h3>
+
+<p><code>Shadowsocks</code></p>
+
+<h3>邮件客户端</h3>
+
+<p>Foxmail, 和自带<code>mail</code>软件有的一拼</p>
+
+<h3>笔记软件</h3>
+
+<p><code>Evernote</code>印象笔记
+<code>simplenote</code>(简易笔记软件)比自带笔记软件好用一点是可以添加标签，可以同步</p>
+
+<h3>markdown编辑器</h3>
+
+<p><code>Cmd markdown编辑器</code>，这个可以多平台使用，云端同步，导出PDF等等，功能越来越强大，而且主题也很漂亮，推荐使用。
+<code>Mou</code>
+<code>马克飞象</code></p>
+
+<h3>音视频播放器</h3>
+
+<p>网易云播放器、QQ音乐播放器
+爱奇艺视频播放器
+射手音影， 这个也非常好，动漫的话可以自己搜索匹配字幕。
+<code>Moist</code> 视频播放器
+<code>MPlayerX</code> 视频播放器，推荐使用</p>
+
+<h3>搜索查找优化</h3>
+
+<p><code>Alfred</code> 这个定制的功能也非常强大。比自带<code>Spotlight</code>功能优化很多。推荐使用</p>
+
+<h3>BT种子下载</h3>
+
+<p><code>uTorrent</code>
+<code>迅雷</code></p>
+
+<h3>思维导图工具</h3>
+
+<p><code>XMind</code></p>
+
+<h3>流程图工具</h3>
+
+<p><code>OmniGraffle</code></p>
+
+<h3>Git托管工具</h3>
+
+<p><code>SourceTree</code>
+<code>Github Desktop</code></p>
+
+<h3>原型工具</h3>
+
+<p><code>Axure RP Pro</code></p>
+
+<h3>Mac软件安装工具</h3>
+
+<p><code>Ports</code>
+<code>Homebrew</code></p>
+
+<h3>虚拟机安装工具</h3>
+
+<p><code>Parallels Desktop</code></p>
+
+<h3>解压缩软件</h3>
+
+<p><code>iZip Unarchiver</code>
+<code>The Unarchiver</code></p>
+
+<h3>抓包工具</h3>
+
+<p><code>Charles</code>, 非常好用，抓取移动端包非常方便
+<code>WireShark</code></p>
+
+<h3>MySQl连接客户端</h3>
+
+<p><code>navcat for MySQL</code>
+<code>Sequel Pro</code></p>
+
+<h3>系统管理软件</h3>
+
+<p><code>CleanMyMac</code></p>
+
+<h2>hosts管理工具</h2>
+
+<p><code>gasmask</code>
+<code>ihosts</code></p>
+
+<h3>浏览器</h3>
+
+<p><code>Chrome 强烈推荐</code>
+<code>Firefox</code>
+<code>Opera</code></p>
+
+<h3>小工具软件</h3>
+
+<p><code>Sip颜色提取软件</code>
+<code>Gas Mask</code> （mac hosts文件管理工具）
+<code>XtraFinder</code> (Finder 增强工具)
+<code>android 文件传输</code>
+<code>AirDroid</code>手机、Mac连接工具
+<code>cheatSheet</code> 快捷键查找工具
+<code>欧陆词典</code>
+Taxera NTFS  读写NTF格式的磁盘。<a href="http://www.tuxera.com/products/tuxera-ntfs-for-mac/">官网</a>， 推荐使用
+<code>jenv</code> 一个命令行上java版本管理的软件 <a href="http://www.jenv.be">安装方法</a></p>
+
+<h3>未完&hellip;</h3>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Mac使用Octopress搭建博客]]></title>
-    <link href="http://lvzwq.github.io/blog/2016/12/04/macshi-yong-octopressda-jian-bo-ke/"/>
-    <updated>2016-12-04T08:22:05+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2016/12/04/macshi-yong-octopressda-jian-bo-ke</id>
+    <link href="http://lvzwq.github.io/blog/2015/09/04/macshi-yong-octopressda-jian-bo-ke/"/>
+    <updated>2015-09-04T08:22:05+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/09/04/macshi-yong-octopressda-jian-bo-ke</id>
     <content type="html"><![CDATA[<!--more-->
 
 
@@ -42,7 +212,7 @@ sudo gem install bundler
 </code></li>
 <li>升级<code>rake</code>版本
 <code>
-boundle update rake
+bundle update rake
 </code></li>
 </ul>
 

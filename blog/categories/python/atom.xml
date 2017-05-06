@@ -1,0 +1,962 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Python | 闲散记事]]></title>
+  <link href="http://lvzwq.github.io/blog/categories/python/atom.xml" rel="self"/>
+  <link href="http://lvzwq.github.io/"/>
+  <updated>2017-05-07T00:15:13+08:00</updated>
+  <id>http://lvzwq.github.io/</id>
+  <author>
+    <name><![CDATA[Lvzwq]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Flask项目部署]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/12/25/flaskxiang-mu-bu-shu/"/>
+    <updated>2015-12-25T23:13:07+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/12/25/flaskxiang-mu-bu-shu</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<h2>使用<code>gunicorn</code>部署<code>Flask</code>项目</h2>
+
+<p>添加项目中使用到<code>python</code>第三方扩展，如果使用<code>virtualenv</code>的话，可以在虚拟环境中使用<code>pip freeze</code>命令直接导出。</p>
+
+<pre><code class="sh">pip freeze &gt; requirements.txt
+</code></pre>
+
+<p>如下是所需要的扩展。</p>
+
+<pre><code>Flask==0.10.1
+Jinja2==2.7.3
+PyYAML==3.11
+SQLAlchemy==1.0.4
+Werkzeug==0.9.6
+requests==2.2.1
+ConfigParser==3.5.0b2
+gunicorn==19.4.1
+uWSGI==2.0.11.2
+</code></pre>
+
+<p>可以先在本地搭建一下服务。使用<code>docker</code>的话，其实就是把这个服务放在一个容器中，使用一个端口与本机交互。
+<code>bash
+pip install -r requirements.txt  #安装扩展
+gunicorn -w 4 helper:app -b :8000  # 启动服务,服务端口为8000
+</code></p>
+
+<p><code>gunicorn</code>启动命令中, <code>-w 4</code>表示启动进程数量，<code>-b</code>表示绑定的主机和端口,默认是<code>127.0.0.1:8000</code>。详细的配置参考<a href="http://docs.gunicorn.org/en/latest/settings.html">http://docs.gunicorn.org/en/latest/settings.html</a>,
+其中<code>helper:app</code>分别表示<code>helper.py</code>中的<code>app</code>应用</p>
+
+<p><code>helper.py</code></p>
+
+<pre><code class="python">#!/usr/bin/env python
+# coding: utf-8
+from main import create_app
+app = create_app()
+app.debug = True
+# app.run(host="0.0.0.0", port=5000)
+</code></pre>
+
+<p>其中<code>create_app</code>已经初始化<code>Flask</code>配置了。</p>
+
+<h3>使用<code>gunicorn</code>过程中的注意事项:</h3>
+
+<ul>
+<li>要将<code>app.run()</code>注释掉。
+如果没有注释的话，会出现下面这种错误。</li>
+</ul>
+
+
+<pre><code>[2015-12-25 13:05:10 +0800] [51268] [INFO] Starting gunicorn 19.4.1
+[2015-12-25 13:05:10 +0800] [51268] [INFO] Listening at: http://0.0.0.0:8004 (51268)
+[2015-12-25 13:05:10 +0800] [51268] [INFO] Using worker: sync
+[2015-12-25 13:05:10 +0800] [51271] [INFO] Booting worker with pid: 51271
+ * Running on http://0.0.0.0:5000/
+ * Restarting with reloader
+[2015-12-25 13:05:11 +0800] [51272] [INFO] Starting gunicorn 19.4.1
+[2015-12-25 13:05:11 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+[2015-12-25 13:05:11 +0800] [51272] [ERROR] Retrying in 1 second.
+[2015-12-25 13:05:12 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+[2015-12-25 13:05:12 +0800] [51272] [ERROR] Retrying in 1 second.
+[2015-12-25 13:05:13 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+[2015-12-25 13:05:13 +0800] [51272] [ERROR] Retrying in 1 second.
+[2015-12-25 13:05:14 +0800] [51272] [ERROR] Connection in use: ('', 8000)
+...
+</code></pre>
+
+<ul>
+<li>启动命令中使用<code>-b :8000</code>
+如果使用</li>
+</ul>
+
+
+<pre><code>gunicorn -w 4 -b 127.0.0.1:8000 helper:app
+</code></pre>
+
+<p>在浏览器中就只能通过<code>localhost:8000</code>或者<code>127.0.0.1:8000</code>访问了，而不能直接通过<code>ip</code>访问。
+应该设置为:</p>
+
+<pre><code>gunicorn -w 4 -b :8000 helper:app
+或者
+gunicorn -w 4 -b 0.0.0.0:8000 helper:app
+</code></pre>
+
+<p>现在开始将这个简单的项目部署到<code>docker</code>中,
+首先看项目目录结构</p>
+
+<pre><code>.
+├── README.md
+├── config
+│   ├── __init__.py
+│   └── helper.conf
+├── helper.py
+├── library
+│   ├── __init__.py
+│   ├── curl.py
+├── main
+│   ├── __init__.py
+│   ├── car.py
+├── static
+├── templates
+└── uwsgi.ini
+</code></pre>
+
+<ol>
+<li>添加<code>Dockerfile</code>文件
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>cd /path/to/project
+</span><span class='line'>touch Dockerfile&lt;/li&gt;
+</span><span class='line'>&lt;/ol&gt;
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;添加以下内容&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;FROM daocloud.io/python:2.7
+</span><span class='line'>RUN mkdir /code
+</span><span class='line'>WORKDIR /code
+</span><span class='line'>ADD requirements.txt /code/requirements.txt
+</span><span class='line'>RUN pip install -r /code/requirements.txt
+</span><span class='line'>COPY . /code
+</span><span class='line'>COPY docker-entrypoint.sh docker-entrypoint.sh
+</span><span class='line'>RUN chmod +x docker-entrypoint.sh
+</span><span class='line'>EXPOSE 8000&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;CMD /code/docker-entrypoint.sh</span></code></pre></td></tr></table></div></figure>
+项目服务启动的端口为8000，所以暴露8000端口，供主机访问</p>
+
+<ol>
+<li>添加启动文件<code>docker-entrypoint.sh</code></li>
+</ol>
+
+
+<pre><code>#!/bin/sh
+/usr/local/bin/gunicorn -w 4 -b :8000 helper:app
+</code></pre>
+
+<ol>
+<li>将当前项目生成镜像</li>
+</ol>
+
+
+<pre><code>$ docker build -t helper .
+</code></pre>
+
+<ol>
+<li>使用生成的镜像启动容器</li>
+</ol>
+
+
+<pre><code>$ docker run -p 8090:8000 helper
+</code></pre>
+
+<p>可以加上<code>-d</code>参数使项目在后台运行。可以直接在浏览器中通过
+<code>http://主机ip:8090</code>访问项目了。之后可以直接设置<code>nginx</code>转发端口来绑定域名。</p>
+
+<h2>使用<code>uWSGI</code>来部署<code>Flask</code>项目</h2>
+
+<p><code>Centos</code>上安装<code>uWSGI</code></p>
+
+<pre><code>yum install -y python python-devel uwsgi-plugin-python
+pip install uwsgi
+</code></pre>
+
+<p>直接命令行启动服务</p>
+
+<pre><code>uwsgi --http-socket 0.0.0.0:8000 --plugins python -w helper:app
+或者
+uwsgi --http-socket 0.0.0.0:8000 --plugins python --module helper --callable app --master --processes 4 --enable-threads --threads 4
+</code></pre>
+
+<h3>使用<code>INI</code>配置文件, <code>helper.ini</code>如下</h3>
+
+<pre><code>[uwsgi]
+# uwsgi 启动时所使用的地址与端口
+socket = 0.0.0.0:8000
+# 或者
+http-socket = 0.0.0.0:8000
+
+# 指向网站目录
+chdir = /root/helper
+
+plugin = python
+
+# python 启动程序文件
+wsgi-file = helper.py
+
+# python 程序内用以启动的 app 变量名
+callable = app
+
+# 处理器数
+processes = 4
+
+# 线程数
+threads = 2
+</code></pre>
+
+<p>执行启动命令</p>
+
+<pre><code>uwsgi -i helper.ini
+</code></pre>
+
+<h3>使用<code>XML</code>配置文件</h3>
+
+<pre><code class="xml">&lt;?xml version="1.0"?&gt;
+&lt;uwsgi&gt;
+    &lt;chdir&gt;/root/helper&lt;/chdir&gt;
+    &lt;!-- 项目对应的文件夹 --&gt;
+    &lt;pythonpath&gt;/root/helper&lt;/pythonpath&gt; 
+    &lt;plugins&gt;python&lt;/plugins&gt;
+
+    &lt;!-- 对应helper.py --&gt;
+    &lt;module&gt;helper&lt;/module&gt; 
+    &lt;callable&gt;app&lt;/callable&gt;  
+    &lt;master/&gt;
+
+    &lt;socket&gt;/tmp/helper.sock&lt;/socket&gt;
+    &lt;!-- 或者使用 --&gt;
+    &lt;!-- &lt;http-socket&gt;0.0.0.0:8000&lt;/http-socket&gt; --&gt;
+
+    &lt;!-- 使用虚拟环境--&gt;
+    &lt;!-- &lt;virtualenv&gt;/root/helper/env/&lt;/virtualenv&gt; --&gt;
+    &lt;uid&gt;root&lt;/uid&gt;
+    &lt;gid&gt;root&lt;/gid&gt;
+    &lt;chmod-socket&gt;644&lt;/chmod-socket&gt;
+    &lt;chown-socket&gt;root&lt;/chown-socket&gt;
+    &lt;enable-threads&gt;true&lt;/enable-threads&gt;
+    &lt;processes&gt;4&lt;/processes&gt;
+    &lt;!-- 后台运行，打印日志 --&gt;
+    &lt;daemonize&gt;/root/helper/logs/%n.log&lt;/daemonize&gt;
+    &lt;memory-report/&gt;
+&lt;/uwsgi&gt;
+</code></pre>
+
+<p>执行启动命令</p>
+
+<pre><code>uwsgi -x helper.xml
+</code></pre>
+
+<h3>使用<code>uWSGI</code>注意事项</h3>
+
+<ol>
+<li>在<code>helper.py</code>中不要加<code>app.run()</code>
+如果加上<code>app.run()</code>,会出现以下错误<code>unable to load configuration from uwsgi</code></li>
+</ol>
+
+
+<pre><code>your mercy for graceful operations on workers is 60 seconds
+mapped 363840 bytes (355 KB) for 4 cores
+*** Operational MODE: preforking ***
+added /root/helper/ to pythonpath.
+ * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+unable to load configuration from uwsgi
+</code></pre>
+
+<p>另外，在<code>helper.py</code>中，在<code>if __name__ == '__main__':</code>中的内容不会加载。</p>
+
+<ol>
+<li>在配置内容中需要加上<code>uWSGI</code>对<code>Python</code>的支持</li>
+</ol>
+
+
+<pre><code>&lt;plugins&gt;python&lt;/plugins&gt;
+或者 ini文件中
+plugins = python
+</code></pre>
+
+<p>没有加上，可能会出现</p>
+
+<pre><code>unable to load app 0 (mountpoint='') (callable not found or import error)
+*** no app loaded. going in full dynamic mode ***
+*** uWSGI is running in multiple interpreter mode ***
+</code></pre>
+
+<p>但是有的时候，也说可以不用加上，这个视情况而定。
+还有一种情况，是出现<code>uWSGI</code>对<code>Python</code>的扩展没有安装，错误如下
+<code>
+[uWSGI] parsing config file uwsgi.xml
+!!! UNABLE to load uWSGI plugin: dlopen(./python_plugin.so, 10): image not found !!!
+</code>
+在<code>Centos</code>执行
+<code>
+yum install -y uwsgi-plugin-python
+</code></p>
+
+<ol>
+<li><a href="http://stackoverflow.com/questions/15878176/uwsgi-invalid-request-block-size"><code>invalid request block size: 21573 (max 4096)...skip</code></a>
+uWSGI日志如下
+<code>
+WSGI app 0 (mountpoint='') ready in 1 seconds on interpreter 0x1c32840 pid: 22461 (default app)
+mountpoint  already configured. skip.
+spawned uWSGI worker 1 (pid: 22461, cores: 2)
+spawned uWSGI worker 2 (pid: 22466, cores: 2)
+spawned uWSGI worker 3 (pid: 22467, cores: 2)
+spawned uWSGI worker 4 (pid: 22468, cores: 2)
+invalid request block size: 21573 (max 4096)...skip
+invalid request block size: 21573 (max 4096)...skip
+</code>
+这个是因为在<code>uWSGI</code>配置文件中，设置了<code>socket</code>配置项为<code>0.0.0.0:8000</code>或者<code>socket</code>为<code>/tmp/uwsgi.sock</code>， 这样设置是不能通过浏览器访问的，还需要绑定<code>nginx</code>转发。可以将<code>socket</code>改为
+<code>
+&lt;http-socket&gt;0.0.0.0:8000&lt;/http-socket&gt;
+</code></li>
+</ol>
+
+
+<p>这样可以直接通过<code>IP:8000</code>直接访问。</p>
+
+<h2>使用<code>nginx</code>代理</h2>
+
+<p>设置的是<code>socket</code>的话，<code>nginx</code>配置如下
+<code>
+server {
+        listen 80;
+        server_name www.example.com;
+        access_log /var/log/nginx/www.example.com/access.log;
+        error_log /var/log/nginx/www.example.com/error.log;
+        location / {
+                include uwsgi_params;
+                uwsgi_pass 0.0.0.0:8000;
+                # uwsgi_pass unix:/tmp/helper.sock;
+        }
+}
+</code>
+如果使用了<code>http-socket</code>的话，这种可以直接在浏览器中直接<code>IP</code>访问，可以直接设置代理。也可以把服务部署在<code>docker</code>中，使用上面的配置</p>
+
+<pre><code>server {
+    listen 80;
+    server_name www.example.com;
+    access_log /var/log/nginx/www.example.com/access.log;
+    error_log /var/log/nginx/www.example.com/error.log;
+
+    error_page   500 502 503 504  /50x.html;
+
+    location / {
+        proxy_pass              http://localhost:8090;
+        proxy_set_header        Host $host;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_buffering off;
+        add_header X-Accel-Buffering no;
+    }
+}
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQLAlchemy(二) --- ORM]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-er-orm/"/>
+    <updated>2015-10-31T19:34:33+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-er-orm</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<p><code>SQLAlchemy ORM</code>提供了一个连接数据库表和用户自定义<code>Python</code>类的方法。</p>
+
+<h3>定义一个映射(Mapping)</h3>
+
+<p>类的映射使用已经在基类中定义的声明式系统,这个基类(<code>base class</code>)维护了一个和这个基类相关的数据表的对应关系, 这就是所谓的<code>declarative base class</code>。
+我们的应用在一般在导入的模块中将只有一个这个基类的实例。我们使用<code>declarative_base()</code>创建这个基类的实例。
+<code>python
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
+</code>
+有了这个基类我们可以定义任何数量的映射类。</p>
+
+<pre><code class="python">from sqlalchemy import Column, Integer, String
+
+class User(Base):
+    __tablename__ = 'users'   
+    id = Column(Integer, primary_key=True)
+    name = Column(String(32), nullable=False)
+    gender = Column(String(1), nullable=False, server_default='M')
+
+    def __repr__(self):
+        return "&lt;User(name='%s', gender='%s')" % (self.name,                            self.gender)
+
+# 执行创建表的语句
+Base.metadata.create_all(engine)
+</code></pre>
+
+<p>一个继承自<code>Base</code>的类至少有一个<code>__tablename__</code>属性，并且至少有一个含有主键(<code>primary key</code>)的<code>Column</code>。当一个类创建时， <code>Declarative</code> 将所有的<code>Column</code>类用特殊的Python属性访问器替代。</p>
+
+<h3>创建Session</h3>
+
+<p>ORM操作数据库的句柄就是<code>Session</code>.当我们启动我们的应用时，在<code>create_engine()</code>的同时，我们定义了一个<code>Session</code>类将作为一个创建<code>Session</code>实例的工厂。</p>
+
+<pre><code class="python">from sqlalchemy.orm import sessionmaker
+Session = sessionmaker(bind=engine)
+</code></pre>
+
+<p>如果我们还没有<code>Engine</code>的实例，我们可以先创建Session，当创建Engine后再绑定。
+<code>
+Session = sessionmaker()
+Session.configure(bind=engine)
+</code></p>
+
+<p>当需要和数据库有一个会话时，可以初始化一个<code>Session</code></p>
+
+<pre><code>session = Session()
+</code></pre>
+
+<h3>添加新的类</h3>
+
+<p>为了持久化<code>User</code>对象， 我们使用<code>add()</code>将它加入到<code>Session</code>中。</p>
+
+<pre><code>user = User(name="zhangsan", gender="M")
+session.add(user)
+</code></pre>
+
+<p>此时，这个<code>user</code>实例是待定的(<code>pending</code>);不执行任何SQL也不代表数据库中的一行数据。当使用一个<code>flush</code>过程时，<code>Session</code>将执行SQL来持久化<code>user</code>。</p>
+
+<pre><code>our_user = session.query(User).filter_by(name='zhangsan').first()
+# 此时our_user 和 user是同一个对象
+</code></pre>
+
+<p>事实上，<code>Session</code>返回同一行(对象)就是我们刚刚在<code>Session</code>内部的类的字典持久化的对象，所以我们事实上获得的就是我们加入<code>Session</code>中的实例。</p>
+
+<p>我们需要告诉<code>Session</code>我们想要将所有的改变存入到数据库，提交事务。我们通过<code>commit()</code>来执行。</p>
+
+<pre><code>session.commit()
+</code></pre>
+
+<p>在执行<code>commit</code>之前，执行<code>query</code>后，即使<code>user</code>已经有了标识符<code>id</code>, 但是数据库中并没有提交数据，只有在<code>commit</code>之后才会提交数据。</p>
+
+<p>我们可以在数据提交<code>commit</code>之前调用事务的<code>rollback</code>来回滚之前的修改。</p>
+
+<pre><code>session.rollback()
+</code></pre>
+
+<h3>查询<code>Query</code></h3>
+
+<p><code>Query</code>查询返回的是元组<code>tuples</code>,是<code>KeyedTuple</code>提供的类，并且更像一个原生的Python对象。</p>
+
+<pre><code>for row in session.query(User, User.name).all(): 
+    print row.User, row.name
+</code></pre>
+
+<p><code>filter()</code>方法通常接收的是Python操作符，而<code>filter_by()</code>方法使用关键字参数</p>
+
+<pre><code>session.query(User).filter(User.name == "ed")
+session.query(User).filter_by(name = "ed")
+</code></pre>
+
+<p>通用的查询语句
+equals:</p>
+
+<pre><code>query.filter(User.name == 'ed')
+</code></pre>
+
+<p>not equals:</p>
+
+<pre><code>query.filter(User.name != 'ed')
+</code></pre>
+
+<p>LIKE:</p>
+
+<pre><code>query.filter(User.name.like('%ed%'))
+</code></pre>
+
+<p>IN:</p>
+
+<pre><code>query.filter(User.name.in_(['ed', 'wendy', 'jack']))
+
+# works with query objects too:
+query.filter(User.name.in_(
+        session.query(User.name).filter(User.name.like('%ed%'))
+))
+</code></pre>
+
+<p>NOT IN:</p>
+
+<pre><code>query.filter(~User.name.in_(['ed', 'wendy', 'jack']))
+</code></pre>
+
+<p>IS NULL:</p>
+
+<pre><code>query.filter(User.name == None)
+
+# alternatively, if pep8/linters are a concern
+query.filter(User.name.is_(None))
+</code></pre>
+
+<p>IS NOT NULL:</p>
+
+<pre><code>query.filter(User.name != None)
+
+# alternatively, if pep8/linters are a concern
+
+query.filter(User.name.isnot(None))
+</code></pre>
+
+<p>AND:</p>
+
+<pre><code># use and_()
+from sqlalchemy import and_
+query.filter(and_(User.name == 'ed', User.fullname == 'Ed Jones'))
+
+# or send multiple expressions to .filter()
+query.filter(User.name == 'ed', User.fullname == 'Ed Jones')
+
+# or chain multiple filter()/filter_by() calls
+query.filter(User.name == 'ed').filter(User.fullname == 'Ed Jones')
+</code></pre>
+
+<p>OR:</p>
+
+<pre><code>from sqlalchemy import or_
+query.filter(or_(User.name == 'ed', User.name == 'wendy'))
+MATCH:
+
+query.filter(User.name.match('wendy'))
+</code></pre>
+
+<h3>返回列表<code>List</code>和标量<code>Scalar</code></h3>
+
+<p><code>all()</code>返回一个列表</p>
+
+<pre><code>query = session.query(User).filter(User.name.like('%ed')).order_by(User.id)
+query.all()
+</code></pre>
+
+<p><code>first()</code>使用限制，返回结果集的第一条作为<code>Scalar</code></p>
+
+<pre><code>query.first()
+</code></pre>
+
+<p><code>one()</code> 如果返回结果集不止一个对象，将<code>raise</code>一个错误。</p>
+
+<pre><code class="python">from sqlalchemy.orm.exc import MultipleResultsFound
+try:
+    users = query.one()
+except MultiResultsFound e:
+    print e
+</code></pre>
+
+<p>没有数据返回时</p>
+
+<pre><code>from sqlalchemy.orm.exc import NoResultFound
+try:
+    users = query.one()
+except NoResultFound, e:
+    print e
+</code></pre>
+
+<p><code>scalar()</code>调用<code>one()</code>方法，并且成功时返回第一列数据</p>
+
+<pre><code>query.scalar()
+</code></pre>
+
+<h3>使用文本SQL语句</h3>
+
+<p>文本字符串可以在查询中灵活使用，通过<code>text()</code>构建。</p>
+
+<pre><code>from sqlalchemy import text
+for user in session.query(User).filter(text("id&gt;20")).order_by(text("id")).all()
+    print user.name
+</code></pre>
+
+<p>可以绑定参数，使用<code>params()</code>方法</p>
+
+<pre><code>session.query(User).filter(text("id&lt;:value and name=:name")).params(value=220, name="ed").order_by(User.id).one()
+</code></pre>
+
+<p>计数方法<code>count()</code></p>
+
+<pre><code>session.query(User).filter(Usre.name.like("%ed")).count()
+</code></pre>
+
+<p>也可以使用<code>func.count()</code>来计数</p>
+
+<pre><code>from sqlalchemy import func
+session.query(func.count(User.name), User.name).group_by(User.name).all()
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SQLAlchemy(一)]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-1/"/>
+    <updated>2015-10-31T17:45:47+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-1</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+<h3>使用<code>create_engine</code>连接数据库</h3>
+
+<pre><code>from sqlalchemy import create_engine
+conn = "mysql://root:root@localhost/dbname?charset=utf8"
+engine = create_engine(conn, echo=True) # 在console中输出SQL语句
+</code></pre>
+
+<p><code>create_engine</code>方法返回的是一个<code>Engine</code>对象实例，<code>Engine</code>对象实例<code>engine</code>并没有立即连接数据库，只有在第一次有与数据库操作的任务时才会去连接数据库。</p>
+
+<h3>定义和创建表</h3>
+
+<pre><code>from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
+metadata = MetaData()
+</code></pre>
+
+<p><code>SQLAlchemy</code> 使用 <code>ORM</code> 来映射对象和表的关系。
+表(<code>Table</code>)的集合以及与它们有关系的子类(<code>child object</code>)  称为<code>数据库元数据</code>(<code>database metadata</code>)</p>
+
+<pre><code>users = Table('user', metadata,
+        Column('id', Integer, primary_key=True),
+        Column('name', String(32), nullable=False),
+        Column('gender', String(1), nullable=False, server_default='M')
+        )
+metadata.create_all(engine)
+</code></pre>
+
+<p>创建好表对象之后，我们来创建表。
+使用<code>metadata</code>的<code>create_all</code>方法来在数据库中创建表。<code>create_all</code>这个方法首先会在数据库中查找对应的表是否存在，存在则不创建，所以这个方法多次调用是安全的。</p>
+
+<h3>数据库操作</h3>
+
+<ul>
+<li>插入
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="n">Insert</span> <span class="err">构造对应</span><span class="n">insert</span><span class="err">语句</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">ins</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">insert</span><span class="p">()</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;&amp;</span><span class="n">lt</span><span class="p">;</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">sql</span><span class="o">.</span><span class="n">dml</span><span class="o">.</span><span class="n">Insert</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x1079a6290</span><span class="o">&gt;&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">ins</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="n">INSERT</span> <span class="n">INTO</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">user</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;</span> <span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">gender</span><span class="p">)</span> <span class="n">VALUES</span> <span class="p">(:</span><span class="nb">id</span><span class="p">,</span> <span class="p">:</span><span class="n">name</span><span class="p">,</span> <span class="p">:</span><span class="n">gender</span><span class="p">)</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">ins</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">insert</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">name</span><span class="o">=&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">jack</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;,</span> <span class="n">gender</span><span class="o">=&amp;</span><span class="n">rsquo</span><span class="p">;</span><span class="n">M</span><span class="s">&#39;)</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="err">也可以这样</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">ul</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="err">执行插入操作</span>
+</span><span class='line'><span class="err">我们创建的</span><span class="sb">`engine`</span><span class="err">对象是一个能执行</span><span class="n">SQL</span><span class="err">语句的数据库仓库。我们使用</span><span class="sb">`connect`</span><span class="err">来创建一个连接</span><span class="o">.</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">conn</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="err">执行插入操作</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ins</span><span class="p">)</span> <span class="c"># 执行SQL插入操作,返回一个ResultProxy object</span>
+</span><span class='line'><span class="k">print</span> <span class="n">result</span><span class="o">.</span><span class="n">rowcount</span> <span class="c"># 显示插入条数</span>
+</span><span class='line'><span class="k">print</span> <span class="n">result</span><span class="o">.</span><span class="n">inserted_primary_key</span> <span class="c"># 显示插入的id</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">*</span> <span class="err">批量插入</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">insert</span><span class="p">(),</span> <span class="p">[</span>
+</span><span class='line'>    <span class="p">{</span><span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">name</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span> <span class="p">:</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">Zs</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;,</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">gender</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;:</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">F</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;},</span>
+</span><span class='line'>    <span class="p">{</span><span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">name</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span> <span class="p">:</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">Ls</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;,</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">gender</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;:</span> <span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span><span class="n">M</span><span class="s">&#39;},</span>
+</span><span class='line'>    <span class="p">{</span><span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">name</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span> <span class="p">:</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">Ww</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;,</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">gender</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;:</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">F</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;}</span>
+</span><span class='line'>    <span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<ul>
+<li>查询
+主要的创建<code>select</code>的SQL语句的方法是<code>select()</code>
+<code>
+from sqlalchemy import select
+s = select([users]) # select参数是一个列表  
+r = conn.execute(s) # 返回的是一个ResultProxy object
+all = conn.fetchall() # 返回一个含有所有RowProxy的列表
+print all[0].name, all[0].id
+print all[0]['name'], all[0]['id']
+print all[0][0], all[1][1] # RowProxy 不支持赋值操作,可以强制转换为dict
+</code>
+条件查询
+<code>
+s = select(['user', 'address']).where(user.c.id == address.c.user_id)
+</code>
+连接词
+<code>python
+from sqlalchemy import and_,  or_, not_
+c = and_(users.c.name.like('j%'), users.c.gender == 'M', not_(users.c.id == 1)
+s = select([users.c.id, users.c.name]).where(c)
+</code>
+使用原生SQL语句
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">text</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">text</span><span class="err">（</span><span class="s">&quot;SELECT * FROM users WHERE users.gender = :gender and name = :name&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">gender</span><span class="o">=&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">F</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;,</span> <span class="n">name</span><span class="o">=&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">Z</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span><span class="o">&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">ul</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="err">也可以在</span><span class="n">select</span><span class="p">()</span><span class="err">中使用</span><span class="n">text</span><span class="err">语句</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">])</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">users</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="mi">2</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;))</span>
+</span><span class='line'><span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="err">尽量少使用</span><span class="n">text</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="err">使用假名</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">u1</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">alias</span><span class="p">()</span>
+</span><span class='line'><span class="n">u2</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">alias</span><span class="p">()</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="err">使用连接</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="k">print</span> <span class="n">users</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="c"># 需要之前设置外键</span>
+</span><span class='line'><span class="k">print</span> <span class="n">users</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">email</span><span class="p">])</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">))</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">%</span><span class="n">qq</span><span class="o">.</span><span class="n">com</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;))</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="err">产生的</span><span class="n">SQL</span><span class="err">语句为</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">SELECT</span> <span class="s">&quot;user&quot;</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">address</span><span class="o">.</span><span class="n">email</span> \<span class="n">nFROM</span> <span class="s">&quot;user&quot;</span> <span class="n">JOIN</span> <span class="n">address</span> <span class="n">ON</span> <span class="n">address</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="s">&quot;user&quot;</span><span class="o">.</span><span class="n">id</span> \<span class="n">nWHERE</span> <span class="n">address</span><span class="o">.</span><span class="n">email</span> <span class="n">LIKE</span> <span class="p">:</span><span class="n">email_1</span><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">*</span> <span class="err">使用</span><span class="n">SQLalchemy</span><span class="err">调用数据库的</span><span class="sb">`function`</span><span class="err">函数</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.sql</span> <span class="kn">import</span> <span class="n">func</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">func</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">max_id</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;)])</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">Z</span><span class="o">%</span><span class="p">))</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">*</span> <span class="err">排序</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">])</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">])</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">desc</span><span class="p">())</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">*</span> <span class="err">其他操作</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">])</span><span class="o">.</span><span class="n">having</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">)</span>
+</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">],</span> <span class="n">func</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">score</span><span class="p">)</span><span class="o">.</span><span class="n">lable</span><span class="p">(</span><span class="s">&quot;score_all&amp;rdquo;)).group_by(users.c.gender)</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<h3>更新和删除</h3>
+
+<pre><code>up = users.update().where(users.c.id == 1).values(name="testname")
+
+up = users.update().where(users.c.id == 1).values(name="prefix_" + users.c.name)
+# 使用bindparam来操作更新数据
+from sqlalchemy import bindparam
+stmt = users.update().where(users.c.id == bindparam("user_id")).values(name = bindparam("new_name"))
+s = conn.execute(stmt, user_id=1, new_name="hello")
+
+批量更新数据
+s = conn.execute(stmt, [
+    {'user_id': 1, 'new_name': 'good'},
+    {'user_id': 2, 'new_name': 'bad'}
+    ])
+</code></pre>
+
+<p>删除数据
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">d</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+</span><span class='line'><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="c"># 删除全部数据&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">d</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">gender</span> <span class="o">==</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">M</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;)</span>
+</span></code></pre></td></tr></table></div></figure></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Python2中的编码错误]]></title>
+    <link href="http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu/"/>
+    <updated>2015-10-31T17:22:55+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu</id>
+    <content type="html"><![CDATA[<!--more-->
+
+
+
+
+<h3>Python2中常出现的编码问题</h3>
+
+
+
+
+<pre><code>UnicodeDecodeError: 'ascii' codec can't decode byte 0xe5 in position 4: ordinal not in range(128)
+</code></pre>
+
+
+<p>对中文字符串解码出错
+虽然可以在代码头部加入以下代码解决</p>
+
+<pre><code>import sys
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
+</code></pre>
+
+
+<p>但是这种方式已经不推荐使用了<a href="http://stackoverflow.com/questions/3828723/why-we-need-sys-setdefaultencodingutf-8-in-a-py-script">[详细阅读]</a>。<br/>
+所以推荐使用以下方式(Python2默认的字符串编码是<code>str</code>)<br/>
+<code>xxx.decode(&ldquo;utf-8&rdquo;)</code><br/>
+或者在你需要使用中文的地方前面加上<code>u</code>.</p>
+
+<blockquote>
+  这种错误通常发生在以某种编码("<code>ascii</code>")解码一个<code>str</code>类型的字符串时.因为编码映射仅仅只能支持一部分<code>str</code>类型的字符串到<code>unicode</code>字符串, 一个非法的<code>str</code>类型的序列将会导致编码<code>decode()</code>失败。 <a href="https://wiki.python.org/moin/UnicodeDecodeError">[详细阅读]</a>
+</blockquote>
+
+
+<p>如<code>str</code>字符串<code>\x81</code>就不能转化为<code>unicode</code>对应的字符串</p>
+
+<pre><code>&gt;&gt;&gt; "x81".decode("utf-8")
+Traceback (most recent call last):
+  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
+  File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/encodings/utf_8.py", line 16, in decode
+    return codecs.utf_8_decode(input, errors, True)
+UnicodeDecodeError: 'utf8' codec can't decode byte 0x81 in position 0: invalid start byte
+</code></pre>
+
+
+<p>另一种情况的解码错误</p>
+
+<blockquote>
+  自相矛盾的是，<code>UnicodeDecodeError</code>也可能发生在编码<code>__encoding__</code>时。
+  原因是编码函数<code>encode()</code>通常情况下需要一个<code>unicode</code>类型的字符串作为参数。但是实际传过来的是一个<code>str</code>类型的参数。<code>encode()</code>函数将这个参数向上转换"<code>up-convert</code>"为<code>unicode</code>类型，然后再将转化为他们自己的编码。这也会出现这样的向上转换"<code>up-convertion</code>"的时候，系统默认选择一个<code>ascii</code>解码器, 解码器中没有这个<code>str</code>类型的<code>unicode</code>编码,  。因此这是在一个编码器<code>encoder</code>中出现解码失败的情况。
+</blockquote>
+
+
+<p>如<code>str</code>类型的<code>\xd0\x91</code>在encode()时就会出现<code>UnicodeDecodeError</code>错误</p>
+
+<pre><code>&gt;&gt;&gt; "xd0x91".encode("utf-8")
+Traceback (most recent call last):
+  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
+</code></pre>
+
+
+<p>在这个过程中发生了两件事情。首先<code>\xd0\x91</code>是python默认的<code>str</code>类型的字符串，而编码<code>encode</code>需要一个<code>unicode</code>类型的字符串，所以在编码<code>encode</code>之前，先转化为<code>unicode</code>,而执行的是<code>&ldquo;\xd0\x91&rdquo;.decode(&ldquo;ascii&rdquo;)</code>, 所以会出现上面的错误。</p>
+
+<pre><code>&gt;&gt;&gt; "xd0x91".decode("ascii")
+Traceback (most recent call last):
+  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
+UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
+&gt;&gt;&gt; # 而如果使用utf-8 转码的话就可以正常执行
+&gt;&gt;&gt; "xd0x91".decode("utf-8")
+u'u0411'
+</code></pre>
+
+
+
+
+<h3>总结</h3>
+
+
+<p>所以出现上面的<code>UnicodeDecodeError</code>错误时，可以不使用系统的<code>ascii</code>编码解码，自己使用<code>utf-8</code>解码就可以解决问题,即<code>xx.decode(&ldquo;utf-8&rdquo;)</code>。但是如果<code>str</code>类型的字符串非常特殊，如第一种例子中的<code>\x81</code>的话就直接无法转码了。所以最好的方法还是将一个字符串定义为<code>unicode</code>类型。</p>
+]]></content>
+  </entry>
+  
+</feed>

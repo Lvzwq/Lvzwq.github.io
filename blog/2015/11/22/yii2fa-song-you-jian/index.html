@@ -1,0 +1,450 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>YII2发送邮件 - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
+
+  
+  <meta name="description" content="YII2是PHP中一个比较流行的WEB框架。
+下面来讲一下在YII2中如何配置邮件服务。YII2中默认是使用swiftmailer来发送邮件的。
+如果YII2中没有这个扩展，可以使用以下方式安装 1
+php composer.phar require --prefer-dist yiisoft/ &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2015/11/22/yii2fa-song-you-jian/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
+  <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">-->
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>Note.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">YII2发送邮件</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-11-22T23:06:47+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>11:06 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><!--more-->
+
+
+<p><code>YII2</code>是<code>PHP</code>中一个比较流行的WEB框架。
+下面来讲一下在<code>YII2</code>中如何配置邮件服务。<code>YII2</code>中默认是使用<code>swiftmailer</code>来发送邮件的。
+如果<code>YII2</code>中没有这个扩展，可以使用以下方式安装</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>php composer.phar require --prefer-dist yiisoft/yii2-swiftmailer
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>或者添加以下代码到<code>composer.json</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="s2">&quot;yiisoft/yii2-swiftmailer&quot;</span>: <span class="s2">&quot;~2.0.0&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>然后执行<code>composer install</code>命令更新扩展</p>
+
+<p>安装完之后，需要在<code>YII2</code>的配置文件中配置邮箱的基本信息
+在<code>config/web.php</code>中添加</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='Php'><span class='line'><span class="s1">&#39;mailer&#39;</span> <span class="o">=&gt;</span> <span class="p">[</span>
+</span><span class='line'>          <span class="s1">&#39;class&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;yii\swiftmailer\Mailer&#39;</span><span class="p">,</span>
+</span><span class='line'>          <span class="s1">&#39;viewPath&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;@app/mail&#39;</span><span class="p">,</span>  <span class="c1">//配置邮件模板的位置</span>
+</span><span class='line'>          <span class="s1">&#39;transport&#39;</span> <span class="o">=&gt;</span> <span class="p">[</span>
+</span><span class='line'>              <span class="s1">&#39;class&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;Swift_SmtpTransport&#39;</span><span class="p">,</span>
+</span><span class='line'>              <span class="s1">&#39;host&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;smtp.126.com&#39;</span><span class="p">,</span>
+</span><span class='line'>              <span class="s1">&#39;username&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;xxuser@126.com&#39;</span><span class="p">,</span>
+</span><span class='line'>              <span class="s1">&#39;password&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;xxpwd&#39;</span><span class="p">,</span>
+</span><span class='line'>              <span class="s1">&#39;port&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;465&#39;</span><span class="p">,</span>
+</span><span class='line'>              <span class="s1">&#39;encryption&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;ssl&#39;</span><span class="p">,</span>
+</span><span class='line'>          <span class="p">],</span>
+</span><span class='line'>          <span class="s1">&#39;useFileTransport&#39;</span> <span class="o">=&gt;</span> <span class="k">false</span><span class="p">,</span>
+</span><span class='line'>            <span class="s1">&#39;messageConfig&#39;</span><span class="o">=&gt;</span> <span class="p">[</span>
+</span><span class='line'>                <span class="s1">&#39;charset&#39;</span><span class="o">=&gt;</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">,</span>
+</span><span class='line'>                <span class="s1">&#39;from&#39;</span><span class="o">=&gt;</span><span class="p">[</span><span class="s1">&#39;xxuser@126.com&#39;</span><span class="o">=&gt;</span><span class="s1">&#39;admin&#39;</span><span class="p">]</span>
+</span><span class='line'>            <span class="p">],</span>
+</span><span class='line'>      <span class="p">],</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>简单的邮件</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='Php'><span class='line'><span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">mailer</span><span class="o">-&gt;</span><span class="na">compose</span><span class="p">()</span>
+</span><span class='line'>     <span class="o">-&gt;</span><span class="na">setFrom</span><span class="p">(</span><span class="s1">&#39;xxuser@126.com&#39;</span><span class="p">)</span>
+</span><span class='line'>     <span class="o">-&gt;</span><span class="na">setTo</span><span class="p">(</span><span class="nv">$mailTo</span><span class="p">)</span>
+</span><span class='line'>     <span class="o">-&gt;</span><span class="na">setTextBody</span><span class="p">(</span><span class="s1">&#39;您好， 有邮件来访&#39;</span><span class="p">)</span>   <span class="c1">//发布纯文字文本</span>
+</span><span class='line'>     <span class="c1">//-&gt;setHtmlBody(&quot;点击查看&lt;a href=&#39;zwq.bingyan.net&#39;&gt;zwq.bingyan.net&lt;/a&gt;&quot;)    //发布可以带html标签的文本</span>
+</span><span class='line'>     <span class="o">-&gt;</span><span class="na">setSubject</span><span class="p">(</span><span class="nv">$subject</span><span class="p">)</span>
+</span><span class='line'>     <span class="o">-&gt;</span><span class="na">send</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>带有模板的邮件</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='Php'><span class='line'> <span class="nv">$mail</span> <span class="o">=</span> <span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">mailer</span><span class="o">-&gt;</span><span class="na">compose</span><span class="p">(</span><span class="s1">&#39;resetPassword&#39;</span><span class="p">,</span> <span class="p">[</span> <span class="s2">&quot;id&quot;</span> <span class="o">=&gt;</span> <span class="mi">123</span><span class="p">,</span> <span class="s2">&quot;key&quot;</span> <span class="o">=&gt;</span> <span class="s2">&quot;asdsfdgfrtryt124354&quot;</span><span class="p">]);</span>
+</span><span class='line'>        <span class="nv">$mail</span><span class="o">-&gt;</span><span class="na">setFrom</span><span class="p">(</span><span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">params</span><span class="p">[</span><span class="s1">&#39;adminEmail&#39;</span><span class="p">]);</span>
+</span><span class='line'>        <span class="nv">$mail</span><span class="o">-&gt;</span><span class="na">setTo</span><span class="p">(</span><span class="s2">&quot;xxuser@gmail.com&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="nv">$mail</span><span class="o">-&gt;</span><span class="na">setSubject</span><span class="p">(</span><span class="s2">&quot;XX网 | 密码重置&quot;</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">return</span> <span class="nv">$mail</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的代码说明，使用<code>resetPassword.php</code>这个模板,模板文件在刚才配置的<code>viewPath</code>这个目录下。
+另外这个模板默认是以一个公共的模板<code>layouts/html.php</code>配置的。发送带有模板的邮件是不需要调用<code>setTextBody</code>和<code>setHtmlBody</code>的。
+模板文件目录结构如下所示</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='Php'><span class='line'><span class="o">--</span> <span class="nb">mail</span><span class="o">/</span>
+</span><span class='line'>    <span class="o">--</span> <span class="nx">layouts</span><span class="o">/</span>
+</span><span class='line'>        <span class="o">--</span> <span class="nx">html</span><span class="o">.</span><span class="nx">php</span>
+</span><span class='line'>    <span class="o">--</span> <span class="nx">resetPassword</span><span class="o">.</span><span class="nx">php</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中<code>html.php</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="o">&lt;?</span><span class="nx">php</span>
+</span><span class='line'><span class="k">use</span> <span class="nx">yii\helpers\Html</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/* @var $this \yii\web\View view component instance */</span>
+</span><span class='line'><span class="cm">/* @var $message \yii\mail\MessageInterface the message being composed */</span>
+</span><span class='line'><span class="cm">/* @var $content string main view render result */</span>
+</span><span class='line'><span class="nv">$resetURL</span> <span class="o">=</span> <span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">urlManager</span><span class="o">-&gt;</span><span class="na">createAbsoluteUrl</span><span class="p">([</span><span class="s1">&#39;user/activate&#39;</span><span class="p">]);</span>
+</span><span class='line'><span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'><span class="cp">&lt;?php</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">beginPage</span><span class="p">()</span> <span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'><span class="x">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;</span>
+</span><span class='line'><span class="x">&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;</span>
+</span><span class='line'><span class="x">&lt;head&gt;</span>
+</span><span class='line'><span class="x">    &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=</span><span class="cp">&lt;?</span><span class="o">=</span> <span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">charset</span> <span class="cp">?&gt;</span><span class="x">&quot; /&gt;</span>
+</span><span class='line'><span class="x">    &lt;title&gt;</span><span class="cp">&lt;?</span><span class="o">=</span> <span class="nx">Html</span><span class="o">::</span><span class="na">encode</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">title</span><span class="p">)</span> <span class="cp">?&gt;</span><span class="x">&lt;/title&gt;</span>
+</span><span class='line'><span class="x">    </span><span class="cp">&lt;?php</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">head</span><span class="p">()</span> <span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'><span class="x">&lt;/head&gt;</span>
+</span><span class='line'><span class="x">&lt;body&gt;</span>
+</span><span class='line'><span class="x">    </span><span class="cp">&lt;?php</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">beginBody</span><span class="p">()</span> <span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'><span class="x">    </span><span class="cp">&lt;?</span><span class="o">=</span> <span class="nv">$content</span> <span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'><span class="x">    </span><span class="cp">&lt;?php</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">endBody</span><span class="p">()</span> <span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'><span class="x">&lt;/body&gt;</span>
+</span><span class='line'><span class="x">&lt;/html&gt;</span>
+</span><span class='line'><span class="cp">&lt;?php</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">endPage</span><span class="p">()</span> <span class="cp">?&gt;</span><span class="x"></span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>resetPassword.php</code>中</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="o">&lt;?</span><span class="nx">php</span>
+</span><span class='line'><span class="k">use</span> <span class="nx">yii\helpers\Html</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">$resetLink</span> <span class="o">=</span> <span class="nx">Yii</span><span class="o">::</span><span class="nv">$app</span><span class="o">-&gt;</span><span class="na">urlManager</span><span class="o">-&gt;</span><span class="na">createAbsoluteUrl</span><span class="p">([</span><span class="s1">&#39;user/activate&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span> <span class="o">=&gt;</span> <span class="nv">$id</span><span class="p">,</span> <span class="s2">&quot;key&quot;</span> <span class="o">=&gt;</span> <span class="nv">$key</span><span class="p">]);</span>
+</span><span class='line'><span class="cp">?&gt;</span><span class="x"></span>
+</span><span class='line'>
+</span><span class='line'><span class="x">&lt;p&gt;尊敬的用户&lt;/p&gt;</span>
+</span><span class='line'><span class="x">&lt;p&gt;您好!&lt;/p&gt;</span>
+</span><span class='line'><span class="x">&lt;b&gt;请点击以下链接重置密码&lt;/b&gt;&lt;br&gt;</span>
+</span><span class='line'><span class="x">&lt;a href=&quot;</span><span class="cp">&lt;?</span><span class="o">=</span> <span class="nv">$resetLink</span> <span class="cp">?&gt;</span><span class="x">&quot;&gt;</span><span class="cp">&lt;?</span><span class="o">=</span> <span class="nv">$resetLink</span> <span class="cp">?&gt;</span><span class="x">&lt;/a&gt;</span>
+</span><span class='line'><span class="x">&lt;br&gt;&lt;br&gt;</span>
+</span><span class='line'><span class="x">&lt;p&gt;系统发信，请勿回复&lt;/p&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在<code>resetPassword.php</code>最后解析的<code>html</code>内容会替换到<code>html.php</code>中的<code>$content</code>.
+在向模板中传递参数时，是以数组的形式传递的，如上<code>$id</code>, <code>$key</code>和<code>compose</code>中第二个参数保持一致。</p>
+
+<p>根据上面配置会生成
+<code>http://www.example.com/user/activite?id=123&amp;key=asdsfdgfrtryt124354</code>
+这个链接不够友好，我们可以使Ta更加<code>Restful</code>
+<code>http://www.example.com/user/activite/123/asdsfdgfrtryt124354</code>
+这样需要在<code>config/web.php</code>中配置</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="s1">&#39;urlManager&#39;</span> <span class="o">=&gt;</span> <span class="p">[</span>
+</span><span class='line'>          <span class="s1">&#39;showScriptName&#39;</span> <span class="o">=&gt;</span> <span class="k">false</span><span class="p">,</span>
+</span><span class='line'>          <span class="s1">&#39;enablePrettyUrl&#39;</span> <span class="o">=&gt;</span> <span class="k">true</span><span class="p">,</span>
+</span><span class='line'>          <span class="c1">//&#39;suffix&#39; =&gt; &#39;.htm&#39;,</span>
+</span><span class='line'>          <span class="s1">&#39;rules&#39;</span> <span class="o">=&gt;</span> <span class="p">[</span>
+</span><span class='line'>                <span class="s2">&quot;&lt;controller:(user)&gt;/&lt;action:(activate)&gt;/&lt;id:\d+&gt;/&lt;key:\w+&gt;&quot;</span> <span class="o">=&gt;</span> <span class="s1">&#39;&lt;controller&gt;/&lt;action&gt;&#39;</span><span class="p">,</span>
+</span><span class='line'>          <span class="p">],</span>
+</span><span class='line'>      <span class="p">],</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>更详细，请参考<a href="http://www.yiiframework.com/doc-2.0/ext-swiftmailer-index.html">官方教程</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-11-22T23:06:47+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>11:06 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/php/'>php</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2015/11/22/yii2fa-song-you-jian/" data-via="" data-counturl="http://lvzwq.github.io/blog/2015/11/22/yii2fa-song-you-jian/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/11/21/php7an-zhuang-opensslkuo-zhan/" title="Previous Post: PHP7安装OpenSSL扩展">&laquo; PHP7安装OpenSSL扩展</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/12/17/iosdong-hua-zhi-core-animationji-chu/" title="Next Post: IOS动画之Core Animation基础">IOS动画之Core Animation基础 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Java 对字符串转为可执行代码</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/13/zookeeperji-qun-da-jian/">Zookeeper集群搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/26/macshang-bu-cuo-de-ruan-jian-he-zi-yong-de-you-xiu-chromecha-jian/">MAC上不错的软件和自用的优秀Chrome插件</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/docker/'>docker (2)</a></li>
+<li class='category'><a href='/blog/categories/elasticsearch/'>elasticsearch (1)</a></li>
+<li class='category'><a href='/blog/categories/hadoop/'>hadoop (1)</a></li>
+<li class='category'><a href='/blog/categories/ios/'>ios (5)</a></li>
+<li class='category'><a href='/blog/categories/java/'>java (1)</a></li>
+<li class='category'><a href='/blog/categories/kafka/'>kafka (1)</a></li>
+<li class='category'><a href='/blog/categories/mac/'>mac (2)</a></li>
+<li class='category'><a href='/blog/categories/php/'>php (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (4)</a></li>
+<li class='category'><a href='/blog/categories/scala/'>scala (1)</a></li>
+<li class='category'><a href='/blog/categories/zookeeper/'>zookeeper (1)</a></li>
+
+  </ul>
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  <!--返回顶部开始-->
+<div id="full" style="width:0px; height:0px; position:fixed; right:180px; bottom:150px; z-index:100; text-align:center; background-color:transparent; cursor:pointer;">
+  <a href="#" onclick="goTop();return false;"><img src="/images/top.png" border=0 alt="返回顶部"></a>
+</div>
+<script src="/javascripts/top.js" type="text/javascript"></script>
+<!--返回顶部结束-->
+</body>
+</html>
