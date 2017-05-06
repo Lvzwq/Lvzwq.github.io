@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Mac使用Octopress搭建博客"
-date: 2016-12-04 08:22:05 +0800
+date: 2015-09-04 08:22:05 +0800
 comments: true
 categories: Mac
 ---
@@ -30,7 +30,7 @@ sudo gem install bundler
 ```
 * 升级`rake`版本
 ```
-boundle update rake
+bundle update rake
 ```
 
 
