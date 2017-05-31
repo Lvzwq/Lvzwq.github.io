@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
+<loc>http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/</loc>
+<lastmod>2017-05-27T09:43:06+08:00</lastmod>
+</url>
+<url>
 <loc>http://lvzwq.github.io/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/</loc>
 <lastmod>2017-05-06T16:25:43+08:00</lastmod>
 </url>
@@ -69,10 +73,6 @@
 <lastmod>2015-10-31T19:34:33+08:00</lastmod>
 </url>
 <url>
-<loc>http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-1/</loc>
-<lastmod>2015-10-31T17:45:47+08:00</lastmod>
-</url>
-<url>
 <loc>http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu/</loc>
 <lastmod>2015-10-31T17:22:55+08:00</lastmod>
 </url>
@@ -81,16 +81,20 @@
 <lastmod>2015-09-04T08:22:05+08:00</lastmod>
 </url>
 <url>
+<loc>http://lvzwq.github.io/blog/0201/10/31/sqlalchemy-1/</loc>
+<lastmod>0201-10-31T17:45:47+08:00</lastmod>
+</url>
+<url>
 <loc>http://lvzwq.github.io/blog/archives/</loc>
 </url>
 <url>
 <loc>http://lvzwq.github.io/</loc>
 </url>
 <url>
-<loc>http://lvzwq.github.io/blog/categories/mac/</loc>
+<loc>http://lvzwq.github.io/blog/categories/python/</loc>
 </url>
 <url>
-<loc>http://lvzwq.github.io/blog/categories/python/</loc>
+<loc>http://lvzwq.github.io/blog/categories/mac/</loc>
 </url>
 <url>
 <loc>http://lvzwq.github.io/blog/categories/ios/</loc>
@@ -118,5 +122,11 @@
 </url>
 <url>
 <loc>http://lvzwq.github.io/blog/categories/elasticsearch/</loc>
+</url>
+<url>
+<loc>http://lvzwq.github.io/posts/2/</loc>
+</url>
+<url>
+<loc>http://lvzwq.github.io/posts/3/</loc>
 </url>
 </urlset>

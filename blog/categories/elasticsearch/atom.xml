@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Elasticsearch | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/elasticsearch/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-07T01:18:28+08:00</updated>
+  <updated>2017-06-01T01:24:06+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -30,6 +30,8 @@
 3、设置环境变量 JAVA_HOME</p>
 
 <h2>配置修改</h2>
+
+<p>修改<code>elasticsearch.yml</code></p>
 
 <pre><code>cluster.name: es5-cluster   # 集群名称
 node.name: node-1    # 节点名称
