@@ -18,6 +18,9 @@ categories: ElasticSearch
 
 
 ## 配置修改
+
+修改`elasticsearch.yml`
+
 ```
 cluster.name: es5-cluster   # 集群名称
 node.name: node-1    # 节点名称
