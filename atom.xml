@@ -4,7 +4,7 @@
   <title><![CDATA[闲散记事]]></title>
   <link href="http://lvzwq.github.io/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-06-01T01:24:06+08:00</updated>
+  <updated>2017-06-08T14:26:49+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -14,11 +14,318 @@
 
   
   <entry>
+    <title type="html"><![CDATA[堆内存最佳实践]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/"/>
+    <updated>2017-06-08T01:05:38+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian</id>
+    <content type="html"><![CDATA[<!-- more -->
+
+
+<h2>堆分析</h2>
+
+<h3>采用堆直方图分析堆内存使用</h3>
+
+<p>利用堆直方图，我们可以快速看到应用内的对象数目，同时不需要进行完整的堆转储。堆直方图获取方式<code>jcmd PID GC.class_histogram</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>jcmd <span class="m">16685</span> GC.class_histogram <span class="p">|</span> more
+</span><span class='line'>16685:
+</span><span class='line'>
+</span><span class='line'> num     <span class="c">#instances         #bytes  class name</span>
+</span><span class='line'>----------------------------------------------
+</span><span class='line'>   1:       <span class="m">3382715</span>      <span class="m">310396224</span>  <span class="o">[</span>C
+</span><span class='line'>   2:       <span class="m">3293714</span>       <span class="m">79049136</span>  java.lang.String
+</span><span class='line'>   3:       <span class="m">2364000</span>       <span class="m">75648000</span>  java.util.HashMap<span class="nv">$Node</span>
+</span><span class='line'>   4:         <span class="m">14080</span>       <span class="m">54832544</span>  <span class="o">[</span>I
+</span><span class='line'>   5:         <span class="m">95607</span>       <span class="m">23472416</span>  <span class="o">[</span>B
+</span><span class='line'>   6:        <span class="m">159142</span>       <span class="m">22423488</span>  <span class="o">[</span>Ljava.util.HashMap<span class="nv">$Node</span><span class="p">;</span>
+</span><span class='line'>   7:         <span class="m">53314</span>       <span class="m">13002496</span>  <span class="o">[</span>Ljava.lang.Object<span class="p">;</span>
+</span><span class='line'>   8:        <span class="m">524288</span>       <span class="m">12582912</span>  com.mogujie.union.cpmbilling.common.disruptor.CpmLogEvent
+</span><span class='line'>   9:        <span class="m">472423</span>       <span class="m">11338152</span>  java.util.concurrent.atomic.AtomicLong
+</span><span class='line'>  10:        <span class="m">164987</span>        <span class="m">7919376</span>  java.util.HashMap
+</span><span class='line'>  11:        <span class="m">142903</span>        <span class="m">4572896</span>  com.mogujie.union.cpmbilling.common.kafka.consumer.MessageInfo
+</span><span class='line'>  12:        <span class="m">161610</span>        <span class="m">3878640</span>  java.lang.Long
+</span><span class='line'>  13:        <span class="m">131572</span>        <span class="m">3157728</span>  com.mogujie.union.cpmbilling.common.kafka.producer.KafkaLogEntity
+</span><span class='line'>  14:        <span class="m">169888</span>        <span class="m">2718208</span>  java.lang.Integer
+</span><span class='line'>......
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在接近顶端的地方，字符数组(<code>[C</code>)和<code>String</code>对象很常见，因为他们是最常创建的Java对象。字节数组(<code>[B</code>)和Object数组同样很常见。该命令不会强制执行Full GC，但是<code>GC.class_histogram</code>中的输出仅包含活跃对象。</p>
+
+<p>运行下面的命令也会得到同样的结果</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jmap -histo PID
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>jmap</code>的输出中包含会被回收的对象(死对象)。如果在获取直方图之前强制执行一次Full GC，可以使用下面命令</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jmap -histo:live PID
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>直方图擅长识别有分配了一两个特定类的过多实例而引发的问题，但是要进行深度的分析，就需要应用到堆转储。</p>
+
+<h3>堆转储</h3>
+
+<p>生成堆转储文件的方式</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jcmd PID GC.heap_dump /path/to/save/heap_dump.hprof
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>或者</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jmap -dump:live,file<span class="o">=</span>/path/to/save/heap_dump.hprof PID
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在jmap中包含live选项，这会在生成堆转储之前强制执行一次Full GC; jcmd默认就会这样做。如果你想包含其他对象(死对象)，可以在jcmd命令后面加上-all选项。</p>
+
+<p>生成的heap_dump.hprof文件我们可以使用下面一些工具打开，常见的有:<br/>
+<code>jhat</code>: 这是最原始的堆分析工具，它会读取堆转储文件，并运行一个小型的http服务器，可以在网页上查看堆转储的信息。</p>
+
+<p>VisualVM 以及 mat等开源原件</p>
+
+<p>对堆的第一遍分析通常涉及保留内存。一个对象的保留内存，是指回收该对象可以释放出的内存量。</p>
+
+<h4>浅对象大小、保留对象大小及深对象大小</h4>
+
+<blockquote><p>对于内存分析，还有其他两个很有用的术语: 浅(shallow)和深(deep)。一个对象的浅大小，值的是该对象本身的大小。如果该对象包含一个指向另一个对象的引用，4字节或8字节的引用会计算在内，但是目标对象的大小不会包含进来。</p>
+
+<p>深大小则包含哪些对象的大小。深大小与保留大小的区别在于那些存在共享的对象。在深大小包括那些共享的内存空间，而保留大小则不包含。</p></blockquote>
+
+<h3>内存溢出错误</h3>
+
+<ul>
+<li>JVM没有原生内存可用</li>
+<li>永久代(在Java 7和更早的版本中) 或元空间(在Java 8)内存不足。</li>
+<li>Java堆本身空间不足 - 对于给定的堆空间而言，应用中活跃对象太多</li>
+<li>JVM执行GC耗时太多</li>
+</ul>
+
+
+<p>自动堆转储
+OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转储。有几个JVM参数可以帮助我们获取</p>
+
+<p>-XX:+HeapDumpOnOutOfMemoryError
+该标志默认为false，打开该标志，JVM会在抛出OutOfMemoryError时创建堆转储。</p>
+
+<p>-XX:HeapDumpPath=<path>
+该标志执行堆转储存储路径。默认会生成java_pid.hprof文件</p>
+
+<p>-XX:+HeapDumpAfterFullGC
+这会在运行一次Full GC后生成一个堆转储文件</p>
+
+<p>-XX:+HeapDumpBeforeFullGC
+这回在运行一次Full GC之前生成一个堆转储文件</p>
+
+<h3>减少内存使用</h3>
+
+<h4>减少对象大小</h4>
+
+<p>减少对象大小的大小有2种方式：减少实例变量的个数(效果很明显),或者减小实例变量的大小。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[服务器常用命令使用]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/"/>
+    <updated>2017-06-07T20:02:13+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong</id>
+    <content type="html"><![CDATA[<!-- more -->
+
+
+<h3>服务器配置查看</h3>
+
+<ul>
+<li>查看主机名</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>hostname
+</span><span class='line'>mogu015038
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看IP</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>ifconfig 或者 hostname -i
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看系统内核版本号和系统名称</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>uname -a
+</span><span class='line'>Linux mogu015038 2.6.32-431.el6.x86_64 <span class="c">#1 SMP Fri Nov 22 03:15:09 UTC 2013 x86_64 x86_64 x86_64 GNU/Linux</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">## 或者</span>
+</span><span class='line'>cat /proc/version
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看系统CPU的统计信息</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>lscpu
+</span><span class='line'>Architecture:          x86_64
+</span><span class='line'>CPU op-mode<span class="o">(</span>s<span class="o">)</span>:        32-bit, 64-bit
+</span><span class='line'>Byte Order:            Little Endian
+</span><span class='line'>CPU<span class="o">(</span>s<span class="o">)</span>:                24
+</span><span class='line'>On-line CPU<span class="o">(</span>s<span class="o">)</span> list:   0-23
+</span><span class='line'>Thread<span class="o">(</span>s<span class="o">)</span> per core:    2
+</span><span class='line'>Core<span class="o">(</span>s<span class="o">)</span> per socket:    6
+</span><span class='line'>Socket<span class="o">(</span>s<span class="o">)</span>:             2
+</span><span class='line'>NUMA node<span class="o">(</span>s<span class="o">)</span>:          2
+</span><span class='line'>Vendor ID:             GenuineIntel
+</span><span class='line'>CPU family:            6
+</span><span class='line'>Model:                 62
+</span><span class='line'>Stepping:              4
+</span><span class='line'>CPU MHz:               2100.094
+</span><span class='line'>BogoMIPS:              4199.41
+</span><span class='line'>Virtualization:        VT-x
+</span><span class='line'>L1d cache:             32K
+</span><span class='line'>L1i cache:             32K
+</span><span class='line'>L2 cache:              256K
+</span><span class='line'>L3 cache:              15360K
+</span><span class='line'>NUMA node0 CPU<span class="o">(</span>s<span class="o">)</span>:     0-5,12-17
+</span><span class='line'>NUMA node1 CPU<span class="o">(</span>s<span class="o">)</span>:     6-11,18-23
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看系统CPU的统计信息</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>cat /proc/cpuinfo
+</span><span class='line'>processor : 0
+</span><span class='line'>vendor_id : GenuineIntel
+</span><span class='line'>cpu family    : 6
+</span><span class='line'>model     : 62
+</span><span class='line'>model name    : Intel<span class="o">(</span>R<span class="o">)</span> Xeon<span class="o">(</span>R<span class="o">)</span> CPU E5-2620 v2 @ 2.10GHz
+</span><span class='line'>stepping  : 4
+</span><span class='line'>cpu MHz       : 2100.094
+</span><span class='line'>cache size    : <span class="m">15360</span> KB
+</span><span class='line'>physical id   : 0
+</span><span class='line'>siblings  : 12
+</span><span class='line'>core id       : 0
+</span><span class='line'>cpu cores : 6
+</span><span class='line'>apicid        : 0
+</span><span class='line'>initial apicid    : 0
+</span><span class='line'>fpu       : yes
+</span><span class='line'>fpu_exception : yes
+</span><span class='line'>cpuid level   : 13
+</span><span class='line'>wp        : yes
+</span><span class='line'>flags     : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good xtopology nonstop_tsc aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm arat epb xsaveopt pln pts dts tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
+</span><span class='line'>bogomips  : 4200.18
+</span><span class='line'>clflush size  : 64
+</span><span class='line'>cache_alignment   : 64
+</span><span class='line'>address sizes : <span class="m">46</span> bits physical, <span class="m">48</span> bits virtual
+</span><span class='line'>power management:
+</span><span class='line'>
+</span><span class='line'>......
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Java性能优化一线程DUMP]]></title>
     <link href="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/"/>
     <updated>2017-05-27T09:43:06+08:00</updated>
     <id>http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1</id>
-    <content type="html"><![CDATA[<p>参考: <a href="%E4%B8%89%E4%B8%AA%E5%AE%9E%E4%BE%8B%E6%BC%94%E7%A4%BA%20Java%20Thread%20Dump%20%E6%97%A5%E5%BF%97%E5%88%86%E6%9E%90">三个实例演示 Java Thread Dump 日志分析</a></p>
+    <content type="html"><![CDATA[<p>参考: <a href="http://www.cnblogs.com/zhengyun_ustc/archive/2013/01/06/dumpanalysis.html">三个实例演示 Java Thread Dump 日志分析</a></p>
 
 <!-- more -->
 
@@ -5254,208 +5561,6 @@ equals:</p>
 </pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">func</span>
 </span><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 </span></code></pre></td></tr></table></div></figure>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Python2中的编码错误]]></title>
-    <link href="http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu/"/>
-    <updated>2015-10-31T17:22:55+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-
-
-<h3>Python2中常出现的编码问题</h3>
-
-
-
-
-<pre><code>UnicodeDecodeError: 'ascii' codec can't decode byte 0xe5 in position 4: ordinal not in range(128)
-</code></pre>
-
-
-<p>对中文字符串解码出错
-虽然可以在代码头部加入以下代码解决</p>
-
-<pre><code>import sys
-import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
-</code></pre>
-
-
-<p>但是这种方式已经不推荐使用了<a href="http://stackoverflow.com/questions/3828723/why-we-need-sys-setdefaultencodingutf-8-in-a-py-script">[详细阅读]</a>。<br/>
-所以推荐使用以下方式(Python2默认的字符串编码是<code>str</code>)<br/>
-<code>xxx.decode(&ldquo;utf-8&rdquo;)</code><br/>
-或者在你需要使用中文的地方前面加上<code>u</code>.</p>
-
-<blockquote>
-  这种错误通常发生在以某种编码("<code>ascii</code>")解码一个<code>str</code>类型的字符串时.因为编码映射仅仅只能支持一部分<code>str</code>类型的字符串到<code>unicode</code>字符串, 一个非法的<code>str</code>类型的序列将会导致编码<code>decode()</code>失败。 <a href="https://wiki.python.org/moin/UnicodeDecodeError">[详细阅读]</a>
-</blockquote>
-
-
-<p>如<code>str</code>字符串<code>\x81</code>就不能转化为<code>unicode</code>对应的字符串</p>
-
-<pre><code>&gt;&gt;&gt; "x81".decode("utf-8")
-Traceback (most recent call last):
-  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
-  File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/encodings/utf_8.py", line 16, in decode
-    return codecs.utf_8_decode(input, errors, True)
-UnicodeDecodeError: 'utf8' codec can't decode byte 0x81 in position 0: invalid start byte
-</code></pre>
-
-
-<p>另一种情况的解码错误</p>
-
-<blockquote>
-  自相矛盾的是，<code>UnicodeDecodeError</code>也可能发生在编码<code>__encoding__</code>时。
-  原因是编码函数<code>encode()</code>通常情况下需要一个<code>unicode</code>类型的字符串作为参数。但是实际传过来的是一个<code>str</code>类型的参数。<code>encode()</code>函数将这个参数向上转换"<code>up-convert</code>"为<code>unicode</code>类型，然后再将转化为他们自己的编码。这也会出现这样的向上转换"<code>up-convertion</code>"的时候，系统默认选择一个<code>ascii</code>解码器, 解码器中没有这个<code>str</code>类型的<code>unicode</code>编码,  。因此这是在一个编码器<code>encoder</code>中出现解码失败的情况。
-</blockquote>
-
-
-<p>如<code>str</code>类型的<code>\xd0\x91</code>在encode()时就会出现<code>UnicodeDecodeError</code>错误</p>
-
-<pre><code>&gt;&gt;&gt; "xd0x91".encode("utf-8")
-Traceback (most recent call last):
-  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
-UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
-</code></pre>
-
-
-<p>在这个过程中发生了两件事情。首先<code>\xd0\x91</code>是python默认的<code>str</code>类型的字符串，而编码<code>encode</code>需要一个<code>unicode</code>类型的字符串，所以在编码<code>encode</code>之前，先转化为<code>unicode</code>,而执行的是<code>&ldquo;\xd0\x91&rdquo;.decode(&ldquo;ascii&rdquo;)</code>, 所以会出现上面的错误。</p>
-
-<pre><code>&gt;&gt;&gt; "xd0x91".decode("ascii")
-Traceback (most recent call last):
-  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
-UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
-&gt;&gt;&gt; # 而如果使用utf-8 转码的话就可以正常执行
-&gt;&gt;&gt; "xd0x91".decode("utf-8")
-u'u0411'
-</code></pre>
-
-
-
-
-<h3>总结</h3>
-
-
-<p>所以出现上面的<code>UnicodeDecodeError</code>错误时，可以不使用系统的<code>ascii</code>编码解码，自己使用<code>utf-8</code>解码就可以解决问题,即<code>xx.decode(&ldquo;utf-8&rdquo;)</code>。但是如果<code>str</code>类型的字符串非常特殊，如第一种例子中的<code>\x81</code>的话就直接无法转码了。所以最好的方法还是将一个字符串定义为<code>unicode</code>类型。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Mac使用Octopress搭建博客]]></title>
-    <link href="http://lvzwq.github.io/blog/2015/09/04/macshi-yong-octopressda-jian-bo-ke/"/>
-    <updated>2015-09-04T08:22:05+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2015/09/04/macshi-yong-octopressda-jian-bo-ke</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-<p>一、搭建环境</p>
-
-<ul>
-<li>安装<code>homebrew</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>使用<code>homebrew</code>升级新版本ruby替换系统自带<code>ruby</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>brew install ruby</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>升级<code>gem</code>版本</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>gem update  --system 2.6.6</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>安装<code>bundler</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sudo gem install bundler</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>升级<code>rake</code>版本</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>bundle update rake</span></code></pre></td></tr></table></div></figure>
-
-
-<p>二、在本地启动博客服务</p>
-
-<ul>
-<li>安装博客所需要的<code>ruby</code>依赖</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>bundler install</span></code></pre></td></tr></table></div></figure>
-
-
-<p>
-* 安装默认主题和配置</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake install</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>编译markdown文件，生成静态文件</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake generate</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>本地预览</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake preview</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>新建文章</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake new_post
-</span><span class='line'>Enter a title for your post:</span></code></pre></td></tr></table></div></figure>
-
-
-<p>三、将本地博客上传至<code>GitPage</code></p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake generate
-</span><span class='line'>rake deploy</span></code></pre></td></tr></table></div></figure>
-
-
 
 ]]></content>
   </entry>
