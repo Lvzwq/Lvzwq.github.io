@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-06-08T14:26:49+08:00</updated>
+  <updated>2017-06-15T14:17:37+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -218,18 +218,18 @@ OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转�
 
 <p>代码示例</p>
 
-<pre><code>    Map&lt;String,Object&gt; map=new HashMap&lt;String,Object&gt;();  
-    map.put("testService",testService);  
-    map.put("person",person);  
-    String expression="testService.save(person)";  
+<pre><code class="java">Map&lt;String,Object&gt; map = new HashMap&lt;String,Object&gt;();  
+map.put("testService",testService);  
+map.put("person", person);  
+String expression="testService.save(person)";  
 
-     JexlEngine jexl=new JexlEngine();  
-     Expression e = jexl.createExpression(expression);  
-     JexlContext jc = new MapContext();  
-     for(String key:map.keySet()){  
-           jc.set(key, map.get(key));  
-     }  
-     Object o = e.evaluate(jc);
+JexlEngine jexl=new JexlEngine();  
+Expression e = jexl.createExpression(expression);  
+JexlContext jc = new MapContext();  
+for(String key:map.keySet()){  
+      jc.set(key, map.get(key));  
+}  
+Object o = e.evaluate(jc);
 </code></pre>
 
 <h2>方式二</h2>
@@ -238,18 +238,20 @@ OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转�
 
 <p>使用Java自带的jdk, <code>javax.script.ScriptEngine</code></p>
 
-<pre><code>        String str = "3&amp;&amp;2&amp;&amp;1";
-        ScriptEngineManager factory = new ScriptEngineManager();
-        ScriptEngine engine = factory.getEngineByName("JavaScript");
-        str = str.replace("2", "true");
-        str = str.replace("3", "true");
-        str = str.replace("1", "false");
-        Object o = null;
-        try {
-            o = engine.eval(str);
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        }
+<pre><code class="java">  String str = "a&amp;&amp;b&amp;&amp;c";
+  ScriptEngineManager factory = new ScriptEngineManager();
+  ScriptEngine engine = factory.getEngineByName("JavaScript");
+  str = str.replace("a", "true");
+  str = str.replace("b", "true");
+  str = str.replace("c", "false");
+  Object o = null;
+  try {
+      o = engine.eval(str);
+  } catch (ScriptException e) {
+      e.printStackTrace();
+  }finally {
+      System.out.println("o = " + o);
+  }
 </code></pre>
 ]]></content>
   </entry>
