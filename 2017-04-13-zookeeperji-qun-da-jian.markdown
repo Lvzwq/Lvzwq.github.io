@@ -83,7 +83,7 @@ B为选举端口，表示选举新leader时服务器间相互通信的端口（�
 
 ### 启动前配置
     在zk数据dataDir存储目录/root/zookeeper下新建myid文件，并分别写入0,1,2，与配置中的相同
-    
+
 启动服务
 
 ```
@@ -126,7 +126,7 @@ java.net.NoRouteToHostException: No route to host (Host unreachable)
 最简单的方法是禁止防火墙
 
 ```sh
-systemctl stop firewalld.service 
+systemctl stop firewalld.service
 systemctl disable firewalld.service #禁止firewall开机启动
 ```
 

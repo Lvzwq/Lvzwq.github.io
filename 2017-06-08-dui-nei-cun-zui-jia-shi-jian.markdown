@@ -35,11 +35,12 @@ $ jcmd 16685 GC.class_histogram | more
   14:        169888        2718208  java.lang.Integer
 ......
 ```
+
 在接近顶端的地方，字符数组(`[C`)和`String`对象很常见，因为他们是最常创建的Java对象。字节数组(`[B`)和Object数组同样很常见。该命令不会强制执行Full GC，但是`GC.class_histogram`中的输出仅包含活跃对象。
 
 运行下面的命令也会得到同样的结果
 ```sh
-jmap -histo PID 
+jmap -histo PID
 ```
 `jmap`的输出中包含会被回收的对象(死对象)。如果在获取直方图之前强制执行一次Full GC，可以使用下面命令
 ```sh
@@ -98,7 +99,3 @@ OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转�
 
 #### 减少对象大小
 减少对象大小的大小有2种方式：减少实例变量的个数(效果很明显),或者减小实例变量的大小。
-
-
-
-
