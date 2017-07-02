@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-07T01:18:28+08:00</updated>
+  <updated>2017-07-02T23:39:11+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -12,6 +12,374 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[SpringBoot配置读取与加载的几种方式]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai/"/>
+    <updated>2017-07-01T23:14:32+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai</id>
+    <content type="html"><![CDATA[<blockquote><p>SpringBoot 简化了配置，将原来大量使用xml的配置使用Spring config的方式来是实现，这种方式看上去比xml更加简洁，更好理解。</p></blockquote>
+
+<!-- more -->
+
+
+<h3>SpringBoot 配置读取</h3>
+
+<p>SpringBoot应用默认读取的应用配置是在application.properties或者application.yml文件中</p>
+
+<pre><code>mq.consumer.topic=binlog.unionbusiness.UnionCommodity
+mq.consumer.groupId=ad.cps.commission
+mq.consumer.address=mq.keeper.service.xxx.org
+mq.consumer.batchSize=20
+mq.consumer.timeOut=2000
+
+# mq Consumer 
+mq.asyn.topic=binlog.unionbusiness.UnionAsynEffectOps
+mq.asyn.groupId=unionads.cps.asyneffect
+mq.asyn.address=mq.keeper.service.xxx.org
+mq.asyn.batchSize=10
+mq.asyn.timeOut=2000
+
+# mq Producer
+mq.producer.topic=ad.cpscommission.tradeitemid
+mq.producer.groupId=ad.cps.commission
+mq.producer.address=mq.keeper.service.xxx.org
+</code></pre>
+
+<p>读取的方式有很多种，第一种通过直接通过<code>@ConfigurationProperties</code>注解来读取配置</p>
+
+<pre><code class="java">@Slf4j
+@Data
+@ConfigurationProperties(prefix = "mq.producer")
+@Component
+public class CorgiProducer implements InitializingBean, DisposableBean{
+
+    private String topic;
+    private String groupId;
+    private String address;
+
+    private static Producer producer;
+
+...
+}
+</code></pre>
+
+<p>另外一种，通过SpringMVC中<code>@Value("${xxx}")</code>注解的方式来获取属性文件中的值
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Data</span>
+</span><span class='line'><span class="nd">@Component</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Config</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.groupId}&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="kd">private</span> <span class="n">String</span> <span class="n">groupId</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.topic}&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="kd">private</span> <span class="n">String</span> <span class="n">topic</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.address}&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="kd">private</span> <span class="n">String</span> <span class="n">address</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.batchSize}&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="kd">private</span> <span class="kt">int</span> <span class="n">batchSize</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.timeOut}&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="kd">private</span> <span class="kt">long</span> <span class="n">timeOut</span><span class="o">;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;&amp;</span><span class="n">hellip</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<p>通过@Bean结合@ConfigurationProperties的方式可以配置相同类的2个不同实例，如配置2个数据源。
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Bean</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">defaultConfig</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
+</span><span class='line'><span class="nd">@ConfigurationProperties</span><span class="o">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">mq</span><span class="o">.</span><span class="na">consumer</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">CorgiConfig</span> <span class="nf">defaultCorgiConfig</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="nf">CorgiConfig</span><span class="o">();</span>
+</span><span class='line'><span class="o">}&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="nd">@Bean</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">asynConfig</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
+</span><span class='line'><span class="nd">@ConfigurationProperties</span><span class="o">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">mq</span><span class="o">.</span><span class="na">asyn</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">CorgiConfig</span> <span class="nf">asynCorgiConfig</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="nf">CorgiConfig</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Spring AOP学习]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi/"/>
+    <updated>2017-06-15T19:49:18+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi</id>
+    <content type="html"><![CDATA[<h3>AOP概念</h3>
+
+<p>AOP概念和术语不是Spring独有的，AOP术语并不是直观感受的，而是一种抽象概念。</p>
+
+<!-- more -->
+
+
+<blockquote><p>切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。
+连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。
+通知Advice: 在一个特殊的Joint Point被Aspect执行的动作。不同的类型的Advice有"around,&ldquo; "before&rdquo; 和 &ldquo;after&rdquo; 类型。
+切入点Pointcut: 通知定义了切面要发生的“故事”和时间，那么切入点就定义了“故事”发生的地点，例如某个类或方法的名称，spring中允许我们方便的用正则表达式来指定</p></blockquote>
+
+<p>Spring AOP是用纯Java实现的，不需要特殊的编译过程，并且不需要控制Classloader的层级关系，并且可以用在Servlet容器中和应用服务器中。
+Spring AOP目前只支持方法级别的执行Joint Point(在Spring Bean中方法执行的通知Advice)。</p>
+
+<h4>AOP代理</h4>
+
+<p>Spring AOP代理默认使用标准SDK的动态代理，这允许代理任意接口interface。Spring AOP也可以使用CGLIB代理，这是代理类而不是代理接口interface,如果一个类没有实现一个接口默认是使用CGLIB代理的。</p>
+
+<h4>@AspectJ</h4>
+
+<p>需要手动开启@AspectJ支持，可以在Java配置中添加@Configuration上添加@EnableAspectJAutoProxy注解。
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Configuration</span>
+</span><span class='line'><span class="nd">@EnableAspectJAutoProxy</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AppConfig</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
+</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
+</span><span class='line'><span class="n">或者在xml配置中开启</span><span class="nd">@AspectJ</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="n">xml</span>
+</span><span class='line'><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="nl">aop:</span><span class="n">aspectj</span><span class="o">-</span><span class="n">autoproxy</span><span class="o">/&gt;</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<ul>
+<li><p>声明一个Aspect
+开启了@AspectJ支持，任何Spring bean使用了@Aspect注解都将被Spring检测并配置成Spring AOP。</p></li>
+<li><p>声明一个切入点Pointcut
+使用@Pointcut注解的切入点表达式，并且注解的方法必须是含void返回值的方法。
+<code>
+@Pointcut("execution(* transfer(..))")  // the pointcut expression
+private void anyOldTransfer() {} // the pointcut signature
+</code></p></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[堆内存最佳实践]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/"/>
+    <updated>2017-06-08T01:05:38+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian</id>
+    <content type="html"><![CDATA[<!-- more -->
+
+
+<h2>堆分析</h2>
+
+<h3>采用堆直方图分析堆内存使用</h3>
+
+<p>利用堆直方图，我们可以快速看到应用内的对象数目，同时不需要进行完整的堆转储。堆直方图获取方式<code>jcmd PID GC.class_histogram</code></p>
+
+<pre><code class="sh">$ jcmd 16685 GC.class_histogram | more
+16685:
+
+ num     #instances         #bytes  class name
+----------------------------------------------
+   1:       3382715      310396224  [C
+   2:       3293714       79049136  java.lang.String
+   3:       2364000       75648000  java.util.HashMap$Node
+   4:         14080       54832544  [I
+   5:         95607       23472416  [B
+   6:        159142       22423488  [Ljava.util.HashMap$Node;
+   7:         53314       13002496  [Ljava.lang.Object;
+   8:        524288       12582912  com.mogujie.union.cpmbilling.common.disruptor.CpmLogEvent
+   9:        472423       11338152  java.util.concurrent.atomic.AtomicLong
+  10:        164987        7919376  java.util.HashMap
+  11:        142903        4572896  com.mogujie.union.cpmbilling.common.kafka.consumer.MessageInfo
+  12:        161610        3878640  java.lang.Long
+  13:        131572        3157728  com.mogujie.union.cpmbilling.common.kafka.producer.KafkaLogEntity
+  14:        169888        2718208  java.lang.Integer
+......
+</code></pre>
+
+<p>在接近顶端的地方，字符数组(<code>[C</code>)和<code>String</code>对象很常见，因为他们是最常创建的Java对象。字节数组(<code>[B</code>)和Object数组同样很常见。该命令不会强制执行Full GC，但是<code>GC.class_histogram</code>中的输出仅包含活跃对象。</p>
+
+<p>运行下面的命令也会得到同样的结果
+<code>sh
+jmap -histo PID
+</code>
+<code>jmap</code>的输出中包含会被回收的对象(死对象)。如果在获取直方图之前强制执行一次Full GC，可以使用下面命令
+<code>sh
+jmap -histo:live PID
+</code>
+直方图擅长识别有分配了一两个特定类的过多实例而引发的问题，但是要进行深度的分析，就需要应用到堆转储。</p>
+
+<h3>堆转储</h3>
+
+<p>生成堆转储文件的方式
+<code>sh
+jcmd PID GC.heap_dump /path/to/save/heap_dump.hprof
+</code>
+或者
+<code>sh
+jmap -dump:live,file=/path/to/save/heap_dump.hprof PID
+</code>
+在jmap中包含live选项，这会在生成堆转储之前强制执行一次Full GC; jcmd默认就会这样做。如果你想包含其他对象(死对象)，可以在jcmd命令后面加上-all选项。</p>
+
+<p>生成的heap_dump.hprof文件我们可以使用下面一些工具打开，常见的有:<br/>
+<code>jhat</code>: 这是最原始的堆分析工具，它会读取堆转储文件，并运行一个小型的http服务器，可以在网页上查看堆转储的信息。</p>
+
+<p>VisualVM 以及 mat等开源原件</p>
+
+<p>对堆的第一遍分析通常涉及保留内存。一个对象的保留内存，是指回收该对象可以释放出的内存量。</p>
+
+<h4>浅对象大小、保留对象大小及深对象大小</h4>
+
+<blockquote><p>对于内存分析，还有其他两个很有用的术语: 浅(shallow)和深(deep)。一个对象的浅大小，值的是该对象本身的大小。如果该对象包含一个指向另一个对象的引用，4字节或8字节的引用会计算在内，但是目标对象的大小不会包含进来。</p>
+
+<p>深大小则包含哪些对象的大小。深大小与保留大小的区别在于那些存在共享的对象。在深大小包括那些共享的内存空间，而保留大小则不包含。</p></blockquote>
+
+<h3>内存溢出错误</h3>
+
+<ul>
+<li>JVM没有原生内存可用</li>
+<li>永久代(在Java 7和更早的版本中) 或元空间(在Java 8)内存不足。</li>
+<li>Java堆本身空间不足 - 对于给定的堆空间而言，应用中活跃对象太多</li>
+<li>JVM执行GC耗时太多</li>
+</ul>
+
+
+<p>自动堆转储
+OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转储。有几个JVM参数可以帮助我们获取</p>
+
+<p>-XX:+HeapDumpOnOutOfMemoryError
+该标志默认为false，打开该标志，JVM会在抛出OutOfMemoryError时创建堆转储。</p>
+
+<p>-XX:HeapDumpPath=<path>
+该标志执行堆转储存储路径。默认会生成java_pid.hprof文件</p>
+
+<p>-XX:+HeapDumpAfterFullGC
+这会在运行一次Full GC后生成一个堆转储文件</p>
+
+<p>-XX:+HeapDumpBeforeFullGC
+这回在运行一次Full GC之前生成一个堆转储文件</p>
+
+<h3>减少内存使用</h3>
+
+<h4>减少对象大小</h4>
+
+<p>减少对象大小的大小有2种方式：减少实例变量的个数(效果很明显),或者减小实例变量的大小。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Java性能优化一线程DUMP]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/"/>
+    <updated>2017-05-27T09:43:06+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1</id>
+    <content type="html"><![CDATA[<p>参考: <a href="http://www.cnblogs.com/zhengyun_ustc/archive/2013/01/06/dumpanalysis.html">三个实例演示 Java Thread Dump 日志分析</a></p>
+
+<!-- more -->
+
+
+<h3>Java程序线程Thread Dump分析</h3>
+
+<p>通过<code>jstack -l PID</code>可以实时查看当前程序的线程dump</p>
+
+<pre><code>"corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1" #188 prio=5 os_prio=0 tid=0x00007f9e6006b000 nid=0x6297 waiting for monitor entry [0x00007f9dd2cb5000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.assembleAdResult(DefaultMessageHandler.java:116)
+        - waiting to lock &lt;0x00000006c3bb2440&gt; (a java.lang.Object)
+        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.handle(DefaultMessageHandler.java:79)
+        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer.lambda$newListener$0(CorgiConsumeInitializer.java:32)
+        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer$$Lambda$9/799107722.onReceived(Unknown Source)
+        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume0(AbstractParallelWorkerGroup.java:92)
+        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume(AbstractParallelWorkerGroup.java:145)
+        at com.mogujie.corgi.client.consumer.consume.SingleParallelWorkerGroup$1.run(SingleParallelWorkerGroup.java:73)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+        at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
+        at java.lang.Thread.run(Thread.java:745)
+
+   Locked ownable synchronizers:
+        - &lt;0x00000006c3b92898&gt; (a java.util.concurrent.ThreadPoolExecutor$Worker)
+</code></pre>
+
+<p>线程状态有
+<code>jstack  -l PID</code> 查看java程序线程情况<br/>
+•  死锁，Deadlock（重点关注） <br/>
+•  等待资源，Waiting on condition（重点关注） <br/>
+•  等待获取监视器，Waiting on monitor entry（重点关注） <br/>
+•  阻塞，Blocked（重点关注） <br/>
+•  执行中，Runnable <br/>
+•  暂停，Suspended <br/>
+•  对象等待中，Object.wait() 或 TIMED_WAITING <br/>
+•  停止，Parked</p>
+
+<ul>
+<li>我们可以看到线程处于<code>Blocked</code>阻塞状态。说明线程等待资源超时！</li>
+<li><code>waiting to lock &lt;0x00000006c3bb2440&gt;</code>指线程等待给<code>0x00000006c3bb2440</code>这个地址上锁。在线程dump文件中我们可以搜索到很多线程在等待给这个地址上锁，所以找到谁获得了这个锁，就可以找到问题的根源。</li>
+<li><code>waiting for monitor entry [0x00007f9dd2cb5000]</code> 指线程通过同步块<code>synchronized(obj){...}</code>申请进入了临界区，从而进入了等待的<code>Entry Set</code>队列。</li>
+<li>第一行中 <code>corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1</code>是线程名(Thread Name); <code>prio</code>是线程优先级，<code>tid</code>是<code>Java Thread id</code>, <code>nid</code>是<code>native</code>线程<code>id</code>。</li>
+</ul>
+
+
+<h4>线DUMP中的注意事项</h4>
+
+<p>1、不同的Java虚拟机的线程dump的内容是不一样的，JVM版本版本不同，dump信息也略有差异。<br/>
+2、在实际运行中，一次dump可能只表示当时时刻的情况，还无法确认问题，所以建议多次dump信息，如果多次的结果指向同一个地方，则可以确定问题的原因。<br/>
+3、线程状态中，Deadlock: 死锁线程，一般指多个线程调用，进入相互资源调用，导致一直等待无法释放的情况。<br/>
+4、<code>waiting on condition</code>: 等待资源，或等待某个条件的发生。<br/>
+5、<code>waiting for monitor entry</code>和 <code>Object.wait()</code>: <code>Monitor</code>是 Java中用以实现线程之间的互斥与协作的主要手段，它可以看成是对象或者 Class的锁。每一个对象都有，也仅有一个 monitor。
+从下图1中可以看出，每个 <code>Monitor</code>在某个时刻，只能被一个线程拥有，该线程就是 &ldquo;Active Thread"，而其它线程都是 "Waiting Thread"，分别在两个队列 “ Entry Set”和 “Wait Set”里面等候。在 “Entry Set”中等待的线程状态是 "Waiting for monitor entry"，而在 "Wait Set"中等待的线程状态是 "in Object.wait()"。</p>
+
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" /></p>
+
+<h4>CPU飙高问题排查</h4>
+
+<ul>
+<li>通过top命令查看CPU占用较高的进程ID</li>
+<li>通过jstack命令将java的线程栈输出，保留现场<code>jstack -l 30142 &gt; 30142.stack</code></li>
+<li>通过<code>top -H -p PID</code>命令输出占用cpu过高的线程 找到占用cpu过高的PID</li>
+<li>使用printf 命令将30450转换成16进制。<code>printf "%x\n" 18430</code></li>
+<li>打开之前保存的stack文件，找到线程地址为<code>0x76f2</code>的输出，即为出问题的线程</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Java 对字符串转为可执行代码]]></title>
@@ -27,27 +395,27 @@
 
 <p>使用commons的jexl包</p>
 
-<pre><code>    &lt;dependency&gt;
-            &lt;groupId&gt;org.apache.commons&lt;/groupId&gt;
-            &lt;artifactId&gt;commons-jexl&lt;/artifactId&gt;
-            &lt;version&gt;2.0&lt;/version&gt;
-        &lt;/dependency&gt;
+<pre><code class="xml">    &lt;dependency&gt;
+          &lt;groupId&gt;org.apache.commons&lt;/groupId&gt;
+          &lt;artifactId&gt;commons-jexl&lt;/artifactId&gt;
+          &lt;version&gt;2.0&lt;/version&gt;
+  &lt;/dependency&gt;
 </code></pre>
 
 <p>代码示例</p>
 
-<pre><code>    Map&lt;String,Object&gt; map=new HashMap&lt;String,Object&gt;();  
-    map.put("testService",testService);  
-    map.put("person",person);  
-    String expression="testService.save(person)";  
+<pre><code class="java">Map&lt;String,Object&gt; map = new HashMap&lt;String,Object&gt;();  
+map.put("testService",testService);  
+map.put("person", person);  
+String expression="testService.save(person)";  
 
-     JexlEngine jexl=new JexlEngine();  
-     Expression e = jexl.createExpression(expression);  
-     JexlContext jc = new MapContext();  
-     for(String key:map.keySet()){  
-           jc.set(key, map.get(key));  
-     }  
-     Object o = e.evaluate(jc);
+JexlEngine jexl=new JexlEngine();  
+Expression e = jexl.createExpression(expression);  
+JexlContext jc = new MapContext();  
+for(String key:map.keySet()){  
+      jc.set(key, map.get(key));  
+}  
+Object o = e.evaluate(jc);
 </code></pre>
 
 <h2>方式二</h2>
@@ -56,18 +424,20 @@
 
 <p>使用Java自带的jdk, <code>javax.script.ScriptEngine</code></p>
 
-<pre><code>        String str = "3&amp;&amp;2&amp;&amp;1";
-        ScriptEngineManager factory = new ScriptEngineManager();
-        ScriptEngine engine = factory.getEngineByName("JavaScript");
-        str = str.replace("2", "true");
-        str = str.replace("3", "true");
-        str = str.replace("1", "false");
-        Object o = null;
-        try {
-            o = engine.eval(str);
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        }
+<pre><code class="java">  String str = "a&amp;&amp;b&amp;&amp;c";
+  ScriptEngineManager factory = new ScriptEngineManager();
+  ScriptEngine engine = factory.getEngineByName("JavaScript");
+  str = str.replace("a", "true");
+  str = str.replace("b", "true");
+  str = str.replace("c", "false");
+  Object o = null;
+  try {
+      o = engine.eval(str);
+  } catch (ScriptException e) {
+      e.printStackTrace();
+  }finally {
+      System.out.println("o = " + o);
+  }
 </code></pre>
 ]]></content>
   </entry>

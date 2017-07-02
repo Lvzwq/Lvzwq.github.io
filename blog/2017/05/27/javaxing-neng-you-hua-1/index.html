@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Java性能优化一线程DUMP - 闲散记事</title>
+  <meta name="author" content="Lvzwq">
+
+  
+  <meta name="description" content="参考: 三个实例演示 Java Thread Dump 日志分析 Java程序线程Thread Dump分析 通过jstack -l PID可以实时查看当前程序的线程dump 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+"corgi-consumer- &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>-->
+  <script src="/javascripts/jquery.min.js"></script>
+
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">-->
+
+  
+
+
+<!----百度统计 -->
+  <script>
+      var _hmt = _hmt || [];
+      (function() {
+        var hm = document.createElement("script");
+        hm.src = "https://hm.baidu.com/hm.js?44d106fbcf74d88ad91318200ab9233d";
+        var s = document.getElementsByTagName("script")[0]; 
+        s.parentNode.insertBefore(hm, s);
+      })();
+</script>
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">闲散记事</a></h1>
+  
+    <h2>Note.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.baidu.com/s?wd=" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="lvzwq.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Java性能优化一线程DUMP</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-05-27T09:43:06+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:43 am</span></time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://lvzwq.github.io">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>参考: <a href="http://www.cnblogs.com/zhengyun_ustc/archive/2013/01/06/dumpanalysis.html">三个实例演示 Java Thread Dump 日志分析</a></p>
+
+<!-- more -->
+
+
+<h3>Java程序线程Thread Dump分析</h3>
+
+<p>通过<code>jstack -l PID</code>可以实时查看当前程序的线程dump</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>"corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1" #188 prio=5 os_prio=0 tid=0x00007f9e6006b000 nid=0x6297 waiting for monitor entry [0x00007f9dd2cb5000]
+</span><span class='line'>   java.lang.Thread.State: BLOCKED (on object monitor)
+</span><span class='line'>        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.assembleAdResult(DefaultMessageHandler.java:116)
+</span><span class='line'>        - waiting to lock &lt;0x00000006c3bb2440&gt; (a java.lang.Object)
+</span><span class='line'>        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.handle(DefaultMessageHandler.java:79)
+</span><span class='line'>        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer.lambda$newListener$0(CorgiConsumeInitializer.java:32)
+</span><span class='line'>        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer$$Lambda$9/799107722.onReceived(Unknown Source)
+</span><span class='line'>        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume0(AbstractParallelWorkerGroup.java:92)
+</span><span class='line'>        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume(AbstractParallelWorkerGroup.java:145)
+</span><span class='line'>        at com.mogujie.corgi.client.consumer.consume.SingleParallelWorkerGroup$1.run(SingleParallelWorkerGroup.java:73)
+</span><span class='line'>        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+</span><span class='line'>        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+</span><span class='line'>        at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
+</span><span class='line'>        at java.lang.Thread.run(Thread.java:745)
+</span><span class='line'>
+</span><span class='line'>   Locked ownable synchronizers:
+</span><span class='line'>        - &lt;0x00000006c3b92898&gt; (a java.util.concurrent.ThreadPoolExecutor$Worker)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>线程状态有
+<code>jstack  -l PID</code> 查看java程序线程情况<br/>
+•  死锁，Deadlock（重点关注） <br/>
+•  等待资源，Waiting on condition（重点关注） <br/>
+•  等待获取监视器，Waiting on monitor entry（重点关注） <br/>
+•  阻塞，Blocked（重点关注） <br/>
+•  执行中，Runnable <br/>
+•  暂停，Suspended <br/>
+•  对象等待中，Object.wait() 或 TIMED_WAITING <br/>
+•  停止，Parked</p>
+
+<ul>
+<li>我们可以看到线程处于<code>Blocked</code>阻塞状态。说明线程等待资源超时！</li>
+<li><code>waiting to lock &lt;0x00000006c3bb2440&gt;</code>指线程等待给<code>0x00000006c3bb2440</code>这个地址上锁。在线程dump文件中我们可以搜索到很多线程在等待给这个地址上锁，所以找到谁获得了这个锁，就可以找到问题的根源。</li>
+<li><code>waiting for monitor entry [0x00007f9dd2cb5000]</code> 指线程通过同步块<code>synchronized(obj){...}</code>申请进入了临界区，从而进入了等待的<code>Entry Set</code>队列。</li>
+<li>第一行中 <code>corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1</code>是线程名(Thread Name); <code>prio</code>是线程优先级，<code>tid</code>是<code>Java Thread id</code>, <code>nid</code>是<code>native</code>线程<code>id</code>。</li>
+</ul>
+
+
+<h4>线DUMP中的注意事项</h4>
+
+<p>1、不同的Java虚拟机的线程dump的内容是不一样的，JVM版本版本不同，dump信息也略有差异。<br/>
+2、在实际运行中，一次dump可能只表示当时时刻的情况，还无法确认问题，所以建议多次dump信息，如果多次的结果指向同一个地方，则可以确定问题的原因。<br/>
+3、线程状态中，Deadlock: 死锁线程，一般指多个线程调用，进入相互资源调用，导致一直等待无法释放的情况。<br/>
+4、<code>waiting on condition</code>: 等待资源，或等待某个条件的发生。<br/>
+5、<code>waiting for monitor entry</code>和 <code>Object.wait()</code>: <code>Monitor</code>是 Java中用以实现线程之间的互斥与协作的主要手段，它可以看成是对象或者 Class的锁。每一个对象都有，也仅有一个 monitor。
+从下图1中可以看出，每个 <code>Monitor</code>在某个时刻，只能被一个线程拥有，该线程就是 &ldquo;Active Thread"，而其它线程都是 "Waiting Thread"，分别在两个队列 “ Entry Set”和 “Wait Set”里面等候。在 “Entry Set”中等待的线程状态是 "Waiting for monitor entry"，而在 "Wait Set"中等待的线程状态是 "in Object.wait()"。</p>
+
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" /></p>
+
+<h4>CPU飙高问题排查</h4>
+
+<ul>
+<li>通过top命令查看CPU占用较高的进程ID</li>
+<li>通过jstack命令将java的线程栈输出，保留现场<code>jstack -l 30142 &gt; 30142.stack</code></li>
+<li>通过<code>top -H -p PID</code>命令输出占用cpu过高的线程 找到占用cpu过高的PID</li>
+<li>使用printf 命令将30450转换成16进制。<code>printf "%x\n" 18430</code></li>
+<li>打开之前保存的stack文件，找到线程地址为<code>0x76f2</code>的输出，即为出问题的线程</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-05-27T09:43:06+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:43 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/java/'>java</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/" data-via="" data-counturl="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/" title="Previous Post: ElasticSearch5.3.1 集群搭建">&laquo; ElasticSearch5.3.1 集群搭建</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/" title="Next Post: 服务器常用命令使用">服务器常用命令使用 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/07/01/springboyu-jia-zai/">SpringBoot配置读取与加载的几种方式</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/15/spring-aopxue-xi/">Spring AOP学习</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/">堆内存最佳实践</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/">服务器常用命令使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/05/27/javaxing-neng-you-hua-1/">Java性能优化一线程DUMP</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+<section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/docker/'>docker (2)</a></li>
+<li class='category'><a href='/blog/categories/elasticsearch/'>elasticsearch (1)</a></li>
+<li class='category'><a href='/blog/categories/hadoop/'>hadoop (1)</a></li>
+<li class='category'><a href='/blog/categories/ios/'>ios (5)</a></li>
+<li class='category'><a href='/blog/categories/java/'>java (5)</a></li>
+<li class='category'><a href='/blog/categories/kafka/'>kafka (1)</a></li>
+<li class='category'><a href='/blog/categories/linux/'>linux (1)</a></li>
+<li class='category'><a href='/blog/categories/mac/'>mac (2)</a></li>
+<li class='category'><a href='/blog/categories/php/'>php (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (4)</a></li>
+<li class='category'><a href='/blog/categories/scala/'>scala (1)</a></li>
+<li class='category'><a href='/blog/categories/zookeeper/'>zookeeper (1)</a></li>
+
+  </ul>
+</section>
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Lvzwq -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'lazy-note';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/';
+        var disqus_url = 'http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+  <!--返回顶部开始-->
+<div id="full" style="width:0px; height:0px; position:fixed; right:180px; bottom:150px; z-index:100; text-align:center; background-color:transparent; cursor:pointer;">
+  <a href="#" onclick="goTop();return false;"><img src="/images/top.png" border=0 alt="返回顶部"></a>
+</div>
+<script src="/javascripts/top.js" type="text/javascript"></script>
+<!--返回顶部结束-->
+</body>
+</html>

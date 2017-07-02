@@ -4,7 +4,7 @@
   <title><![CDATA[闲散记事]]></title>
   <link href="http://lvzwq.github.io/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-07T01:18:28+08:00</updated>
+  <updated>2017-07-02T23:39:11+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -12,6 +12,639 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[SpringBoot配置读取与加载的几种方式]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai/"/>
+    <updated>2017-07-01T23:14:32+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai</id>
+    <content type="html"><![CDATA[<blockquote><p>SpringBoot 简化了配置，将原来大量使用xml的配置使用Spring config的方式来是实现，这种方式看上去比xml更加简洁，更好理解。</p></blockquote>
+
+<!-- more -->
+
+
+<h3>SpringBoot 配置读取</h3>
+
+<p>SpringBoot应用默认读取的应用配置是在application.properties或者application.yml文件中</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mq.consumer.topic=binlog.unionbusiness.UnionCommodity
+</span><span class='line'>mq.consumer.groupId=ad.cps.commission
+</span><span class='line'>mq.consumer.address=mq.keeper.service.xxx.org
+</span><span class='line'>mq.consumer.batchSize=20
+</span><span class='line'>mq.consumer.timeOut=2000
+</span><span class='line'>
+</span><span class='line'># mq Consumer 
+</span><span class='line'>mq.asyn.topic=binlog.unionbusiness.UnionAsynEffectOps
+</span><span class='line'>mq.asyn.groupId=unionads.cps.asyneffect
+</span><span class='line'>mq.asyn.address=mq.keeper.service.xxx.org
+</span><span class='line'>mq.asyn.batchSize=10
+</span><span class='line'>mq.asyn.timeOut=2000
+</span><span class='line'>
+</span><span class='line'># mq Producer
+</span><span class='line'>mq.producer.topic=ad.cpscommission.tradeitemid
+</span><span class='line'>mq.producer.groupId=ad.cps.commission
+</span><span class='line'>mq.producer.address=mq.keeper.service.xxx.org</span></code></pre></td></tr></table></div></figure>
+
+
+<p>读取的方式有很多种，第一种通过直接通过<code>@ConfigurationProperties</code>注解来读取配置</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Slf4j</span>
+</span><span class='line'><span class="nd">@Data</span>
+</span><span class='line'><span class="nd">@ConfigurationProperties</span><span class="o">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;mq.producer&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="nd">@Component</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CorgiProducer</span> <span class="kd">implements</span> <span class="n">InitializingBean</span><span class="o">,</span> <span class="n">DisposableBean</span><span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">topic</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">groupId</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">address</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">private</span> <span class="kd">static</span> <span class="n">Producer</span> <span class="n">producer</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">...</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>另外一种，通过SpringMVC中<code>@Value("${xxx}")</code>注解的方式来获取属性文件中的值</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Data</span>
+</span><span class='line'><span class="nd">@Component</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Config</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.groupId}&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">groupId</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.topic}&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">topic</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.address}&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="n">String</span> <span class="n">address</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.batchSize}&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kt">int</span> <span class="n">batchSize</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.timeOut}&quot;</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">private</span> <span class="kt">long</span> <span class="n">timeOut</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">...</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过@Bean结合@ConfigurationProperties的方式可以配置相同类的2个不同实例，如配置2个数据源。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Bean</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;defaultConfig&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="nd">@ConfigurationProperties</span><span class="o">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;mq.consumer&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">CorgiConfig</span> <span class="nf">defaultCorgiConfig</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="nf">CorgiConfig</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nd">@Bean</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;asynConfig&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="nd">@ConfigurationProperties</span><span class="o">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="s">&quot;mq.asyn&quot;</span><span class="o">)</span>
+</span><span class='line'><span class="kd">public</span> <span class="n">CorgiConfig</span> <span class="nf">asynCorgiConfig</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="nf">CorgiConfig</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Spring AOP学习]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi/"/>
+    <updated>2017-06-15T19:49:18+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi</id>
+    <content type="html"><![CDATA[<h3>AOP概念</h3>
+
+<p>AOP概念和术语不是Spring独有的，AOP术语并不是直观感受的，而是一种抽象概念。</p>
+
+<!-- more -->
+
+
+<blockquote><p>切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。
+连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。
+通知Advice: 在一个特殊的Joint Point被Aspect执行的动作。不同的类型的Advice有"around,&ldquo; "before&rdquo; 和 &ldquo;after&rdquo; 类型。
+切入点Pointcut: 通知定义了切面要发生的“故事”和时间，那么切入点就定义了“故事”发生的地点，例如某个类或方法的名称，spring中允许我们方便的用正则表达式来指定</p></blockquote>
+
+<p>Spring AOP是用纯Java实现的，不需要特殊的编译过程，并且不需要控制Classloader的层级关系，并且可以用在Servlet容器中和应用服务器中。
+Spring AOP目前只支持方法级别的执行Joint Point(在Spring Bean中方法执行的通知Advice)。</p>
+
+<h4>AOP代理</h4>
+
+<p>Spring AOP代理默认使用标准SDK的动态代理，这允许代理任意接口interface。Spring AOP也可以使用CGLIB代理，这是代理类而不是代理接口interface,如果一个类没有实现一个接口默认是使用CGLIB代理的。</p>
+
+<h4>@AspectJ</h4>
+
+<p>需要手动开启@AspectJ支持，可以在Java配置中添加@Configuration上添加@EnableAspectJAutoProxy注解。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Configuration</span>
+</span><span class='line'><span class="nd">@EnableAspectJAutoProxy</span>
+</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AppConfig</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>或者在xml配置中开启@AspectJ</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="nt">&lt;aop:aspectj-autoproxy/&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><p>声明一个Aspect
+开启了@AspectJ支持，任何Spring bean使用了@Aspect注解都将被Spring检测并配置成Spring AOP。</p></li>
+<li><p>声明一个切入点Pointcut
+使用@Pointcut注解的切入点表达式，并且注解的方法必须是含void返回值的方法。</p></li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>@Pointcut(&quot;execution(* transfer(..))&quot;)  // the pointcut expression
+</span><span class='line'>private void anyOldTransfer() {} // the pointcut signature
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[堆内存最佳实践]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/"/>
+    <updated>2017-06-08T01:05:38+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian</id>
+    <content type="html"><![CDATA[<!-- more -->
+
+
+<h2>堆分析</h2>
+
+<h3>采用堆直方图分析堆内存使用</h3>
+
+<p>利用堆直方图，我们可以快速看到应用内的对象数目，同时不需要进行完整的堆转储。堆直方图获取方式<code>jcmd PID GC.class_histogram</code></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>jcmd <span class="m">16685</span> GC.class_histogram <span class="p">|</span> more
+</span><span class='line'>16685:
+</span><span class='line'>
+</span><span class='line'> num     <span class="c">#instances         #bytes  class name</span>
+</span><span class='line'>----------------------------------------------
+</span><span class='line'>   1:       <span class="m">3382715</span>      <span class="m">310396224</span>  <span class="o">[</span>C
+</span><span class='line'>   2:       <span class="m">3293714</span>       <span class="m">79049136</span>  java.lang.String
+</span><span class='line'>   3:       <span class="m">2364000</span>       <span class="m">75648000</span>  java.util.HashMap<span class="nv">$Node</span>
+</span><span class='line'>   4:         <span class="m">14080</span>       <span class="m">54832544</span>  <span class="o">[</span>I
+</span><span class='line'>   5:         <span class="m">95607</span>       <span class="m">23472416</span>  <span class="o">[</span>B
+</span><span class='line'>   6:        <span class="m">159142</span>       <span class="m">22423488</span>  <span class="o">[</span>Ljava.util.HashMap<span class="nv">$Node</span><span class="p">;</span>
+</span><span class='line'>   7:         <span class="m">53314</span>       <span class="m">13002496</span>  <span class="o">[</span>Ljava.lang.Object<span class="p">;</span>
+</span><span class='line'>   8:        <span class="m">524288</span>       <span class="m">12582912</span>  com.mogujie.union.cpmbilling.common.disruptor.CpmLogEvent
+</span><span class='line'>   9:        <span class="m">472423</span>       <span class="m">11338152</span>  java.util.concurrent.atomic.AtomicLong
+</span><span class='line'>  10:        <span class="m">164987</span>        <span class="m">7919376</span>  java.util.HashMap
+</span><span class='line'>  11:        <span class="m">142903</span>        <span class="m">4572896</span>  com.mogujie.union.cpmbilling.common.kafka.consumer.MessageInfo
+</span><span class='line'>  12:        <span class="m">161610</span>        <span class="m">3878640</span>  java.lang.Long
+</span><span class='line'>  13:        <span class="m">131572</span>        <span class="m">3157728</span>  com.mogujie.union.cpmbilling.common.kafka.producer.KafkaLogEntity
+</span><span class='line'>  14:        <span class="m">169888</span>        <span class="m">2718208</span>  java.lang.Integer
+</span><span class='line'>......
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在接近顶端的地方，字符数组(<code>[C</code>)和<code>String</code>对象很常见，因为他们是最常创建的Java对象。字节数组(<code>[B</code>)和Object数组同样很常见。该命令不会强制执行Full GC，但是<code>GC.class_histogram</code>中的输出仅包含活跃对象。</p>
+
+<p>运行下面的命令也会得到同样的结果</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jmap -histo PID
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>jmap</code>的输出中包含会被回收的对象(死对象)。如果在获取直方图之前强制执行一次Full GC，可以使用下面命令</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jmap -histo:live PID
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>直方图擅长识别有分配了一两个特定类的过多实例而引发的问题，但是要进行深度的分析，就需要应用到堆转储。</p>
+
+<h3>堆转储</h3>
+
+<p>生成堆转储文件的方式</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jcmd PID GC.heap_dump /path/to/save/heap_dump.hprof
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>或者</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jmap -dump:live,file<span class="o">=</span>/path/to/save/heap_dump.hprof PID
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在jmap中包含live选项，这会在生成堆转储之前强制执行一次Full GC; jcmd默认就会这样做。如果你想包含其他对象(死对象)，可以在jcmd命令后面加上-all选项。</p>
+
+<p>生成的heap_dump.hprof文件我们可以使用下面一些工具打开，常见的有:<br/>
+<code>jhat</code>: 这是最原始的堆分析工具，它会读取堆转储文件，并运行一个小型的http服务器，可以在网页上查看堆转储的信息。</p>
+
+<p>VisualVM 以及 mat等开源原件</p>
+
+<p>对堆的第一遍分析通常涉及保留内存。一个对象的保留内存，是指回收该对象可以释放出的内存量。</p>
+
+<h4>浅对象大小、保留对象大小及深对象大小</h4>
+
+<blockquote><p>对于内存分析，还有其他两个很有用的术语: 浅(shallow)和深(deep)。一个对象的浅大小，值的是该对象本身的大小。如果该对象包含一个指向另一个对象的引用，4字节或8字节的引用会计算在内，但是目标对象的大小不会包含进来。</p>
+
+<p>深大小则包含哪些对象的大小。深大小与保留大小的区别在于那些存在共享的对象。在深大小包括那些共享的内存空间，而保留大小则不包含。</p></blockquote>
+
+<h3>内存溢出错误</h3>
+
+<ul>
+<li>JVM没有原生内存可用</li>
+<li>永久代(在Java 7和更早的版本中) 或元空间(在Java 8)内存不足。</li>
+<li>Java堆本身空间不足 - 对于给定的堆空间而言，应用中活跃对象太多</li>
+<li>JVM执行GC耗时太多</li>
+</ul>
+
+
+<p>自动堆转储
+OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转储。有几个JVM参数可以帮助我们获取</p>
+
+<p>-XX:+HeapDumpOnOutOfMemoryError
+该标志默认为false，打开该标志，JVM会在抛出OutOfMemoryError时创建堆转储。</p>
+
+<p>-XX:HeapDumpPath=<path>
+该标志执行堆转储存储路径。默认会生成java_pid.hprof文件</p>
+
+<p>-XX:+HeapDumpAfterFullGC
+这会在运行一次Full GC后生成一个堆转储文件</p>
+
+<p>-XX:+HeapDumpBeforeFullGC
+这回在运行一次Full GC之前生成一个堆转储文件</p>
+
+<h3>减少内存使用</h3>
+
+<h4>减少对象大小</h4>
+
+<p>减少对象大小的大小有2种方式：减少实例变量的个数(效果很明显),或者减小实例变量的大小。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[服务器常用命令使用]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/"/>
+    <updated>2017-06-07T20:02:13+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong</id>
+    <content type="html"><![CDATA[<!-- more -->
+
+
+<h3>服务器配置查看</h3>
+
+<ul>
+<li>查看主机名</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>hostname
+</span><span class='line'>mogu015038
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看IP</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>ifconfig 或者 hostname -i
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看系统内核版本号和系统名称</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>uname -a
+</span><span class='line'>Linux mogu015038 2.6.32-431.el6.x86_64 <span class="c">#1 SMP Fri Nov 22 03:15:09 UTC 2013 x86_64 x86_64 x86_64 GNU/Linux</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">## 或者</span>
+</span><span class='line'>cat /proc/version
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看系统CPU的统计信息</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>lscpu
+</span><span class='line'>Architecture:          x86_64
+</span><span class='line'>CPU op-mode<span class="o">(</span>s<span class="o">)</span>:        32-bit, 64-bit
+</span><span class='line'>Byte Order:            Little Endian
+</span><span class='line'>CPU<span class="o">(</span>s<span class="o">)</span>:                24
+</span><span class='line'>On-line CPU<span class="o">(</span>s<span class="o">)</span> list:   0-23
+</span><span class='line'>Thread<span class="o">(</span>s<span class="o">)</span> per core:    2
+</span><span class='line'>Core<span class="o">(</span>s<span class="o">)</span> per socket:    6
+</span><span class='line'>Socket<span class="o">(</span>s<span class="o">)</span>:             2
+</span><span class='line'>NUMA node<span class="o">(</span>s<span class="o">)</span>:          2
+</span><span class='line'>Vendor ID:             GenuineIntel
+</span><span class='line'>CPU family:            6
+</span><span class='line'>Model:                 62
+</span><span class='line'>Stepping:              4
+</span><span class='line'>CPU MHz:               2100.094
+</span><span class='line'>BogoMIPS:              4199.41
+</span><span class='line'>Virtualization:        VT-x
+</span><span class='line'>L1d cache:             32K
+</span><span class='line'>L1i cache:             32K
+</span><span class='line'>L2 cache:              256K
+</span><span class='line'>L3 cache:              15360K
+</span><span class='line'>NUMA node0 CPU<span class="o">(</span>s<span class="o">)</span>:     0-5,12-17
+</span><span class='line'>NUMA node1 CPU<span class="o">(</span>s<span class="o">)</span>:     6-11,18-23
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看系统CPU的统计信息</li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>cat /proc/cpuinfo
+</span><span class='line'>processor : 0
+</span><span class='line'>vendor_id : GenuineIntel
+</span><span class='line'>cpu family    : 6
+</span><span class='line'>model     : 62
+</span><span class='line'>model name    : Intel<span class="o">(</span>R<span class="o">)</span> Xeon<span class="o">(</span>R<span class="o">)</span> CPU E5-2620 v2 @ 2.10GHz
+</span><span class='line'>stepping  : 4
+</span><span class='line'>cpu MHz       : 2100.094
+</span><span class='line'>cache size    : <span class="m">15360</span> KB
+</span><span class='line'>physical id   : 0
+</span><span class='line'>siblings  : 12
+</span><span class='line'>core id       : 0
+</span><span class='line'>cpu cores : 6
+</span><span class='line'>apicid        : 0
+</span><span class='line'>initial apicid    : 0
+</span><span class='line'>fpu       : yes
+</span><span class='line'>fpu_exception : yes
+</span><span class='line'>cpuid level   : 13
+</span><span class='line'>wp        : yes
+</span><span class='line'>flags     : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good xtopology nonstop_tsc aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm arat epb xsaveopt pln pts dts tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
+</span><span class='line'>bogomips  : 4200.18
+</span><span class='line'>clflush size  : 64
+</span><span class='line'>cache_alignment   : 64
+</span><span class='line'>address sizes : <span class="m">46</span> bits physical, <span class="m">48</span> bits virtual
+</span><span class='line'>power management:
+</span><span class='line'>
+</span><span class='line'>......
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li>查看内存统计信息</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Java性能优化一线程DUMP]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/"/>
+    <updated>2017-05-27T09:43:06+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1</id>
+    <content type="html"><![CDATA[<p>参考: <a href="http://www.cnblogs.com/zhengyun_ustc/archive/2013/01/06/dumpanalysis.html">三个实例演示 Java Thread Dump 日志分析</a></p>
+
+<!-- more -->
+
+
+<h3>Java程序线程Thread Dump分析</h3>
+
+<p>通过<code>jstack -l PID</code>可以实时查看当前程序的线程dump</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>"corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1" #188 prio=5 os_prio=0 tid=0x00007f9e6006b000 nid=0x6297 waiting for monitor entry [0x00007f9dd2cb5000]
+</span><span class='line'>   java.lang.Thread.State: BLOCKED (on object monitor)
+</span><span class='line'>        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.assembleAdResult(DefaultMessageHandler.java:116)
+</span><span class='line'>        - waiting to lock &lt;0x00000006c3bb2440&gt; (a java.lang.Object)
+</span><span class='line'>        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.handle(DefaultMessageHandler.java:79)
+</span><span class='line'>        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer.lambda$newListener$0(CorgiConsumeInitializer.java:32)
+</span><span class='line'>        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer$$Lambda$9/799107722.onReceived(Unknown Source)
+</span><span class='line'>        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume0(AbstractParallelWorkerGroup.java:92)
+</span><span class='line'>        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume(AbstractParallelWorkerGroup.java:145)
+</span><span class='line'>        at com.mogujie.corgi.client.consumer.consume.SingleParallelWorkerGroup$1.run(SingleParallelWorkerGroup.java:73)
+</span><span class='line'>        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+</span><span class='line'>        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+</span><span class='line'>        at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
+</span><span class='line'>        at java.lang.Thread.run(Thread.java:745)
+</span><span class='line'>
+</span><span class='line'>   Locked ownable synchronizers:
+</span><span class='line'>        - &lt;0x00000006c3b92898&gt; (a java.util.concurrent.ThreadPoolExecutor$Worker)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>线程状态有
+<code>jstack  -l PID</code> 查看java程序线程情况<br/>
+•  死锁，Deadlock（重点关注） <br/>
+•  等待资源，Waiting on condition（重点关注） <br/>
+•  等待获取监视器，Waiting on monitor entry（重点关注） <br/>
+•  阻塞，Blocked（重点关注） <br/>
+•  执行中，Runnable <br/>
+•  暂停，Suspended <br/>
+•  对象等待中，Object.wait() 或 TIMED_WAITING <br/>
+•  停止，Parked</p>
+
+<ul>
+<li>我们可以看到线程处于<code>Blocked</code>阻塞状态。说明线程等待资源超时！</li>
+<li><code>waiting to lock &lt;0x00000006c3bb2440&gt;</code>指线程等待给<code>0x00000006c3bb2440</code>这个地址上锁。在线程dump文件中我们可以搜索到很多线程在等待给这个地址上锁，所以找到谁获得了这个锁，就可以找到问题的根源。</li>
+<li><code>waiting for monitor entry [0x00007f9dd2cb5000]</code> 指线程通过同步块<code>synchronized(obj){...}</code>申请进入了临界区，从而进入了等待的<code>Entry Set</code>队列。</li>
+<li>第一行中 <code>corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1</code>是线程名(Thread Name); <code>prio</code>是线程优先级，<code>tid</code>是<code>Java Thread id</code>, <code>nid</code>是<code>native</code>线程<code>id</code>。</li>
+</ul>
+
+
+<h4>线DUMP中的注意事项</h4>
+
+<p>1、不同的Java虚拟机的线程dump的内容是不一样的，JVM版本版本不同，dump信息也略有差异。<br/>
+2、在实际运行中，一次dump可能只表示当时时刻的情况，还无法确认问题，所以建议多次dump信息，如果多次的结果指向同一个地方，则可以确定问题的原因。<br/>
+3、线程状态中，Deadlock: 死锁线程，一般指多个线程调用，进入相互资源调用，导致一直等待无法释放的情况。<br/>
+4、<code>waiting on condition</code>: 等待资源，或等待某个条件的发生。<br/>
+5、<code>waiting for monitor entry</code>和 <code>Object.wait()</code>: <code>Monitor</code>是 Java中用以实现线程之间的互斥与协作的主要手段，它可以看成是对象或者 Class的锁。每一个对象都有，也仅有一个 monitor。
+从下图1中可以看出，每个 <code>Monitor</code>在某个时刻，只能被一个线程拥有，该线程就是 &ldquo;Active Thread"，而其它线程都是 "Waiting Thread"，分别在两个队列 “ Entry Set”和 “Wait Set”里面等候。在 “Entry Set”中等待的线程状态是 "Waiting for monitor entry"，而在 "Wait Set"中等待的线程状态是 "in Object.wait()"。</p>
+
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" /></p>
+
+<h4>CPU飙高问题排查</h4>
+
+<ul>
+<li>通过top命令查看CPU占用较高的进程ID</li>
+<li>通过jstack命令将java的线程栈输出，保留现场<code>jstack -l 30142 &gt; 30142.stack</code></li>
+<li>通过<code>top -H -p PID</code>命令输出占用cpu过高的线程 找到占用cpu过高的PID</li>
+<li>使用printf 命令将30450转换成16进制。<code>printf "%x\n" 18430</code></li>
+<li>打开之前保存的stack文件，找到线程地址为<code>0x76f2</code>的输出，即为出问题的线程</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[ElasticSearch5.3.1 集群搭建]]></title>
@@ -30,6 +663,8 @@
 3、设置环境变量 JAVA_HOME</p>
 
 <h2>配置修改</h2>
+
+<p>修改<code>elasticsearch.yml</code></p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -337,21 +972,22 @@
 
 <p>使用commons的jexl包</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>     &lt;dependency&gt;
-</span><span class='line'>            &lt;groupId&gt;org.apache.commons&lt;/groupId&gt;
-</span><span class='line'>            &lt;artifactId&gt;commons-jexl&lt;/artifactId&gt;
-</span><span class='line'>            &lt;version&gt;2.0&lt;/version&gt;
-</span><span class='line'>        &lt;/dependency&gt;</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'>  <span class="nt">&lt;dependency&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;groupId&gt;</span>org.apache.commons<span class="nt">&lt;/groupId&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;artifactId&gt;</span>commons-jexl<span class="nt">&lt;/artifactId&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;version&gt;</span>2.0<span class="nt">&lt;/version&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/dependency&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <p>代码示例</p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -363,18 +999,19 @@
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>Map&lt;String,Object&gt; map=new HashMap&lt;String,Object&gt;();  
-</span><span class='line'>map.put("testService",testService);  
-</span><span class='line'>map.put("person",person);  
-</span><span class='line'>String expression="testService.save(person)";  
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">Object</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">Object</span><span class="o">&gt;();</span>
+</span><span class='line'><span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;testService&quot;</span><span class="o">,</span><span class="n">testService</span><span class="o">);</span>
+</span><span class='line'><span class="n">map</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">&quot;person&quot;</span><span class="o">,</span> <span class="n">person</span><span class="o">);</span>
+</span><span class='line'><span class="n">String</span> <span class="n">expression</span><span class="o">=</span><span class="s">&quot;testService.save(person)&quot;</span><span class="o">;</span>
 </span><span class='line'>
-</span><span class='line'> JexlEngine jexl=new JexlEngine();  
-</span><span class='line'> Expression e = jexl.createExpression(expression);  
-</span><span class='line'> JexlContext jc = new MapContext();  
-</span><span class='line'> for(String key:map.keySet()){  
-</span><span class='line'>       jc.set(key, map.get(key));  
-</span><span class='line'> }  
-</span><span class='line'> Object o = e.evaluate(jc);</span></code></pre></td></tr></table></div></figure>
+</span><span class='line'><span class="n">JexlEngine</span> <span class="n">jexl</span><span class="o">=</span><span class="k">new</span> <span class="nf">JexlEngine</span><span class="o">();</span>
+</span><span class='line'><span class="n">Expression</span> <span class="n">e</span> <span class="o">=</span> <span class="n">jexl</span><span class="o">.</span><span class="na">createExpression</span><span class="o">(</span><span class="n">expression</span><span class="o">);</span>
+</span><span class='line'><span class="n">JexlContext</span> <span class="n">jc</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">MapContext</span><span class="o">();</span>
+</span><span class='line'><span class="k">for</span><span class="o">(</span><span class="n">String</span> <span class="nl">key:</span><span class="n">map</span><span class="o">.</span><span class="na">keySet</span><span class="o">()){</span>
+</span><span class='line'>      <span class="n">jc</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">key</span><span class="o">));</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="n">Object</span> <span class="n">o</span> <span class="o">=</span> <span class="n">e</span><span class="o">.</span><span class="na">evaluate</span><span class="o">(</span><span class="n">jc</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure>
 
 
 <h2>方式二</h2>
@@ -383,7 +1020,7 @@
 
 <p>使用Java自带的jdk, <code>javax.script.ScriptEngine</code></p>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -395,20 +1032,23 @@
 <span class='line-number'>10</span>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'> String str = "3&&2&&1";
-</span><span class='line'>  ScriptEngineManager factory = new ScriptEngineManager();
-</span><span class='line'>    ScriptEngine engine = factory.getEngineByName("JavaScript");
-</span><span class='line'>    str = str.replace("2", "true");
-</span><span class='line'>    str = str.replace("3", "true");
-</span><span class='line'>    str = str.replace("1", "false");
-</span><span class='line'>    Object o = null;
-</span><span class='line'>    try {
-</span><span class='line'>        o = engine.eval(str);
-</span><span class='line'>    } catch (ScriptException e) {
-</span><span class='line'>        e.printStackTrace();
-</span><span class='line'>    }</span></code></pre></td></tr></table></div></figure>
-
-
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="n">String</span> <span class="n">str</span> <span class="o">=</span> <span class="s">&quot;a&amp;&amp;b&amp;&amp;c&quot;</span><span class="o">;</span>
+</span><span class='line'>  <span class="n">ScriptEngineManager</span> <span class="n">factory</span> <span class="o">=</span> <span class="k">new</span> <span class="nf">ScriptEngineManager</span><span class="o">();</span>
+</span><span class='line'>  <span class="n">ScriptEngine</span> <span class="n">engine</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="na">getEngineByName</span><span class="o">(</span><span class="s">&quot;JavaScript&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">str</span> <span class="o">=</span> <span class="n">str</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="s">&quot;a&quot;</span><span class="o">,</span> <span class="s">&quot;true&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">str</span> <span class="o">=</span> <span class="n">str</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="s">&quot;b&quot;</span><span class="o">,</span> <span class="s">&quot;true&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">str</span> <span class="o">=</span> <span class="n">str</span><span class="o">.</span><span class="na">replace</span><span class="o">(</span><span class="s">&quot;c&quot;</span><span class="o">,</span> <span class="s">&quot;false&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">Object</span> <span class="n">o</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>  <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">o</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="na">eval</span><span class="o">(</span><span class="n">str</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ScriptException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>  <span class="o">}</span><span class="k">finally</span> <span class="o">{</span>
+</span><span class='line'>      <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;o = &quot;</span> <span class="o">+</span> <span class="n">o</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 ]]></content>
   </entry>
@@ -4704,942 +5344,6 @@ uWSGI日志如下</li>
 
 
 <p>这种方法也值得争议,因为也没有完全利用重用机制。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[IOS 添加toolBar]]></title>
-    <link href="http://lvzwq.github.io/blog/2015/11/04/ios-tian-jia-toolbar/"/>
-    <updated>2015-11-04T19:34:33+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2015/11/04/ios-tian-jia-toolbar</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-<p><code>UIToolBar</code>是<code>UINavigationController</code>中的一个<code>Bar</code>，默认是隐藏的。设置<code>UINavigationController</code>的<code>toolbarHidden</code>属性可显示<code>UIToolBar</code></p>
-
-<p>也可以不用直接使用<code>UINavigationController</code>，直接新建，如下</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-</pre></td><td class='code'><pre><code class='objective-c'><span class='line'><span class="p">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">addToolBar</span><span class="p">{</span>
-</span><span class='line'>    <span class="nb">self</span><span class="p">.</span><span class="n">toolBar</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIToolbar</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithFrame</span><span class="p">:</span><span class="n">CGRectMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">DeviceHeight</span> <span class="o">-</span> <span class="mi">40</span><span class="p">,</span> <span class="n">DeviceWidth</span><span class="p">,</span> <span class="mf">40.0f</span><span class="p">)];</span>
-</span><span class='line'>    <span class="bp">UIImage</span> <span class="o">*</span><span class="n">back</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIImage</span> <span class="nl">imageNamed</span><span class="p">:</span><span class="s">@&quot;Left&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="bp">UIBarButtonItem</span> <span class="o">*</span><span class="n">item1</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIBarButtonItem</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithImage</span><span class="p">:</span><span class="n">back</span>
-</span><span class='line'>                                                              <span class="nl">style</span><span class="p">:</span><span class="n">UIBarButtonItemStyleBordered</span>
-</span><span class='line'>                                                             <span class="nl">target</span><span class="p">:</span><span class="nb">self</span>
-</span><span class='line'>                                                             <span class="nl">action</span><span class="p">:</span><span class="k">@selector</span><span class="p">(</span><span class="n">dismissController</span><span class="p">)];</span>
-</span><span class='line'>    <span class="n">item1</span><span class="p">.</span><span class="n">tintColor</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIColor</span> <span class="n">greenColor</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="bp">UIImage</span> <span class="o">*</span><span class="n">star</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIImage</span> <span class="nl">imageNamed</span><span class="p">:</span><span class="s">@&quot;Star&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="bp">UIBarButtonItem</span> <span class="o">*</span><span class="n">item2</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIBarButtonItem</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithImage</span><span class="p">:</span><span class="n">star</span>
-</span><span class='line'>                                                              <span class="nl">style</span><span class="p">:</span><span class="n">UIBarButtonItemStylePlain</span>
-</span><span class='line'>                                                             <span class="nl">target</span><span class="p">:</span><span class="nb">self</span>
-</span><span class='line'>                                                             <span class="nl">action</span><span class="p">:</span><span class="k">@selector</span><span class="p">(</span><span class="n">starArticle</span><span class="p">)];</span>
-</span><span class='line'>    <span class="n">item2</span><span class="p">.</span><span class="n">tintColor</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIColor</span> <span class="n">greenColor</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="bp">UIImage</span> <span class="o">*</span><span class="n">share</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIImage</span> <span class="nl">imageNamed</span><span class="p">:</span><span class="s">@&quot;Share&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="bp">UIBarButtonItem</span> <span class="o">*</span><span class="n">item3</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIBarButtonItem</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithImage</span><span class="p">:</span><span class="n">share</span>
-</span><span class='line'>                                                              <span class="nl">style</span><span class="p">:</span><span class="n">UIBarButtonItemStylePlain</span>
-</span><span class='line'>                                                             <span class="nl">target</span><span class="p">:</span><span class="nb">self</span>
-</span><span class='line'>                                                             <span class="nl">action</span><span class="p">:</span><span class="k">@selector</span><span class="p">(</span><span class="n">shareArticle</span><span class="p">)];</span>
-</span><span class='line'>    <span class="n">item3</span><span class="p">.</span><span class="n">tintColor</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIColor</span> <span class="n">greenColor</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="bp">UIImage</span> <span class="o">*</span><span class="n">comment</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIImage</span> <span class="nl">imageNamed</span><span class="p">:</span><span class="s">@&quot;Bubble&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="bp">UIBarButtonItem</span> <span class="o">*</span><span class="n">item4</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIBarButtonItem</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithImage</span><span class="p">:</span><span class="n">comment</span>
-</span><span class='line'>                                                              <span class="nl">style</span><span class="p">:</span><span class="n">UIBarButtonItemStylePlain</span>
-</span><span class='line'>                                                             <span class="nl">target</span><span class="p">:</span><span class="nb">self</span>
-</span><span class='line'>                                                             <span class="nl">action</span><span class="p">:</span><span class="k">@selector</span><span class="p">(</span><span class="n">commentArticle</span><span class="p">)];</span>
-</span><span class='line'>    <span class="n">item4</span><span class="p">.</span><span class="n">tintColor</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIColor</span> <span class="n">greenColor</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="bp">UIImage</span> <span class="o">*</span><span class="n">more</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIImage</span> <span class="nl">imageNamed</span><span class="p">:</span><span class="s">@&quot;Star&quot;</span><span class="p">];</span>
-</span><span class='line'>    <span class="bp">UIBarButtonItem</span> <span class="o">*</span><span class="n">item5</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIBarButtonItem</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithImage</span><span class="p">:</span><span class="n">more</span>
-</span><span class='line'>                                                                  <span class="nl">style</span><span class="p">:</span><span class="n">UIBarButtonItemStylePlain</span>
-</span><span class='line'>                                                                 <span class="nl">target</span><span class="p">:</span><span class="nb">self</span>
-</span><span class='line'>                                                                 <span class="nl">action</span><span class="p">:</span><span class="k">@selector</span><span class="p">(</span><span class="n">more</span><span class="p">)];</span>
-</span><span class='line'>    <span class="n">item5</span><span class="p">.</span><span class="n">tintColor</span> <span class="o">=</span> <span class="p">[</span><span class="bp">UIColor</span> <span class="n">greenColor</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="bp">UIBarButtonItem</span> <span class="o">*</span><span class="n">item</span> <span class="o">=</span> <span class="p">[[</span><span class="bp">UIBarButtonItem</span> <span class="n">alloc</span><span class="p">]</span>
-</span><span class='line'>                              <span class="nl">initWithBarButtonSystemItem</span><span class="p">:</span><span class="n">UIBarButtonSystemItemFlexibleSpace</span>
-</span><span class='line'>                              <span class="nl">target</span><span class="p">:</span><span class="nb">nil</span>
-</span><span class='line'>                              <span class="nl">action</span><span class="p">:</span><span class="nb">nil</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>    <span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="n">toolBar</span> <span class="nl">setItems</span><span class="p">:[</span><span class="bp">NSArray</span> <span class="nl">arrayWithObjects</span><span class="p">:</span><span class="n">item1</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">item2</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">item3</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">item4</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">item5</span><span class="p">,</span> <span class="nb">nil</span><span class="p">]];</span>
-</span><span class='line'>    <span class="p">[</span><span class="nb">self</span><span class="p">.</span><span class="n">view</span> <span class="nl">addSubview</span><span class="p">:</span><span class="nb">self</span><span class="p">.</span><span class="n">toolBar</span><span class="p">];</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>加一个<code>item</code>是为了均匀分布<code>toolbar</code>上的空间。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[SQLAlchemy(二) --- ORM]]></title>
-    <link href="http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-er-orm/"/>
-    <updated>2015-10-31T19:34:33+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-er-orm</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-<p><code>SQLAlchemy ORM</code>提供了一个连接数据库表和用户自定义<code>Python</code>类的方法。</p>
-
-<h3>定义一个映射(Mapping)</h3>
-
-<p>类的映射使用已经在基类中定义的声明式系统,这个基类(<code>base class</code>)维护了一个和这个基类相关的数据表的对应关系, 这就是所谓的<code>declarative base class</code>。
-我们的应用在一般在导入的模块中将只有一个这个基类的实例。我们使用<code>declarative_base()</code>创建这个基类的实例。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.ext.declarative</span> <span class="kn">import</span> <span class="n">declarative_base</span>
-</span><span class='line'><span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>有了这个基类我们可以定义任何数量的映射类。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
-</span><span class='line'>    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s">&#39;users&#39;</span>
-</span><span class='line'>    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">gender</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">nullable</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="s">&#39;M&#39;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span class='line'>        <span class="k">return</span> <span class="s">&quot;&lt;User(name=&#39;</span><span class="si">%s</span><span class="s">&#39;, gender=&#39;</span><span class="si">%s</span><span class="s">&#39;)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>                            <span class="bp">self</span><span class="o">.</span><span class="n">gender</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># 执行创建表的语句</span>
-</span><span class='line'><span class="n">Base</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>一个继承自<code>Base</code>的类至少有一个<code>__tablename__</code>属性，并且至少有一个含有主键(<code>primary key</code>)的<code>Column</code>。当一个类创建时， <code>Declarative</code> 将所有的<code>Column</code>类用特殊的Python属性访问器替代。</p>
-
-<h3>创建Session</h3>
-
-<p>ORM操作数据库的句柄就是<code>Session</code>.当我们启动我们的应用时，在<code>create_engine()</code>的同时，我们定义了一个<code>Session</code>类将作为一个创建<code>Session</code>实例的工厂。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">sessionmaker</span>
-</span><span class='line'><span class="n">Session</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>如果我们还没有<code>Engine</code>的实例，我们可以先创建Session，当创建Engine后再绑定。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">Session</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">()</span>
-</span><span class='line'><span class="n">Session</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>当需要和数据库有一个会话时，可以初始化一个<code>Session</code></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>添加新的类</h3>
-
-<p>为了持久化<code>User</code>对象， 我们使用<code>add()</code>将它加入到<code>Session</code>中。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;zhangsan&quot;</span><span class="p">,</span> <span class="n">gender</span><span class="o">=</span><span class="s">&quot;M&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>此时，这个<code>user</code>实例是待定的(<code>pending</code>);不执行任何SQL也不代表数据库中的一行数据。当使用一个<code>flush</code>过程时，<code>Session</code>将执行SQL来持久化<code>user</code>。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">our_user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;zhangsan&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-</span><span class='line'><span class="c"># 此时our_user 和 user是同一个对象</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>事实上，<code>Session</code>返回同一行(对象)就是我们刚刚在<code>Session</code>内部的类的字典持久化的对象，所以我们事实上获得的就是我们加入<code>Session</code>中的实例。</p>
-
-<p>我们需要告诉<code>Session</code>我们想要将所有的改变存入到数据库，提交事务。我们通过<code>commit()</code>来执行。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>在执行<code>commit</code>之前，执行<code>query</code>后，即使<code>user</code>已经有了标识符<code>id</code>, 但是数据库中并没有提交数据，只有在<code>commit</code>之后才会提交数据。</p>
-
-<p>我们可以在数据提交<code>commit</code>之前调用事务的<code>rollback</code>来回滚之前的修改。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>查询<code>Query</code></h3>
-
-<p><code>Query</code>查询返回的是元组<code>tuples</code>,是<code>KeyedTuple</code>提供的类，并且更像一个原生的Python对象。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-</span><span class='line'>    <span class="k">print</span> <span class="n">row</span><span class="o">.</span><span class="n">User</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">name</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>filter()</code>方法通常接收的是Python操作符，而<code>filter_by()</code>方法使用关键字参数</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&quot;ed&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;ed&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>通用的查询语句
-equals:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>not equals:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s">&#39;ed&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>LIKE:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%e</span><span class="s">d%&#39;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>IN:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">([</span><span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="s">&#39;wendy&#39;</span><span class="p">,</span> <span class="s">&#39;jack&#39;</span><span class="p">]))</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># works with query objects too:</span>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">(</span>
-</span><span class='line'>        <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%e</span><span class="s">d%&#39;</span><span class="p">))</span>
-</span><span class='line'><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>NOT IN:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">~</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">in_</span><span class="p">([</span><span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="s">&#39;wendy&#39;</span><span class="p">,</span> <span class="s">&#39;jack&#39;</span><span class="p">]))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>IS NULL:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="bp">None</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># alternatively, if pep8/linters are a concern</span>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="bp">None</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>IS NOT NULL:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># alternatively, if pep8/linters are a concern</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">isnot</span><span class="p">(</span><span class="bp">None</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>AND:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># use and_()</span>
-</span><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">and_</span>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">and_</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">fullname</span> <span class="o">==</span> <span class="s">&#39;Ed Jones&#39;</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># or send multiple expressions to .filter()</span>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">fullname</span> <span class="o">==</span> <span class="s">&#39;Ed Jones&#39;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># or chain multiple filter()/filter_by() calls</span>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">fullname</span> <span class="o">==</span> <span class="s">&#39;Ed Jones&#39;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>OR:</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">or_</span>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;ed&#39;</span><span class="p">,</span> <span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&#39;wendy&#39;</span><span class="p">))</span>
-</span><span class='line'><span class="n">MATCH</span><span class="p">:</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s">&#39;wendy&#39;</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>返回列表<code>List</code>和标量<code>Scalar</code></h3>
-
-<p><code>all()</code>返回一个列表</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%e</span><span class="s">d&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</span><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>first()</code>使用限制，返回结果集的第一条作为<code>Scalar</code></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>one()</code> 如果返回结果集不止一个对象，将<code>raise</code>一个错误。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.orm.exc</span> <span class="kn">import</span> <span class="n">MultipleResultsFound</span>
-</span><span class='line'><span class="k">try</span><span class="p">:</span>
-</span><span class='line'>    <span class="n">users</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
-</span><span class='line'><span class="k">except</span> <span class="n">MultiResultsFound</span> <span class="n">e</span><span class="p">:</span>
-</span><span class='line'>    <span class="k">print</span> <span class="n">e</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>没有数据返回时</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.orm.exc</span> <span class="kn">import</span> <span class="n">NoResultFound</span>
-</span><span class='line'><span class="k">try</span><span class="p">:</span>
-</span><span class='line'>    <span class="n">users</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
-</span><span class='line'><span class="k">except</span> <span class="n">NoResultFound</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
-</span><span class='line'>    <span class="k">print</span> <span class="n">e</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>scalar()</code>调用<code>one()</code>方法，并且成功时返回第一列数据</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">query</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>使用文本SQL语句</h3>
-
-<p>文本字符串可以在查询中灵活使用，通过<code>text()</code>构建。</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">text</span>
-</span><span class='line'><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s">&quot;id&gt;20&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-</span><span class='line'>    <span class="k">print</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>可以绑定参数，使用<code>params()</code>方法</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s">&quot;id&lt;:value and name=:name&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">params</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">220</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&quot;ed&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>计数方法<code>count()</code></p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">Usre</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%e</span><span class="s">d&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>也可以使用<code>func.count()</code>来计数</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">func</span>
-</span><span class='line'><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[SQLAlchemy(一)]]></title>
-    <link href="http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-1/"/>
-    <updated>2015-10-31T17:45:47+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2015/10/31/sqlalchemy-1</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-<h3>使用<code>create_engine</code>连接数据库</h3>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>from sqlalchemy import create_engine
-</span><span class='line'>conn = "mysql://root:root@localhost/dbname?charset=utf8"
-</span><span class='line'>engine = create_engine(conn, echo=True) # 在console中输出SQL语句</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>create_engine</code>方法返回的是一个<code>Engine</code>对象实例，<code>Engine</code>对象实例<code>engine</code>并没有立即连接数据库，只有在第一次有与数据库操作的任务时才会去连接数据库。</p>
-
-<h3>定义和创建表</h3>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
-</span><span class='line'>metadata = MetaData()</span></code></pre></td></tr></table></div></figure>
-
-
-<p><code>SQLAlchemy</code> 使用 <code>ORM</code> 来映射对象和表的关系。
-表(<code>Table</code>)的集合以及与它们有关系的子类(<code>child object</code>)  称为<code>数据库元数据</code>(<code>database metadata</code>)</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>users = Table('user', metadata,
-</span><span class='line'>        Column('id', Integer, primary_key=True),
-</span><span class='line'>        Column('name', String(32), nullable=False),
-</span><span class='line'>        Column('gender', String(1), nullable=False, server_default='M')
-</span><span class='line'>        )
-</span><span class='line'>metadata.create_all(engine)</span></code></pre></td></tr></table></div></figure>
-
-
-<p>创建好表对象之后，我们来创建表。
-使用<code>metadata</code>的<code>create_all</code>方法来在数据库中创建表。<code>create_all</code>这个方法首先会在数据库中查找对应的表是否存在，存在则不创建，所以这个方法多次调用是安全的。</p>
-
-<h3>数据库操作</h3>
-
-<ul>
-<li>插入</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="c"># Insert 构造对应insert语句</span>
-</span><span class='line'><span class="n">ins</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">insert</span><span class="p">()</span>
-</span><span class='line'><span class="c"># &lt;sqlalchemy.sql.dml.Insert object at 0x1079a6290&gt;</span>
-</span><span class='line'><span class="k">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">ins</span><span class="p">)</span>
-</span><span class='line'><span class="c"># INSERT INTO &quot;user&quot; (id, name, gender) VALUES (:id, :name, :gender)</span>
-</span><span class='line'><span class="n">ins</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">insert</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;jack&#39;</span><span class="p">,</span> <span class="n">gender</span><span class="o">=</span><span class="s">&#39;M&#39;</span><span class="p">)</span>
-</span><span class='line'><span class="c"># 也可以这样</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>执行插入操作
-我们创建的<code>engine</code>对象是一个能执行SQL语句的数据库仓库。我们使用<code>connect</code>来创建一个连接.</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">conn</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span class='line'><span class="c"># 执行插入操作</span>
-</span><span class='line'><span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">ins</span><span class="p">)</span> <span class="c"># 执行SQL插入操作,返回一个ResultProxy object</span>
-</span><span class='line'><span class="k">print</span> <span class="n">result</span><span class="o">.</span><span class="n">rowcount</span> <span class="c"># 显示插入条数</span>
-</span><span class='line'><span class="k">print</span> <span class="n">result</span><span class="o">.</span><span class="n">inserted_primary_key</span> <span class="c"># 显示插入的id</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>批量插入</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">insert</span><span class="p">(),</span> <span class="p">[</span>
-</span><span class='line'>    <span class="p">{</span><span class="s">&#39;name&#39;</span> <span class="p">:</span> <span class="s">&#39;Zs&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;F&#39;</span><span class="p">},</span>
-</span><span class='line'>    <span class="p">{</span><span class="s">&#39;name&#39;</span> <span class="p">:</span> <span class="s">&#39;Ls&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;M&#39;</span><span class="p">},</span>
-</span><span class='line'>    <span class="p">{</span><span class="s">&#39;name&#39;</span> <span class="p">:</span> <span class="s">&#39;Ww&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;F&#39;</span><span class="p">}</span>
-</span><span class='line'>    <span class="p">])</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>查询
-主要的创建<code>select</code>的SQL语句的方法是<code>select()</code></li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">select</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">])</span> <span class="c"># select参数是一个列表  </span>
-</span><span class='line'><span class="n">r</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="c"># 返回的是一个ResultProxy object</span>
-</span><span class='line'><span class="nb">all</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span> <span class="c"># 返回一个含有所有RowProxy的列表</span>
-</span><span class='line'><span class="k">print</span> <span class="nb">all</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">all</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">id</span>
-</span><span class='line'><span class="k">print</span> <span class="nb">all</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;name&#39;</span><span class="p">],</span> <span class="nb">all</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
-</span><span class='line'><span class="k">print</span> <span class="nb">all</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="nb">all</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="c"># RowProxy 不支持赋值操作,可以强制转换为dict</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>条件查询</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="s">&#39;user&#39;</span><span class="p">,</span> <span class="s">&#39;address&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>连接词</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">and_</span><span class="p">,</span>  <span class="n">or_</span><span class="p">,</span> <span class="n">not_</span>
-</span><span class='line'><span class="n">c</span> <span class="o">=</span> <span class="n">and_</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&#39;j%&#39;</span><span class="p">),</span> <span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">gender</span> <span class="o">==</span> <span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="n">not_</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">])</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>使用原生SQL语句</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">text</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">text</span><span class="err">（</span><span class="s">&quot;SELECT * FROM users WHERE users.gender = :gender and name = :name&quot;</span><span class="p">)</span>
-</span><span class='line'><span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">gender</span><span class="o">=</span><span class="s">&#39;F&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;Z&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># 也可以在select()中使用text语句</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">])</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s">&quot;users.id = 2&quot;</span><span class="p">))</span>
-</span><span class='line'><span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
-</span><span class='line'><span class="c"># 尽量少使用text</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>使用假名</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">u1</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">alias</span><span class="p">()</span>
-</span><span class='line'><span class="n">u2</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">alias</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>使用连接</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">print</span> <span class="n">users</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="c"># 需要之前设置外键</span>
-</span><span class='line'><span class="k">print</span> <span class="n">users</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">email</span><span class="p">])</span><span class="o">.</span><span class="n">select_from</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">))</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">address</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&quot;%qq.com&quot;</span><span class="p">))</span>
-</span><span class='line'>
-</span><span class='line'><span class="c"># 产生的SQL语句为:</span>
-</span><span class='line'><span class="sb">`SELECT &quot;user&quot;.name, address.email \nFROM &quot;user&quot; JOIN address ON address.user_id = &quot;user&quot;.id \nWHERE address.email LIKE :email_1`</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>使用SQLalchemy调用数据库的<code>function</code>函数</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy.sql</span> <span class="kn">import</span> <span class="n">func</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">func</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="s">&quot;max_id&quot;</span><span class="p">)])</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">like</span><span class="p">(</span><span class="s">&quot;Z%))</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>排序</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">])</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">])</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">desc</span><span class="p">())</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>其他操作</li>
-</ul>
-
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">])</span><span class="o">.</span><span class="n">having</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">)</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">select</span><span class="p">([</span><span class="n">users</span><span class="p">],</span> <span class="n">func</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">score</span><span class="p">)</span><span class="o">.</span><span class="n">lable</span><span class="p">(</span><span class="s">&quot;score_all&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">gender</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>更新和删除</h3>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">up</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">update</span><span class="p">()</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;testname&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">up</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">update</span><span class="p">()</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;prefix_&quot;</span> <span class="o">+</span> <span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-</span><span class='line'><span class="c"># 使用bindparam来操作更新数据</span>
-</span><span class='line'><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">bindparam</span>
-</span><span class='line'><span class="n">stmt</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">update</span><span class="p">()</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">bindparam</span><span class="p">(</span><span class="s">&quot;user_id&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="n">bindparam</span><span class="p">(</span><span class="s">&quot;new_name&quot;</span><span class="p">))</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">user_id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">new_name</span><span class="o">=</span><span class="s">&quot;hello&quot;</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'><span class="err">批量更新数据</span>
-</span><span class='line'><span class="n">s</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="p">[</span>
-</span><span class='line'>    <span class="p">{</span><span class="s">&#39;user_id&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;new_name&#39;</span><span class="p">:</span> <span class="s">&#39;good&#39;</span><span class="p">},</span>
-</span><span class='line'>    <span class="p">{</span><span class="s">&#39;user_id&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;new_name&#39;</span><span class="p">:</span> <span class="s">&#39;bad&#39;</span><span class="p">}</span>
-</span><span class='line'>    <span class="p">])</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>删除数据</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="n">d</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
-</span><span class='line'><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="c"># 删除全部数据</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">d</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">users</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">gender</span> <span class="o">==</span> <span class="s">&quot;M&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Python2中的编码错误]]></title>
-    <link href="http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu/"/>
-    <updated>2015-10-31T17:22:55+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2015/10/31/python2zhong-de-bian-ma-cuo-wu</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-
-
-<h3>Python2中常出现的编码问题</h3>
-
-
-
-
-<pre><code>UnicodeDecodeError: 'ascii' codec can't decode byte 0xe5 in position 4: ordinal not in range(128)
-</code></pre>
-
-
-<p>对中文字符串解码出错
-虽然可以在代码头部加入以下代码解决</p>
-
-<pre><code>import sys
-import sys
-reload(sys)
-sys.setdefaultencoding("utf-8")
-</code></pre>
-
-
-<p>但是这种方式已经不推荐使用了<a href="http://stackoverflow.com/questions/3828723/why-we-need-sys-setdefaultencodingutf-8-in-a-py-script">[详细阅读]</a>。<br/>
-所以推荐使用以下方式(Python2默认的字符串编码是<code>str</code>)<br/>
-<code>xxx.decode(&ldquo;utf-8&rdquo;)</code><br/>
-或者在你需要使用中文的地方前面加上<code>u</code>.</p>
-
-<blockquote>
-  这种错误通常发生在以某种编码("<code>ascii</code>")解码一个<code>str</code>类型的字符串时.因为编码映射仅仅只能支持一部分<code>str</code>类型的字符串到<code>unicode</code>字符串, 一个非法的<code>str</code>类型的序列将会导致编码<code>decode()</code>失败。 <a href="https://wiki.python.org/moin/UnicodeDecodeError">[详细阅读]</a>
-</blockquote>
-
-
-<p>如<code>str</code>字符串<code>\x81</code>就不能转化为<code>unicode</code>对应的字符串</p>
-
-<pre><code>&gt;&gt;&gt; "x81".decode("utf-8")
-Traceback (most recent call last):
-  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
-  File "/System/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/encodings/utf_8.py", line 16, in decode
-    return codecs.utf_8_decode(input, errors, True)
-UnicodeDecodeError: 'utf8' codec can't decode byte 0x81 in position 0: invalid start byte
-</code></pre>
-
-
-<p>另一种情况的解码错误</p>
-
-<blockquote>
-  自相矛盾的是，<code>UnicodeDecodeError</code>也可能发生在编码<code>__encoding__</code>时。
-  原因是编码函数<code>encode()</code>通常情况下需要一个<code>unicode</code>类型的字符串作为参数。但是实际传过来的是一个<code>str</code>类型的参数。<code>encode()</code>函数将这个参数向上转换"<code>up-convert</code>"为<code>unicode</code>类型，然后再将转化为他们自己的编码。这也会出现这样的向上转换"<code>up-convertion</code>"的时候，系统默认选择一个<code>ascii</code>解码器, 解码器中没有这个<code>str</code>类型的<code>unicode</code>编码,  。因此这是在一个编码器<code>encoder</code>中出现解码失败的情况。
-</blockquote>
-
-
-<p>如<code>str</code>类型的<code>\xd0\x91</code>在encode()时就会出现<code>UnicodeDecodeError</code>错误</p>
-
-<pre><code>&gt;&gt;&gt; "xd0x91".encode("utf-8")
-Traceback (most recent call last):
-  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
-UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
-</code></pre>
-
-
-<p>在这个过程中发生了两件事情。首先<code>\xd0\x91</code>是python默认的<code>str</code>类型的字符串，而编码<code>encode</code>需要一个<code>unicode</code>类型的字符串，所以在编码<code>encode</code>之前，先转化为<code>unicode</code>,而执行的是<code>&ldquo;\xd0\x91&rdquo;.decode(&ldquo;ascii&rdquo;)</code>, 所以会出现上面的错误。</p>
-
-<pre><code>&gt;&gt;&gt; "xd0x91".decode("ascii")
-Traceback (most recent call last):
-  File "&lt;stdin&gt;", line 1, in &lt;module&gt;
-UnicodeDecodeError: 'ascii' codec can't decode byte 0xd0 in position 0: ordinal not in range(128)
-&gt;&gt;&gt; # 而如果使用utf-8 转码的话就可以正常执行
-&gt;&gt;&gt; "xd0x91".decode("utf-8")
-u'u0411'
-</code></pre>
-
-
-
-
-<h3>总结</h3>
-
-
-<p>所以出现上面的<code>UnicodeDecodeError</code>错误时，可以不使用系统的<code>ascii</code>编码解码，自己使用<code>utf-8</code>解码就可以解决问题,即<code>xx.decode(&ldquo;utf-8&rdquo;)</code>。但是如果<code>str</code>类型的字符串非常特殊，如第一种例子中的<code>\x81</code>的话就直接无法转码了。所以最好的方法还是将一个字符串定义为<code>unicode</code>类型。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Mac使用Octopress搭建博客]]></title>
-    <link href="http://lvzwq.github.io/blog/2015/09/04/macshi-yong-octopressda-jian-bo-ke/"/>
-    <updated>2015-09-04T08:22:05+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2015/09/04/macshi-yong-octopressda-jian-bo-ke</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-<p>一、搭建环境</p>
-
-<ul>
-<li>安装<code>homebrew</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>使用<code>homebrew</code>升级新版本ruby替换系统自带<code>ruby</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>brew install ruby</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>升级<code>gem</code>版本</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>gem update  --system 2.6.6</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>安装<code>bundler</code></li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>sudo gem install bundler</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>升级<code>rake</code>版本</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>bundle update rake</span></code></pre></td></tr></table></div></figure>
-
-
-<p>二、在本地启动博客服务</p>
-
-<ul>
-<li>安装博客所需要的<code>ruby</code>依赖</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>bundler install</span></code></pre></td></tr></table></div></figure>
-
-
-<p>
-* 安装默认主题和配置</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake install</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>编译markdown文件，生成静态文件</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake generate</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>本地预览</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake preview</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>新建文章</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake new_post
-</span><span class='line'>Enter a title for your post:</span></code></pre></td></tr></table></div></figure>
-
-
-<p>三、将本地博客上传至<code>GitPage</code></p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>rake generate
-</span><span class='line'>rake deploy</span></code></pre></td></tr></table></div></figure>
-
-
-
 ]]></content>
   </entry>
   

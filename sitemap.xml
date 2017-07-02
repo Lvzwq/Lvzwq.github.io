@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
+<loc>http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai/</loc>
+<lastmod>2017-07-01T23:14:32+08:00</lastmod>
+</url>
+<url>
+<loc>http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi/</loc>
+<lastmod>2017-06-15T19:49:18+08:00</lastmod>
+</url>
+<url>
+<loc>http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/</loc>
+<lastmod>2017-06-08T01:05:38+08:00</lastmod>
+</url>
+<url>
+<loc>http://lvzwq.github.io/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/</loc>
+<lastmod>2017-06-07T20:02:13+08:00</lastmod>
+</url>
+<url>
+<loc>http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/</loc>
+<lastmod>2017-05-27T09:43:06+08:00</lastmod>
+</url>
+<url>
 <loc>http://lvzwq.github.io/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/</loc>
 <lastmod>2017-05-06T16:25:43+08:00</lastmod>
 </url>
@@ -118,5 +138,8 @@
 </url>
 <url>
 <loc>http://lvzwq.github.io/blog/categories/elasticsearch/</loc>
+</url>
+<url>
+<loc>http://lvzwq.github.io/blog/categories/linux/</loc>
 </url>
 </urlset>

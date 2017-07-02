@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Zookeeper | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/zookeeper/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-05-07T01:18:28+08:00</updated>
+  <updated>2017-07-02T23:39:11+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -144,7 +144,7 @@ java.net.NoRouteToHostException: No route to host (Host unreachable)
 <p>这个出现在了一台centos机器上，主要原因是防火墙禁止访问
 最简单的方法是禁止防火墙</p>
 
-<pre><code class="sh">systemctl stop firewalld.service 
+<pre><code class="sh">systemctl stop firewalld.service
 systemctl disable firewalld.service #禁止firewall开机启动
 </code></pre>
 
