@@ -108,9 +108,9 @@
 <!-- more -->
 
 
-<blockquote><p>切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。
-连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。
-通知Advice: 在一个特殊的Joint Point被Aspect执行的动作。不同的类型的Advice有"around,&ldquo; "before&rdquo; 和 &ldquo;after&rdquo; 类型。
+<blockquote><p>切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。<br/>
+连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。<br/>
+通知Advice: 在一个特殊的Joint Point被Aspect执行的动作。不同的类型的Advice有"around,&ldquo; "before&rdquo; 和 &ldquo;after&rdquo; 类型。<br/>
 切入点Pointcut: 通知定义了切面要发生的“故事”和时间，那么切入点就定义了“故事”发生的地点，例如某个类或方法的名称，spring中允许我们方便的用正则表达式来指定</p></blockquote>
 
 <p>Spring AOP是用纯Java实现的，不需要特殊的编译过程，并且不需要控制Classloader的层级关系，并且可以用在Servlet容器中和应用服务器中。
@@ -154,8 +154,8 @@ Spring AOP目前只支持方法级别的执行Joint Point(在Spring Bean中方�
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='xml'><span class='line'>@Pointcut(&quot;execution(* transfer(..))&quot;)  // the pointcut expression
-</span><span class='line'>private void anyOldTransfer() {} // the pointcut signature
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Pointcut</span><span class="o">(</span><span class="s">&quot;execution(* transfer(..))&quot;</span><span class="o">)</span>  <span class="c1">// the pointcut expression</span>
+</span><span class='line'><span class="kd">private</span> <span class="kt">void</span> <span class="nf">anyOldTransfer</span><span class="o">()</span> <span class="o">{}</span> <span class="c1">// the pointcut signature</span>
 </span></code></pre></td></tr></table></div></figure>
 
 </div>
