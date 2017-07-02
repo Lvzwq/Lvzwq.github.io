@@ -8,6 +8,7 @@ categories: Java
 
 ### AOP概念
 AOP概念和术语不是Spring独有的，AOP术语并不是直观感受的，而是一种抽象概念。
+<!-- more -->
 >
 切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。
 连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。
