@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-08-17T00:24:53+08:00</updated>
+  <updated>2017-08-17T00:29:18+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -22,7 +22,10 @@
 
 <blockquote><p>Java虚拟机在执行Java程序的过程中会把它所管理的内存划分为若干个不同的数据区域。</p></blockquote>
 
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" /></p>
+<!-- more -->
+
+
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" /></p>
 
 <h3>程序计数器(Program Counter Register)</h3>
 
@@ -99,7 +102,7 @@
 
 <h2>垃圾收集器</h2>
 
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" /></p>
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" /></p>
 
 <h3>Serial收集器</h3>
 
@@ -112,7 +115,7 @@
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[SpringBo学习笔记一]]></title>
+    <title type="html"><![CDATA[SpringBoot学习笔记一]]></title>
     <link href="http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/"/>
     <updated>2017-08-17T00:09:28+08:00</updated>
     <id>http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1</id>
@@ -126,6 +129,9 @@
 <li>Provide production-ready features such as metrics, health checks and externalized configuration</li>
 <li>Absolutely no code generation and no requirement for XML configuration</li>
 </ul>
+
+
+<!-- more -->
 
 
 <p>SpringBoot应用Maven依赖加入
@@ -950,17 +956,18 @@ public @interface EnableAutoConfiguration {
 当我们的Jar依赖也就是有我们的环境中存在MongoClient.class,才会创建这个Bean；
 其中ConditionalOnClass中依赖@Conditional(OnClassCondition.class)条件，判断是否加载。</p>
 
-<p>参考
-<a href="http://www.imooc.com/article/15432">Spring Boot起步依赖源码分析</a>
+<h3>参考</h3>
+
+<p><a href="http://www.imooc.com/article/15432">Spring Boot起步依赖源码分析</a><br/>
 <a href="https://fangjian0423.github.io/2017/04/30/springboot-startup-analysis/">SpringBoot源码分析之SpringBoot的启动过程</a></p>
 ]]></content>
   </entry>
   
   <entry>
     <title type="html"><![CDATA[SpringBoot配置读取与加载的几种方式]]></title>
-    <link href="http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai/"/>
+    <link href="http://lvzwq.github.io/blog/2017/07/01/springbootyu-jia-zai/"/>
     <updated>2017-07-01T23:14:32+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai</id>
+    <id>http://lvzwq.github.io/blog/2017/07/01/springbootyu-jia-zai</id>
     <content type="html"><![CDATA[<blockquote><p>SpringBoot 简化了配置，将原来大量使用xml的配置使用Spring config的方式来是实现，这种方式看上去比xml更加简洁，更好理解。</p></blockquote>
 
 <!-- more -->
