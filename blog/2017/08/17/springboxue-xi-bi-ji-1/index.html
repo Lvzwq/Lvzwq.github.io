@@ -5,11 +5,13 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>闲散记事</title>
+  <title>SpringBo学习笔记一 - 闲散记事</title>
   <meta name="author" content="Lvzwq">
 
   
-  <meta name="description" content="运行程序时数据区域 Java虚拟机在执行Java程序的过程中会把它所管理的内存划分为若干个不同的数据区域。 程序计数器(Program Counter Register) 程序计数器是一块较小的内存空间，他可以看做是当前线程所执行的的字节码的行号指示器。 Java 虚拟机栈 线程私有， &hellip;">
+  <meta name="description" content="特点 Create stand-alone Spring applications
+Embed Tomcat, Jetty or Undertow directly (no need to deploy WAR files)
+Provide opinionated &lsquo;starter& &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +20,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://lvzwq.github.io/">
+  <link rel="canonical" href="http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="闲散记事" type="application/atom+xml">
@@ -76,136 +78,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2017/08/17/javanei-cun-qu-yu-yu-la-ji-shou-ji-qi/">Java内存区域与垃圾收集器</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-08-17T00:11:08+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>12:11 am</span></time>
-        
-           | <a href="/blog/2017/08/17/javanei-cun-qu-yu-yu-la-ji-shou-ji-qi/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/08/17/javanei-cun-qu-yu-yu-la-ji-shou-ji-qi/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>运行程序时数据区域</h2>
-
-<blockquote><p>Java虚拟机在执行Java程序的过程中会把它所管理的内存划分为若干个不同的数据区域。</p></blockquote>
-
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" /></p>
-
-<h3>程序计数器(Program Counter Register)</h3>
-
-<p>程序计数器是一块较小的内存空间，他可以看做是当前线程所执行的的字节码的行号指示器。</p>
-
-<h3>Java 虚拟机栈</h3>
-
-<p>线程私有，生命周期与线程相同。每一个方法在执行的同时都会创建一个栈帧(Stack Frame)用于存储局部变量表、操作数栈、动态链接、方法出口等信息。每一个方法从调用到直至执行完成的过程，就对应着一个栈帧在虚拟机栈中入栈和出栈的过程。</p>
-
-<h3>本地方法栈</h3>
-
-<p>本地方法栈与虚拟机栈所发挥的作用是非常相似的，他们之间的区别不过是虚拟机栈为虚拟机执行Java方法(字节码)服务，而本地方法栈则为虚拟机使用的Native方法服务。</p>
-
-<h3>Java堆</h3>
-
-<p>对于大多数应用而言，Java堆是Java虚拟机所管理的内存中最大的一块，在虚拟机启动时创建，是所有线程共享的一块内存区域，此内存区域的作用就是存放对象实例，几乎所有的对象实例都在这里分配内存。Java堆是垃圾回收器管理的主要区域，也被成为GC堆。</p>
-
-<h3>方法区</h3>
-
-<p>方法区是线程共享的内存区域，用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译的代码等数据。</p>
-
-<h3>运行时常量池(Runtime Constants Pool)</h3>
-
-<p>运行时常量池是方法区的一部分。</p>
-
-<h3>对象创建</h3>
-
-<blockquote><p>虚拟机遇到一条new指令是，首先去检查这个指令额参数是否能在常量池中定位到一个类的符号引用，并且检查这个符号引用代表的类是否已经被加载、解析和初始化过。如果没有则必须执行相应的类加载过程。
-在类加载检查通过后，接下来虚拟机将为新生对象分配内存。对象所需的内存大小在类加载完成后便可完全确定，为对象分配空间的任务等同于把一块确定大小的内存空间从Java堆中划分出来。</p></blockquote>
-
-<h3>java堆内存分配方式</h3>
-
-<ul>
-<li>指针碰撞：假设java堆中内存是绝对规整的</li>
-<li>空闲列表:  虚拟机维护一个列表，记录那些内存块是可用的</li>
-</ul>
-
-
-<p>java堆内存是否规整由所采用的垃圾收集器是否带有压缩整理功能决定。因此在使用Serial、ParNew等带有Compact过程的收集器时，系统采用的分配算法是指针碰撞，而使用CMS这种基于Mark-Sweep算法的收集器，通常采用空闲列表。</p>
-
-<h2>垃圾收集器与内存分配策略</h2>
-
-<h3>判断对象是否存活</h3>
-
-<ul>
-<li><p>引用计数算法：给对象添加一个引用计数器，每当有一个地方引用它时，计数器就加1，当引用失效时，计数器值就减1，在任意时刻计数器为0的对象就是不可能再被使用的。目前主流的虚拟机里并没有选用引用计数算法来管理内存，其中最主要的原因是它很难解决对象之间循环引用的问题。</p></li>
-<li><p>可达性分析算法：通过一系列的称为”GC Roots“的对象作为起始点，从这些节点开始向下搜索，搜索所走过的路径被称为引用链，当一个对象到GC Roots没有任何引用链相连时，则称为此对象是不可用的，它们到GC Roots是不可达的，所以它们将会被判定为是可回收的对象。</p></li>
-</ul>
-
-
-<p>在JDK1.2后，Java对引用的概念进行了扩充，将引用划分为强引用、软引用、弱引用、虚引用，这4种引用强度逐渐减弱。</p>
-
-<h3>垃圾收集算法</h3>
-
-<ul>
-<li><p><strong>标记-清除算法(Mark-Sweep)</strong>： 算法分为标记和清除两个阶段，是最基础的收集算法。首先标记处所有需要回收的对象，在标记完成后统一回收所有被标记的对象。
-主要的不足有两个:
-效率问题，标记和清除两个过程的效率都不高；
-空间问题，标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后再程序运行过程中需要分配较大对象时，无法找到足够连续内存而不得不提前出发另一次的垃圾回收动作。</p></li>
-<li><p><strong>复制算法</strong>: 为了解决效率问题，将可用内存按容量大小分为大小相同的两块，每次只使用其中的一块。当这一块的内存用完了，就将还存活的对象复制到另外一块上面，然后再把已使用的内存空间一次清理掉。这样使得每次都是对整个半区进行内存回收，内存分配是也就不用考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。只是这种算法的代价是将内存缩小为了原来的一半。</p></li>
-</ul>
-
-
-<blockquote><p>商业虚拟机都采用这种收集算法来回收新生代，因为新生代中的对象98%是朝生夕死的，所以并不需要按照1:1的比例来划分内存空间，而是将内存分为一块较大的Eden空间和两块较小的Suvivor空间，每次使用Eden空间和其中一块Survivor空间。当回收时，将Eden空间和Survivor空间中还存活的对象一次性地复制到另外一块Survivor空间上，最后清理掉Eden空间和Survivor空间。HotSpot虚拟机默认的Eden和Survivor的大小比例是8:1.
-当Survivor空间不够用时，需要依赖其他内存(这里指老年代)进行分配担保。</p></blockquote>
-
-<ul>
-<li><p><strong>标记-整理算法</strong>： 复制收集算法在对象存活率较高时就要进行较多的复制操作，效率将会降低。更为关键的是，如果不想浪费50%的空间，就需要有额外的空间进行担保，以应对被使用的内存中所有对象都100%存活的极端情况，所以老年代一般不能直接选用这种算法。
-标记整理算法的标记过程仍然与“标记-清除”算法一样，但后续步骤不是直接对可回收对象进行整理，而是让所有存活的对象都向一段移动，然后直接清理掉端边界以外的内存。</p></li>
-<li><p><strong>分代收集算法</strong>：根据对象存活周期的不同将内存划分为几块。一般是把Java堆分为新生代和老年代，这样可以根据各个年代的特点采用最适合的收集算法。
-在新生代中，每次垃圾收集时都发现有大批对象死去，只有少量存活，那就使用复制算法，只需要付出少量存活对象的复制成本就可以完成收集。而老年代中因为对象存活率高、没有额外空间对它进行分配担保，就必须使用“标记-清除”或者“标记-整理”算法来进行收集。</p></li>
-</ul>
-
-
-<h2>垃圾收集器</h2>
-
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" /></p>
-
-<h3>Serial收集器</h3>
-
-<blockquote><p>Serial收集器是最基本、发展历史最悠久的收集器，是一个单线程的收集器。只会使用一个CPU或一条收集线程去完成垃圾收集工作，在进行垃圾收集时，必须暂停其他所有的工作线程，直到它收集结束。</p></blockquote>
-
-<h3>ParNew收集器</h3>
-
-<blockquote><p>ParNew收集器是Serial收集器的多线程版本，除了使用多条线程进行垃圾收集之外，其余行为基本与Serial收集器完全一样。</p></blockquote>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/08/17/springboxue-xi-bi-ji-1/">SpringBo学习笔记一</a></h1>
+      <h1 class="entry-title">SpringBo学习笔记一</h1>
     
     
       <p class="meta">
@@ -216,15 +94,15 @@
 
 <time class='entry-date' datetime='2017-08-17T00:09:28+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>12:09 am</span></time>
         
-           | <a href="/blog/2017/08/17/springboxue-xi-bi-ji-1/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://lvzwq.github.io">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><h2>特点</h2>
+<div class="entry-content"><h2>特点</h2>
 
 <ul>
 <li>Create stand-alone Spring applications</li>
@@ -1194,312 +1072,60 @@ RedisAutoConfiguration 、MongoRepositoriesAutoConfiguration 、ElasticsearchAut
 <a href="http://www.imooc.com/article/15432">Spring Boot起步依赖源码分析</a>
 <a href="https://fangjian0423.github.io/2017/04/30/springboot-startup-analysis/">SpringBoot源码分析之SpringBoot的启动过程</a></p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Lvzwq</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-08-17T00:09:28+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>12:09 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/java/'>java</a>
+  
+</span>
+
+
+    </p>
     
-      <h1 class="entry-title"><a href="/blog/2017/07/01/springboyu-jia-zai/">SpringBoot配置读取与加载的几种方式</a></h1>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/" data-via="" data-counturl="http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/" >Tweet</a>
+  
+  
+  
+</div>
+
     
-    
-      <p class="meta">
-        
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/07/01/springboyu-jia-zai/" title="Previous Post: SpringBoot配置读取与加载的几种方式">&laquo; SpringBoot配置读取与加载的几种方式</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2017/08/17/javanei-cun-qu-yu-yu-la-ji-shou-ji-qi/" title="Next Post: Java内存区域与垃圾收集器">Java内存区域与垃圾收集器 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
 
-
-
-
-<time class='entry-date' datetime='2017-07-01T23:14:32+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2017</span></span> <span class='time'>11:14 pm</span></time>
-        
-           | <a href="/blog/2017/07/01/springboyu-jia-zai/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/07/01/springboyu-jia-zai/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><blockquote><p>SpringBoot 简化了配置，将原来大量使用xml的配置使用Spring config的方式来是实现，这种方式看上去比xml更加简洁，更好理解。</p></blockquote>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/07/01/springboyu-jia-zai/">Read on &rarr;</a>
-    </footer>
-  
 
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/06/15/spring-aopxue-xi/">Spring AOP学习</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-06-15T19:49:18+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:49 pm</span></time>
-        
-           | <a href="/blog/2017/06/15/spring-aopxue-xi/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h3>AOP概念</h3>
-
-<p>AOP概念和术语不是Spring独有的，AOP术语并不是直观感受的，而是一种抽象概念。</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/06/15/spring-aopxue-xi/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/">堆内存最佳实践</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-06-08T01:05:38+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>1:05 am</span></time>
-        
-           | <a href="/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"></div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/">服务器常用命令使用</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-06-07T20:02:13+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>8:02 pm</span></time>
-        
-           | <a href="/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"></div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/06/07/fu-wu-qi-chang-yong-ming-ling-shi-yong/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/05/27/javaxing-neng-you-hua-1/">Java性能优化一线程DUMP</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-05-27T09:43:06+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:43 am</span></time>
-        
-           | <a href="/blog/2017/05/27/javaxing-neng-you-hua-1/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>参考: <a href="http://www.cnblogs.com/zhengyun_ustc/archive/2013/01/06/dumpanalysis.html">三个实例演示 Java Thread Dump 日志分析</a></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/05/27/javaxing-neng-you-hua-1/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">ElasticSearch5.3.1 集群搭建</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-05-06T16:25:43+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>4:25 pm</span></time>
-        
-           | <a href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>参考: <a href="http://blog.csdn.net/gamer_gyt/article/details/59077189">Elasticsearch5.2.1集群搭建，动态加入节点，并添加监控诊断插件</a></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/05/06/elasticsearch5-dot-3-1-ji-qun-da-jian/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/04/25/kafkaji-qun-da-jian/">Kafka集群搭建</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-04-25T00:58:41+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>12:58 am</span></time>
-        
-           | <a href="/blog/2017/04/25/kafkaji-qun-da-jian/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/04/25/kafkaji-qun-da-jian/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>参考:<a href="http://www.jianshu.com/p/dc4770fc34b6">kafka环境搭建2-broker集群+zookeeper集群</a></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/04/25/kafkaji-qun-da-jian/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Java 对字符串转为可执行代码</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-04-25T00:54:14+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>12:54 am</span></time>
-        
-           | <a href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/#disqus_thread"
-             data-disqus-identifier="http://lvzwq.github.io/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"></div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  <div class="pagination">
-    
-      <a class="prev" href="/posts/2">&larr; Older</a>
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
-</div>
 <aside class="sidebar">
   
     <section>
@@ -1553,6 +1179,7 @@ RedisAutoConfiguration 、MongoRepositoriesAutoConfiguration 、ElasticsearchAut
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -1567,7 +1194,10 @@ RedisAutoConfiguration 、MongoRepositoriesAutoConfiguration 、ElasticsearchAut
       var disqus_shortname = 'lazy-note';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/';
+        var disqus_url = 'http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

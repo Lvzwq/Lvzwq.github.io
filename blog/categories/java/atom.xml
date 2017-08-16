@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-07-03T00:12:20+08:00</updated>
+  <updated>2017-08-17T00:24:53+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -12,6 +12,949 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Java内存区域与垃圾收集器]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/08/17/javanei-cun-qu-yu-yu-la-ji-shou-ji-qi/"/>
+    <updated>2017-08-17T00:11:08+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/08/17/javanei-cun-qu-yu-yu-la-ji-shou-ji-qi</id>
+    <content type="html"><![CDATA[<h2>运行程序时数据区域</h2>
+
+<blockquote><p>Java虚拟机在执行Java程序的过程中会把它所管理的内存划分为若干个不同的数据区域。</p></blockquote>
+
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" /></p>
+
+<h3>程序计数器(Program Counter Register)</h3>
+
+<p>程序计数器是一块较小的内存空间，他可以看做是当前线程所执行的的字节码的行号指示器。</p>
+
+<h3>Java 虚拟机栈</h3>
+
+<p>线程私有，生命周期与线程相同。每一个方法在执行的同时都会创建一个栈帧(Stack Frame)用于存储局部变量表、操作数栈、动态链接、方法出口等信息。每一个方法从调用到直至执行完成的过程，就对应着一个栈帧在虚拟机栈中入栈和出栈的过程。</p>
+
+<h3>本地方法栈</h3>
+
+<p>本地方法栈与虚拟机栈所发挥的作用是非常相似的，他们之间的区别不过是虚拟机栈为虚拟机执行Java方法(字节码)服务，而本地方法栈则为虚拟机使用的Native方法服务。</p>
+
+<h3>Java堆</h3>
+
+<p>对于大多数应用而言，Java堆是Java虚拟机所管理的内存中最大的一块，在虚拟机启动时创建，是所有线程共享的一块内存区域，此内存区域的作用就是存放对象实例，几乎所有的对象实例都在这里分配内存。Java堆是垃圾回收器管理的主要区域，也被成为GC堆。</p>
+
+<h3>方法区</h3>
+
+<p>方法区是线程共享的内存区域，用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译的代码等数据。</p>
+
+<h3>运行时常量池(Runtime Constants Pool)</h3>
+
+<p>运行时常量池是方法区的一部分。</p>
+
+<h3>对象创建</h3>
+
+<blockquote><p>虚拟机遇到一条new指令是，首先去检查这个指令额参数是否能在常量池中定位到一个类的符号引用，并且检查这个符号引用代表的类是否已经被加载、解析和初始化过。如果没有则必须执行相应的类加载过程。
+在类加载检查通过后，接下来虚拟机将为新生对象分配内存。对象所需的内存大小在类加载完成后便可完全确定，为对象分配空间的任务等同于把一块确定大小的内存空间从Java堆中划分出来。</p></blockquote>
+
+<h3>java堆内存分配方式</h3>
+
+<ul>
+<li>指针碰撞：假设java堆中内存是绝对规整的</li>
+<li>空闲列表:  虚拟机维护一个列表，记录那些内存块是可用的</li>
+</ul>
+
+
+<p>java堆内存是否规整由所采用的垃圾收集器是否带有压缩整理功能决定。因此在使用Serial、ParNew等带有Compact过程的收集器时，系统采用的分配算法是指针碰撞，而使用CMS这种基于Mark-Sweep算法的收集器，通常采用空闲列表。</p>
+
+<h2>垃圾收集器与内存分配策略</h2>
+
+<h3>判断对象是否存活</h3>
+
+<ul>
+<li><p>引用计数算法：给对象添加一个引用计数器，每当有一个地方引用它时，计数器就加1，当引用失效时，计数器值就减1，在任意时刻计数器为0的对象就是不可能再被使用的。目前主流的虚拟机里并没有选用引用计数算法来管理内存，其中最主要的原因是它很难解决对象之间循环引用的问题。</p></li>
+<li><p>可达性分析算法：通过一系列的称为”GC Roots“的对象作为起始点，从这些节点开始向下搜索，搜索所走过的路径被称为引用链，当一个对象到GC Roots没有任何引用链相连时，则称为此对象是不可用的，它们到GC Roots是不可达的，所以它们将会被判定为是可回收的对象。</p></li>
+</ul>
+
+
+<p>在JDK1.2后，Java对引用的概念进行了扩充，将引用划分为强引用、软引用、弱引用、虚引用，这4种引用强度逐渐减弱。</p>
+
+<h3>垃圾收集算法</h3>
+
+<ul>
+<li><p><strong>标记-清除算法(Mark-Sweep)</strong>： 算法分为标记和清除两个阶段，是最基础的收集算法。首先标记处所有需要回收的对象，在标记完成后统一回收所有被标记的对象。
+主要的不足有两个:
+效率问题，标记和清除两个过程的效率都不高；
+空间问题，标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后再程序运行过程中需要分配较大对象时，无法找到足够连续内存而不得不提前出发另一次的垃圾回收动作。</p></li>
+<li><p><strong>复制算法</strong>: 为了解决效率问题，将可用内存按容量大小分为大小相同的两块，每次只使用其中的一块。当这一块的内存用完了，就将还存活的对象复制到另外一块上面，然后再把已使用的内存空间一次清理掉。这样使得每次都是对整个半区进行内存回收，内存分配是也就不用考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。只是这种算法的代价是将内存缩小为了原来的一半。</p></li>
+</ul>
+
+
+<blockquote><p>商业虚拟机都采用这种收集算法来回收新生代，因为新生代中的对象98%是朝生夕死的，所以并不需要按照1:1的比例来划分内存空间，而是将内存分为一块较大的Eden空间和两块较小的Suvivor空间，每次使用Eden空间和其中一块Survivor空间。当回收时，将Eden空间和Survivor空间中还存活的对象一次性地复制到另外一块Survivor空间上，最后清理掉Eden空间和Survivor空间。HotSpot虚拟机默认的Eden和Survivor的大小比例是8:1.
+当Survivor空间不够用时，需要依赖其他内存(这里指老年代)进行分配担保。</p></blockquote>
+
+<ul>
+<li><p><strong>标记-整理算法</strong>： 复制收集算法在对象存活率较高时就要进行较多的复制操作，效率将会降低。更为关键的是，如果不想浪费50%的空间，就需要有额外的空间进行担保，以应对被使用的内存中所有对象都100%存活的极端情况，所以老年代一般不能直接选用这种算法。
+标记整理算法的标记过程仍然与“标记-清除”算法一样，但后续步骤不是直接对可回收对象进行整理，而是让所有存活的对象都向一段移动，然后直接清理掉端边界以外的内存。</p></li>
+<li><p><strong>分代收集算法</strong>：根据对象存活周期的不同将内存划分为几块。一般是把Java堆分为新生代和老年代，这样可以根据各个年代的特点采用最适合的收集算法。
+在新生代中，每次垃圾收集时都发现有大批对象死去，只有少量存活，那就使用复制算法，只需要付出少量存活对象的复制成本就可以完成收集。而老年代中因为对象存活率高、没有额外空间对它进行分配担保，就必须使用“标记-清除”或者“标记-整理”算法来进行收集。</p></li>
+</ul>
+
+
+<h2>垃圾收集器</h2>
+
+<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" /></p>
+
+<h3>Serial收集器</h3>
+
+<blockquote><p>Serial收集器是最基本、发展历史最悠久的收集器，是一个单线程的收集器。只会使用一个CPU或一条收集线程去完成垃圾收集工作，在进行垃圾收集时，必须暂停其他所有的工作线程，直到它收集结束。</p></blockquote>
+
+<h3>ParNew收集器</h3>
+
+<blockquote><p>ParNew收集器是Serial收集器的多线程版本，除了使用多条线程进行垃圾收集之外，其余行为基本与Serial收集器完全一样。</p></blockquote>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[SpringBo学习笔记一]]></title>
+    <link href="http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1/"/>
+    <updated>2017-08-17T00:09:28+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2017/08/17/springboxue-xi-bi-ji-1</id>
+    <content type="html"><![CDATA[<h2>特点</h2>
+
+<ul>
+<li>Create stand-alone Spring applications</li>
+<li>Embed Tomcat, Jetty or Undertow directly (no need to deploy WAR files)</li>
+<li>Provide opinionated &lsquo;starter&rsquo; POMs to simplify your Maven configuration</li>
+<li>Automatically configure Spring whenever possible</li>
+<li>Provide production-ready features such as metrics, health checks and externalized configuration</li>
+<li>Absolutely no code generation and no requirement for XML configuration</li>
+</ul>
+
+
+<p>SpringBoot应用Maven依赖加入
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;dependency&gt;
+</span><span class='line'>    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+</span><span class='line'>    &lt;artifactId&gt;spring-boot-parent&lt;/artifactId&gt;
+</span><span class='line'>    &lt;version&gt;1.5.6.RELEASE&lt;/version&gt;
+</span><span class='line'>    &lt;scope&gt;import&lt;/scope&gt;
+</span><span class='line'>    &lt;type&gt;pom&lt;/type&gt;
+</span><span class='line'>&lt;/dependency&gt;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;&lt;dependency&gt;
+</span><span class='line'>    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+</span><span class='line'>    &lt;artifactId&gt;spring-boot-starter&lt;/artifactId&gt;
+</span><span class='line'>    &lt;version&gt;1.5.6.RELEASE&lt;/version&gt;
+</span><span class='line'>&lt;/dependency&gt;</span></code></pre></td></tr></table></div></figure></p>
+
+<p>如果要web环境，只需要加入web的starter
+<code>
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+    &lt;version&gt;1.5.6.RELEASE&lt;/version&gt;
+&lt;/dependency&gt;
+</code></p>
+
+<p>SpringBoot应用建立
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>@Slf4j
+</span><span class='line'>@SpringBootApplication
+</span><span class='line'>public class Application {&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;public static void main(String[] args) {
+</span><span class='line'>    SpringApplication app = new SpringApplication(Application.class);
+</span><span class='line'>    app.run(args);
+</span><span class='line'>    //或者直接调用run方法
+</span><span class='line'>   //SpringApplication.run(Application.class, args);
+</span><span class='line'>}     
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}</span></code></pre></td></tr></table></div></figure>
+注解@SpringBootApplication是@Configuration、@EnableAutoConfiguration 和@ComponentScan的简化方式。</p>
+
+<h3>初始化</h3>
+
+<p>创建SpringApplication对象实例，构造器中会调用初始化操作
+<code>java
+@SuppressWarnings({ "unchecked", "rawtypes" })
+private void initialize(Object[] sources) {
+   if (sources != null &amp;&amp; sources.length &gt; 0) {
+      this.sources.addAll(Arrays.asList(sources));
+   }
+    // 判断是否是web程序(javax.servlet.Servlet和org.springframework.web.context.ConfigurableWebApplicationContext都必须在类加载器中存在)，
+    // 并设置到webEnvironment属性中
+   this.webEnvironment = deduceWebEnvironment();
+   // 从spring.factories文件中找出key为ApplicationContextInitializer的类并实例化后设置到SpringApplication的initializers属性中。
+   //这个过程也就是找出所有的应用程序初始化器
+   setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+    // 从spring.factories文件中找出key为ApplicationListener的类并实例化后设置到SpringApplication的listeners属性中。
+    //这个过程就是找出所有的应用程序事件监听器
+   setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+   // 找出main类，这里是Application类
+   this.mainApplicationClass = deduceMainApplicationClass();
+}
+</code></p>
+
+<p>判断是否是WEB环境
+<code>Java
+private boolean deduceWebEnvironment() {
+   for (String className : WEB_ENVIRONMENT_CLASSES) {
+      if (!ClassUtils.isPresent(className, null)) {
+         return false;
+      }
+   }
+   return true;
+}
+</code></p>
+
+<p>ApplicationContextInitializer，应用程序初始化器，做一些初始化的工作：
+<code>Java
+public interface ApplicationContextInitializer&lt;C extends ConfigurableApplicationContext&gt; {
+    void initialize(C applicationContext);
+}
+</code></p>
+
+<p>ApplicationListener，应用程序事件(ApplicationEvent)监听器：
+<code>java
+public interface ApplicationListener&lt;E extends ApplicationEvent&gt; extends EventListener {
+    void onApplicationEvent(E event);
+}
+</code></p>
+
+<p>应用程序事件(ApplicationEvent)监听器有一下几种:(org.springframework.boot.context.event)
+<code>
+ApplicationStartingEvent(应用程序启动事件)
+ApplicationEnvironmentPreparedEvent(环境准备事件)
+ApplicationPreparedEvent(准备事件)
+ApplicationReadyEvent(启动事件)
+ApplicationFailedEvent(失败事件)
+</code></p>
+
+<p>默认情况下，initialize方法从spring.factories文件中找出的key为ApplicationContextInitializer的类有：
+<code>
+org.springframework.boot.context.config.DelegatingApplicationContextInitializer
+org.springframework.boot.context.ContextIdApplicationContextInitializer
+org.springframework.boot.context.ConfigurationWarningsApplicationContextInitializer
+org.springframework.boot.context.web.ServerPortInfoApplicationContextInitializer
+org.springframework.boot.autoconfigure.logging.AutoConfigurationReportLoggingInitializer
+</code></p>
+
+<p>key为ApplicationListener的有：
+<code>
+org.springframework.boot.context.config.AnsiOutputApplicationListener
+org.springframework.boot.context.config.ConfigFileApplicationListener
+org.springframework.boot.logging.LoggingApplicationListener
+org.springframework.boot.logging.ClasspathLoggingApplicationListener
+org.springframework.boot.autoconfigure.BackgroundPreinitializer
+org.springframework.boot.context.config.DelegatingApplicationListener
+org.springframework.boot.builder.ParentContextCloserApplicationListener
+org.springframework.boot.context.FileEncodingApplicationListener
+org.springframework.boot.liquibase.LiquibaseServiceLocatorApplicationListener
+</code></p>
+
+<p>分析run方法之前，先看一下SpringApplication中的一些事件和监听器概念</p>
+
+<blockquote><p>首先是SpringApplicationRunListeners类和SpringApplicationRunListener类的介绍。</p></blockquote>
+
+<p>SpringApplicationRunListeners内部持有SpringApplicationRunListener集合和1个Log日志类。用于SpringApplicationRunListener监听器的批量执行。</p>
+
+<p>SpringApplicationRunListener看名字也知道用于监听SpringApplication的run方法的执行。</p>
+
+<pre><code>
+started(run方法执行的时候立马执行；对应事件的类型是ApplicationStartingEvent)
+
+environmentPrepared(ApplicationContext创建之前并且环境信息准备好的时候调用；对应事件的类型是ApplicationEnvironmentPreparedEvent)
+
+contextPrepared(ApplicationContext创建好并且在source加载之前调用一次；没有具体的对应事件)
+
+contextLoaded(ApplicationContext创建并加载之后并在refresh之前调用；对应事件的类型是ApplicationPreparedEvent)
+
+finished(run方法结束之前调用；对应事件的类型是ApplicationReadyEvent或ApplicationFailedEvent)
+</code></pre>
+
+<h3>启动</h3>
+
+<pre><code>/**
+ * Run the Spring application, creating and refreshing a new
+ * {@link ApplicationContext}.
+ * @param args the application arguments (usually passed from a Java main method)
+ * @return a running {@link ApplicationContext}
+ */
+public ConfigurableApplicationContext run(String... args) {
+   StopWatch stopWatch = new StopWatch(); // 构造一个任务执行观察器
+   stopWatch.start();   // 开始执行，记录开始时间
+   ConfigurableApplicationContext context = null;
+   FailureAnalyzers analyzers = null;
+   configureHeadlessProperty();
+   //加载META-INF/spring.factories, 获取SpringApplicationRunListeners，内部只有一个EventPublishingRunListener
+   SpringApplicationRunListeners listeners = getRunListeners(args);  
+   //这里接受ApplicationStartingEvent事件的listener会执行相应的操作
+   listeners.starting();
+   try {
+      // 构造一个应用程序参数持有类
+      ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+      //创建应用程序的环境信息。如果是web程序，创建StandardServletEnvironment；否则，创建StandardEnvironment
+      //执行ApplicationEnvironmentPreparedEvent事件
+      ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
+      Banner printedBanner = printBanner(environment);
+       // 创建Spring容器
+      context = createApplicationContext();
+      analyzers = new FailureAnalyzers(context);
+      prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+      // Spring容器的刷新
+      refreshContext(context);
+      //// 调用Spring容器中的ApplicationRunner和CommandLineRunner接口的实现类
+      afterRefresh(context, applicationArguments);
+      // 广播出ApplicationReadyEvent事件给相应的监听器执行
+      listeners.finished(context, null);
+      stopWatch.stop();
+      if (this.logStartupInfo) {
+         new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
+      }
+       // 返回Spring容器
+      return context;
+   }
+   catch (Throwable ex) {
+      handleRunFailure(context, listeners, analyzers, ex);
+      throw new IllegalStateException(ex);
+   }
+}
+</code></pre>
+
+<p>创建容器中
+Spring 5 - Spring webflux 是一个新的非堵塞函数式 Reactive Web 框架，可以用来建立异步的，非阻塞，事件驱动的服务，并且扩展性非常好</p>
+
+<h3>应用Application启动过程</h3>
+
+<p>创建容器阶段
+<code>java
+protected ConfigurableApplicationContext createApplicationContext() {
+   Class&lt;?&gt; contextClass = this.applicationContextClass;
+    //判断是WEB容器还是非WEB容器
+   if (contextClass == null) {
+      try {
+         contextClass = Class.forName(this.webEnvironment
+               ? DEFAULT_WEB_CONTEXT_CLASS : DEFAULT_CONTEXT_CLASS);
+      }
+      catch (ClassNotFoundException ex) {
+         throw new IllegalStateException(
+               "Unable create a default ApplicationContext, "
+                     + "please specify an ApplicationContextClass",
+               ex);
+      }
+   }
+   return (ConfigurableApplicationContext) BeanUtils.instantiate(contextClass);
+}
+</code></p>
+
+<p>容器准备阶段
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>private void prepareContext(ConfigurableApplicationContext context,
+</span><span class='line'>      ConfigurableEnvironment environment, SpringApplicationRunListeners listeners,
+</span><span class='line'>      ApplicationArguments applicationArguments, Banner printedBanner) {
+</span><span class='line'>   // 设置Spring容器的环境信息
+</span><span class='line'>   context.setEnvironment(environment);
+</span><span class='line'>    // 回调方法，Spring容器创建之后做一些额外的事
+</span><span class='line'>   postProcessApplicationContext(context);
+</span><span class='line'>   // SpringApplication的的初始化器开始工作,批量执行ApplicationContextInitializer.initialize()方法
+</span><span class='line'>   applyInitializers(context);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   listeners.contextPrepared(context);  //没对应具体的事件，EventPublishingRunListener.contextPrepared()不执行任何操作
+</span><span class='line'>   if (this.logStartupInfo) {
+</span><span class='line'>      logStartupInfo(context.getParent() == null);
+</span><span class='line'>      logStartupProfileInfo(context);
+</span><span class='line'>   }&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   // Add boot specific singleton beans
+</span><span class='line'>   context.getBeanFactory().registerSingleton(&ldquo;springApplicationArguments&rdquo;, applicationArguments);
+</span><span class='line'>   if (printedBanner != null) {
+</span><span class='line'>      context.getBeanFactory().registerSingleton(&ldquo;springBootBanner&rdquo;, printedBanner);
+</span><span class='line'>   }&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   // Load the sources
+</span><span class='line'>   Set&lt;Object&gt; sources = getSources();
+</span><span class='line'>   Assert.notEmpty(sources, &ldquo;Sources must not be empty&rdquo;);
+</span><span class='line'>   //加载bean到容器context中
+</span><span class='line'>   load(context, sources.toArray(new Object[sources.size()]));
+</span><span class='line'>   //执行ApplicationPreparedEvent
+</span><span class='line'>   listeners.contextLoaded(context);
+</span><span class='line'>}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h2&gt;其中&lt;/h2&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;/&lt;em&gt;*
+</span><span class='line'> * Apply any relevant post processing the {@link ApplicationContext}. Subclasses can
+</span><span class='line'> * apply additional processing as required.
+</span><span class='line'> * @param context the application context
+</span><span class='line'> &lt;/em&gt;/
+</span><span class='line'>protected void postProcessApplicationContext(ConfigurableApplicationContext context) {
+</span><span class='line'>   if (this.beanNameGenerator != null) {
+</span><span class='line'>      context.getBeanFactory().registerSingleton(AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR, this.beanNameGenerator);
+</span><span class='line'>   }
+</span><span class='line'>   // 如果SpringApplication设置了资源加载器，设置到Spring容器中
+</span><span class='line'>   if (this.resourceLoader != null) {
+</span><span class='line'>      if (context instanceof GenericApplicationContext) {
+</span><span class='line'>         ((GenericApplicationContext) context).setResourceLoader(this.resourceLoader);
+</span><span class='line'>      }
+</span><span class='line'>      if (context instanceof DefaultResourceLoader) {
+</span><span class='line'>         ((DefaultResourceLoader) context).setClassLoader(this.resourceLoader.getClassLoader());
+</span><span class='line'>      }
+</span><span class='line'>   }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+
+<p>容器刷新阶段
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>private void refreshContext(ConfigurableApplicationContext context) {
+</span><span class='line'>   refresh(context);
+</span><span class='line'>   if (this.registerShutdownHook) {
+</span><span class='line'>      try {
+</span><span class='line'>         context.registerShutdownHook();
+</span><span class='line'>      }
+</span><span class='line'>      catch (AccessControlException ex) {
+</span><span class='line'>         // Not allowed in some environments.
+</span><span class='line'>      }
+</span><span class='line'>   }
+</span><span class='line'>}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h2&gt;执行applicationContext.refresh()方法&lt;/h2&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;protected void refresh(ApplicationContext applicationContext) {
+</span><span class='line'>   Assert.isInstanceOf(AbstractApplicationContext.class, applicationContext);
+</span><span class='line'>   ((AbstractApplicationContext) applicationContext).refresh();
+</span><span class='line'>}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h2&gt;spring-context包内的applicationContext.refresh()方法&lt;/h2&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;public void refresh() throws BeansException, IllegalStateException {
+</span><span class='line'>    Object var1 = this.startupShutdownMonitor;
+</span><span class='line'>    synchronized(this.startupShutdownMonitor) {
+</span><span class='line'>        this.prepareRefresh();
+</span><span class='line'>        ConfigurableListableBeanFactory beanFactory = this.obtainFreshBeanFactory();
+</span><span class='line'>        this.prepareBeanFactory(beanFactory);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;    try {
+</span><span class='line'>        this.postProcessBeanFactory(beanFactory);
+</span><span class='line'>        this.invokeBeanFactoryPostProcessors(beanFactory);
+</span><span class='line'>        this.registerBeanPostProcessors(beanFactory);
+</span><span class='line'>        this.initMessageSource();
+</span><span class='line'>        this.initApplicationEventMulticaster();
+</span><span class='line'>        this.onRefresh();
+</span><span class='line'>        this.registerListeners();
+</span><span class='line'>        this.finishBeanFactoryInitialization(beanFactory);
+</span><span class='line'>        this.finishRefresh();
+</span><span class='line'>    } catch (BeansException var9) {
+</span><span class='line'>        if(this.logger.isWarnEnabled()) {
+</span><span class='line'>            this.logger.warn("Exception encountered during context initialization - cancelling refresh attempt: " + var9);
+</span><span class='line'>        }
+</span><span class='line'>
+</span><span class='line'>        this.destroyBeans();
+</span><span class='line'>        this.cancelRefresh(var9);
+</span><span class='line'>        throw var9;
+</span><span class='line'>    } finally {
+</span><span class='line'>        this.resetCommonCaches();
+</span><span class='line'>    }
+</span><span class='line'>
+</span><span class='line'>}
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;}</span></code></pre></td></tr></table></div></figure></p>
+
+<p>容器创建完成之后
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>/&lt;em&gt;*
+</span><span class='line'> * Called after the context has been refreshed.
+</span><span class='line'> * @param context the application context
+</span><span class='line'> * @param args the application arguments
+</span><span class='line'> &lt;/em&gt;/
+</span><span class='line'>protected void afterRefresh(ConfigurableApplicationContext context, ApplicationArguments args) {
+</span><span class='line'>   callRunners(context, args);
+</span><span class='line'>}&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;private void callRunners(ApplicationContext context, ApplicationArguments args) {
+</span><span class='line'>   List&lt;Object&gt; runners = new ArrayList&lt;Object&gt;();
+</span><span class='line'>   runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
+</span><span class='line'>   runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
+</span><span class='line'>   // 对runners进行排序
+</span><span class='line'>   AnnotationAwareOrderComparator.sort(runners);&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   for (Object runner : new LinkedHashSet&lt;Object&gt;(runners)) {
+</span><span class='line'>      // 找出Spring容器中ApplicationRunner接口的实现类
+</span><span class='line'>      if (runner instanceof ApplicationRunner) {
+</span><span class='line'>         callRunner((ApplicationRunner) runner, args);
+</span><span class='line'>      }
+</span><span class='line'>      // 找出Spring容器中CommandLineRunner接口的实现类
+</span><span class='line'>      if (runner instanceof CommandLineRunner) {
+</span><span class='line'>         callRunner((CommandLineRunner) runner, args);
+</span><span class='line'>      }
+</span><span class='line'>   }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+这样run方法执行完成之后。Spring容器也已经初始化完成，各种监听器和初始化器也做了相应的工作。</p>
+
+<h2>配置自动导入</h2>
+
+<pre><code>@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Inherited
+@AutoConfigurationPackage
+@Import({EnableAutoConfigurationImportSelector.class})
+public @interface EnableAutoConfiguration {
+    String ENABLED_OVERRIDE_PROPERTY = "spring.boot.enableautoconfiguration";
+
+    Class&lt;?&gt;[] exclude() default {};
+
+    String[] excludeName() default {};
+}
+</code></pre>
+
+<p>主要看EnableAutoConfigurationImportSelector这个类，这个类会导入spring boot中的一个配置文件，方法如下：
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'> protected List&lt;String&gt; getCandidateConfigurations(AnnotationMetadata metadata,
+</span><span class='line'>            AnnotationAttributes attributes) {
+</span><span class='line'>        List&lt;String&gt; configurations = SpringFactoriesLoader.loadFactoryNames(
+</span><span class='line'>                getSpringFactoriesLoaderFactoryClass(), getBeanClassLoader());
+</span><span class='line'>        Assert.notEmpty(configurations,
+</span><span class='line'>                &ldquo;No auto configuration classes found in META-INF/spring.factories. If you &rdquo;
+</span><span class='line'>                        + &ldquo;are using a custom packaging, make sure that file is correct.&rdquo;);
+</span><span class='line'>        return configurations;
+</span><span class='line'> }&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;这个方法会导入spring-boot-autoconfigure包下META-INF/spring.factories配置文件spring.factories
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>&gt;Spring Boot 内部提供了很多自动化配置的类，例如，
+</span><span class='line'>RedisAutoConfiguration 、MongoRepositoriesAutoConfiguration 、ElasticsearchAutoConfiguration ，
+</span><span class='line'>这些自动化配置的类会判断 classpath 中是否存在自己需要的那个类，如果存在则会自动配置相关的配置，否则就不会自动配置，
+</span><span class='line'>因此，开发者在 Maven 的 pom 文件中添加相关依赖后，这些依赖就会下载很多 jar 包到 classpath 中，有了这些 lib 就会触发自动化配置，
+</span><span class='line'>所以，我们就能很便捷地使用对于的模块功能了。
+</span><span class='line'>
+</span><span class='line'>我们看一下自动加载的配置
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;Initializers&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;org.springframework.context.ApplicationContextInitializer=\
+</span><span class='line'>org.springframework.boot.autoconfigure.logging.AutoConfigurationReportLoggingInitializer&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;Application Listeners&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;org.springframework.context.ApplicationListener=\
+</span><span class='line'>org.springframework.boot.autoconfigure.BackgroundPreinitializer&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;Auto Configure&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+</span><span class='line'>org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.MessageSourceAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.PropertyPlaceholderAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.cloud.CloudAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.dao.PersistenceExceptionTranslationAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.cassandra.CassandraRepositoriesAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.solr.SolrRepositoriesAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.rest.RepositoryRestMvcAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.h2.H2ConsoleAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.hazelcast.HazelcastJpaDependencyAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.integration.IntegrationAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.JndiDataSourceAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.XADataSourceAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jms.JndiConnectionFactoryAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jms.activemq.ActiveMQAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jms.artemis.ArtemisAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jms.hornetq.HornetQAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jersey.JerseyAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.jooq.JooqAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mobile.DeviceResolverAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mobile.DeviceDelegatingViewResolverAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mobile.SitePreferenceAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.reactor.ReactorAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.security.SecurityFilterAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.security.FallbackWebSecurityAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.security.oauth2.OAuth2AutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.sendgrid.SendGridAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.session.SessionAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.social.SocialWebAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.social.FacebookAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.social.LinkedInAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.social.TwitterAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.velocity.VelocityAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.transaction.jta.JtaAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.DispatcherServletAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.HttpEncodingAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.HttpMessageConvertersAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.MultipartAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.ServerPropertiesAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.websocket.WebSocketAutoConfiguration,\
+</span><span class='line'>org.springframework.boot.autoconfigure.websocket.WebSocketMessagingAutoConfiguration&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;h1&gt;Template availability providers&lt;/h1&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;org.springframework.boot.autoconfigure.template.TemplateAvailabilityProvider=\
+</span><span class='line'>org.springframework.boot.autoconfigure.freemarker.FreeMarkerTemplateAvailabilityProvider,\
+</span><span class='line'>org.springframework.boot.autoconfigure.mustache.MustacheTemplateAvailabilityProvider,\
+</span><span class='line'>org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAvailabilityProvider,\
+</span><span class='line'>org.springframework.boot.autoconfigure.thymeleaf.ThymeleafTemplateAvailabilityProvider,\
+</span><span class='line'>org.springframework.boot.autoconfigure.velocity.VelocityTemplateAvailabilityProvider,\
+</span><span class='line'>org.springframework.boot.autoconfigure.web.JspTemplateAvailabilityProvider
+</span><span class='line'>&lt;code&gt;
+</span><span class='line'>我们来看如何自动加载MongoAutoConfiguration
+</span><span class='line'>&lt;/code&gt;
+</span><span class='line'>@Configuration
+</span><span class='line'>@ConditionalOnClass(MongoClient.class)
+</span><span class='line'>@EnableConfigurationProperties(MongoProperties.class)
+</span><span class='line'>@ConditionalOnMissingBean(type = &ldquo;org.springframework.data.mongodb.MongoDbFactory&rdquo;)
+</span><span class='line'>public class MongoAutoConfiguration {&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   private final MongoProperties properties;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   private final MongoClientOptions options;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   private final Environment environment;&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;   private MongoClient mongo;
+</span><span class='line'>&hellip;</span></code></pre></td></tr></table></div></figure>
+@ConditionalOnClass(MongoClient.class)
+当我们的Jar依赖也就是有我们的环境中存在MongoClient.class,才会创建这个Bean；
+其中ConditionalOnClass中依赖@Conditional(OnClassCondition.class)条件，判断是否加载。</p>
+
+<p>参考
+<a href="http://www.imooc.com/article/15432">Spring Boot起步依赖源码分析</a>
+<a href="https://fangjian0423.github.io/2017/04/30/springboot-startup-analysis/">SpringBoot源码分析之SpringBoot的启动过程</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[SpringBoot配置读取与加载的几种方式]]></title>
@@ -150,9 +1093,9 @@ public class CorgiProducer implements InitializingBean, DisposableBean{
 <!-- more -->
 
 
-<blockquote><p>切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。<br/>
-连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。<br/>
-通知Advice: 在一个特殊的Joint Point被Aspect执行的动作。不同的类型的Advice有"around,&ldquo; "before&rdquo; 和 &ldquo;after&rdquo; 类型。<br/>
+<blockquote><p>切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。
+连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。
+通知Advice: 在一个特殊的Joint Point被Aspect执行的动作。不同的类型的Advice有"around,&ldquo; "before&rdquo; 和 &ldquo;after&rdquo; 类型。
 切入点Pointcut: 通知定义了切面要发生的“故事”和时间，那么切入点就定义了“故事”发生的地点，例如某个类或方法的名称，spring中允许我们方便的用正则表达式来指定</p></blockquote>
 
 <p>Spring AOP是用纯Java实现的，不需要特殊的编译过程，并且不需要控制Classloader的层级关系，并且可以用在Servlet容器中和应用服务器中。
@@ -190,7 +1133,7 @@ Spring AOP目前只支持方法级别的执行Joint Point(在Spring Bean中方�
 开启了@AspectJ支持，任何Spring bean使用了@Aspect注解都将被Spring检测并配置成Spring AOP。</p></li>
 <li><p>声明一个切入点Pointcut
 使用@Pointcut注解的切入点表达式，并且注解的方法必须是含void返回值的方法。
-<code>java
+<code>
 @Pointcut("execution(* transfer(..))")  // the pointcut expression
 private void anyOldTransfer() {} // the pointcut signature
 </code></p></li>
@@ -302,143 +1245,6 @@ OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转�
 <h4>减少对象大小</h4>
 
 <p>减少对象大小的大小有2种方式：减少实例变量的个数(效果很明显),或者减小实例变量的大小。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Java性能优化一线程DUMP]]></title>
-    <link href="http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1/"/>
-    <updated>2017-05-27T09:43:06+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2017/05/27/javaxing-neng-you-hua-1</id>
-    <content type="html"><![CDATA[<p>参考: <a href="http://www.cnblogs.com/zhengyun_ustc/archive/2013/01/06/dumpanalysis.html">三个实例演示 Java Thread Dump 日志分析</a></p>
-
-<!-- more -->
-
-
-<h3>Java程序线程Thread Dump分析</h3>
-
-<p>通过<code>jstack -l PID</code>可以实时查看当前程序的线程dump</p>
-
-<pre><code>"corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1" #188 prio=5 os_prio=0 tid=0x00007f9e6006b000 nid=0x6297 waiting for monitor entry [0x00007f9dd2cb5000]
-   java.lang.Thread.State: BLOCKED (on object monitor)
-        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.assembleAdResult(DefaultMessageHandler.java:116)
-        - waiting to lock &lt;0x00000006c3bb2440&gt; (a java.lang.Object)
-        at com.mogujie.union.adexchange.biz.process.DefaultMessageHandler.handle(DefaultMessageHandler.java:79)
-        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer.lambda$newListener$0(CorgiConsumeInitializer.java:32)
-        at com.mogujie.union.adexchange.common.corgi.CorgiConsumeInitializer$$Lambda$9/799107722.onReceived(Unknown Source)
-        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume0(AbstractParallelWorkerGroup.java:92)
-        at com.mogujie.corgi.client.consumer.consume.AbstractParallelWorkerGroup.consume(AbstractParallelWorkerGroup.java:145)
-        at com.mogujie.corgi.client.consumer.consume.SingleParallelWorkerGroup$1.run(SingleParallelWorkerGroup.java:73)
-        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
-        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
-        at io.netty.util.concurrent.DefaultThreadFactory$DefaultRunnableDecorator.run(DefaultThreadFactory.java:144)
-        at java.lang.Thread.run(Thread.java:745)
-
-   Locked ownable synchronizers:
-        - &lt;0x00000006c3b92898&gt; (a java.util.concurrent.ThreadPoolExecutor$Worker)
-</code></pre>
-
-<p>线程状态有
-<code>jstack  -l PID</code> 查看java程序线程情况<br/>
-•  死锁，Deadlock（重点关注） <br/>
-•  等待资源，Waiting on condition（重点关注） <br/>
-•  等待获取监视器，Waiting on monitor entry（重点关注） <br/>
-•  阻塞，Blocked（重点关注） <br/>
-•  执行中，Runnable <br/>
-•  暂停，Suspended <br/>
-•  对象等待中，Object.wait() 或 TIMED_WAITING <br/>
-•  停止，Parked</p>
-
-<ul>
-<li>我们可以看到线程处于<code>Blocked</code>阻塞状态。说明线程等待资源超时！</li>
-<li><code>waiting to lock &lt;0x00000006c3bb2440&gt;</code>指线程等待给<code>0x00000006c3bb2440</code>这个地址上锁。在线程dump文件中我们可以搜索到很多线程在等待给这个地址上锁，所以找到谁获得了这个锁，就可以找到问题的根源。</li>
-<li><code>waiting for monitor entry [0x00007f9dd2cb5000]</code> 指线程通过同步块<code>synchronized(obj){...}</code>申请进入了临界区，从而进入了等待的<code>Entry Set</code>队列。</li>
-<li>第一行中 <code>corgi-consumer-workers-ad.unionbusiness.unionalarm-7-1</code>是线程名(Thread Name); <code>prio</code>是线程优先级，<code>tid</code>是<code>Java Thread id</code>, <code>nid</code>是<code>native</code>线程<code>id</code>。</li>
-</ul>
-
-
-<h4>线DUMP中的注意事项</h4>
-
-<p>1、不同的Java虚拟机的线程dump的内容是不一样的，JVM版本版本不同，dump信息也略有差异。<br/>
-2、在实际运行中，一次dump可能只表示当时时刻的情况，还无法确认问题，所以建议多次dump信息，如果多次的结果指向同一个地方，则可以确定问题的原因。<br/>
-3、线程状态中，Deadlock: 死锁线程，一般指多个线程调用，进入相互资源调用，导致一直等待无法释放的情况。<br/>
-4、<code>waiting on condition</code>: 等待资源，或等待某个条件的发生。<br/>
-5、<code>waiting for monitor entry</code>和 <code>Object.wait()</code>: <code>Monitor</code>是 Java中用以实现线程之间的互斥与协作的主要手段，它可以看成是对象或者 Class的锁。每一个对象都有，也仅有一个 monitor。
-从下图1中可以看出，每个 <code>Monitor</code>在某个时刻，只能被一个线程拥有，该线程就是 &ldquo;Active Thread"，而其它线程都是 "Waiting Thread"，分别在两个队列 “ Entry Set”和 “Wait Set”里面等候。在 “Entry Set”中等待的线程状态是 "Waiting for monitor entry"，而在 "Wait Set"中等待的线程状态是 "in Object.wait()"。</p>
-
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png" /></p>
-
-<h4>CPU飙高问题排查</h4>
-
-<ul>
-<li>通过top命令查看CPU占用较高的进程ID</li>
-<li>通过jstack命令将java的线程栈输出，保留现场<code>jstack -l 30142 &gt; 30142.stack</code></li>
-<li>通过<code>top -H -p PID</code>命令输出占用cpu过高的线程 找到占用cpu过高的PID</li>
-<li>使用printf 命令将30450转换成16进制。<code>printf "%x\n" 18430</code></li>
-<li>打开之前保存的stack文件，找到线程地址为<code>0x76f2</code>的输出，即为出问题的线程</li>
-</ul>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Java 对字符串转为可执行代码]]></title>
-    <link href="http://lvzwq.github.io/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma/"/>
-    <updated>2017-04-25T00:54:14+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2017/04/25/java-dui-zi-fu-chuan-zhuan-wei-ke-zhi-xing-dai-ma</id>
-    <content type="html"><![CDATA[<!--more-->
-
-
-<h2>方法一</h2>
-
-<p>参考: <a href="http://wiselyman.iteye.com/blog/1677444">java实现字符串转换成可执行代码</a></p>
-
-<p>使用commons的jexl包</p>
-
-<pre><code class="xml">    &lt;dependency&gt;
-          &lt;groupId&gt;org.apache.commons&lt;/groupId&gt;
-          &lt;artifactId&gt;commons-jexl&lt;/artifactId&gt;
-          &lt;version&gt;2.0&lt;/version&gt;
-  &lt;/dependency&gt;
-</code></pre>
-
-<p>代码示例</p>
-
-<pre><code class="java">Map&lt;String,Object&gt; map = new HashMap&lt;String,Object&gt;();  
-map.put("testService",testService);  
-map.put("person", person);  
-String expression="testService.save(person)";  
-
-JexlEngine jexl=new JexlEngine();  
-Expression e = jexl.createExpression(expression);  
-JexlContext jc = new MapContext();  
-for(String key:map.keySet()){  
-      jc.set(key, map.get(key));  
-}  
-Object o = e.evaluate(jc);
-</code></pre>
-
-<h2>方式二</h2>
-
-<p>参考:<a href="http://blog.csdn.net/w1014074794/article/details/45968559">java执行字符串数学表达式 ScriptEngine</a></p>
-
-<p>使用Java自带的jdk, <code>javax.script.ScriptEngine</code></p>
-
-<pre><code class="java">  String str = "a&amp;&amp;b&amp;&amp;c";
-  ScriptEngineManager factory = new ScriptEngineManager();
-  ScriptEngine engine = factory.getEngineByName("JavaScript");
-  str = str.replace("a", "true");
-  str = str.replace("b", "true");
-  str = str.replace("c", "false");
-  Object o = null;
-  try {
-      o = engine.eval(str);
-  } catch (ScriptException e) {
-      e.printStackTrace();
-  }finally {
-      System.out.println("o = " + o);
-  }
-</code></pre>
 ]]></content>
   </entry>
   
