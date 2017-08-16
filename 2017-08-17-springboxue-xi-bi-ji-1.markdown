@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "SpringBo学习笔记一"
+title: "SpringBoot学习笔记一"
 date: 2017-08-17 00:09:28 +0800
 comments: true
 categories: Java
@@ -14,6 +14,8 @@ categories: Java
 + Automatically configure Spring whenever possible
 + Provide production-ready features such as metrics, health checks and externalized configuration
 + Absolutely no code generation and no requirement for XML configuration
+
+<!-- more -->
 
 SpringBoot应用Maven依赖加入
 ```
@@ -543,6 +545,6 @@ public class MongoAutoConfiguration {
 
 
 
-参考
-[Spring Boot起步依赖源码分析](http://www.imooc.com/article/15432)
+### 参考  
+[Spring Boot起步依赖源码分析](http://www.imooc.com/article/15432)  
 [SpringBoot源码分析之SpringBoot的启动过程](https://fangjian0423.github.io/2017/04/30/springboot-startup-analysis/)

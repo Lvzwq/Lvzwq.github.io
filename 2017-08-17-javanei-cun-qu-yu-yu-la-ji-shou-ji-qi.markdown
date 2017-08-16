@@ -10,7 +10,10 @@ categories: Java
 
 > Java虚拟机在执行Java程序的过程中会把它所管理的内存划分为若干个不同的数据区域。
 
-![http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png](http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png)
+
+<!-- more -->
+
+![http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png](http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png)
 
 ### 程序计数器(Program Counter Register)
 程序计数器是一块较小的内存空间，他可以看做是当前线程所执行的的字节码的行号指示器。
@@ -71,7 +74,8 @@ java堆内存是否规整由所采用的垃圾收集器是否带有压缩整理�
 在新生代中，每次垃圾收集时都发现有大批对象死去，只有少量存活，那就使用复制算法，只需要付出少量存活对象的复制成本就可以完成收集。而老年代中因为对象存活率高、没有额外空间对它进行分配担保，就必须使用“标记-清除”或者“标记-整理”算法来进行收集。
 
 ## 垃圾收集器
-![http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png](http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png)
+![http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png](http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png)
+
 
 ### Serial收集器
 > Serial收集器是最基本、发展历史最悠久的收集器，是一个单线程的收集器。只会使用一个CPU或一条收集线程去完成垃圾收集工作，在进行垃圾收集时，必须暂停其他所有的工作线程，直到它收集结束。
