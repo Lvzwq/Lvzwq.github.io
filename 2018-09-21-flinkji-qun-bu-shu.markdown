@@ -1,23 +1,23 @@
 ---
 layout: post
-title: "Flink集群部署"
+title: "Flink集群HA模式部署"
 date: 2018-09-21 11:11:22 +0800
 comments: true
 categories:
 ---
 
-# Flink集群部署
-
 ## 下载安装
 从Flink官网下载最新的稳定版本安装包[https://flink.apache.org/downloads.html](https://flink.apache.org/downloads.html)， 下载1.6.0最新版本。有2种版本，一个是`Apache Flink only`，一种是`Flink with Hadoop® 2.8`。我们安装的是后者。
 
-我们这次安装的5台机器，1台机器作为JobManager,另外4台机器TaskManager,机器Ip分别为:
+<!--more-->
+
+我们这次安装的5台机器，3台机器作为JobManager,另外4台机器TaskManager,机器Ip分别为:
 ```
 10.50.xx.10 (JobManager)
-10.50.xx.11
-10.50.xx.12
-10.50.xx.13
-10.50.xx.14
+10.50.xx.11 (JobManager/TaskManager)
+10.50.xx.12 (JobManager/TaskManager)
+10.50.xx.13 (TaskManager)
+10.50.xx.14 (TaskManager)
 ```
 
 服务依赖zookeeper集群的协调机制实现高可用。zookeeper集群地址
@@ -33,9 +33,9 @@ categories:
 ```
 
 ## 配置文件
-Flink 集群基本配置，修改配置文件flink-1.6.0/conf/flink-conf.yaml
+Flink 集群基本配置，修改配置文件`flink-1.6.0/conf/flink-conf.yaml`
 
-```
+```yaml
 # ip地址设置对应机器的ip
 jobmanager.rpc.address: 10.50.xx.10
 
@@ -90,6 +90,21 @@ state.savepoints.dir: hdfs://10.50.xx.200:9000/flink-savepoints
 # state.backend.incremental: false
 ```
 
+### masters 文件配置
+```
+10.50.xx.10 
+10.50.xx.11 
+10.50.xx.12 
+```
+
+### slaves 文件配置
+```
+10.50.xx.11
+10.50.xx.12 
+10.50.xx.13 
+10.50.xx.14 
+```
+
 ## 修改Flink日志打印
 修改`flink-1.6.0/conf/log.properties`下
 ```
@@ -104,6 +119,7 @@ log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p %-
 
 
 ## 配置免密登录
+
 ```bash
 ssh-keygen -t rsa
 cat id_rsa.pub >> authorized_keys
@@ -117,10 +133,10 @@ chmod 700 ~/.ssh
 
 ## 注意问题
 
-* 如果`ssh`免密登录的默认端口不是22的话，在bin/start-cluster.sh加上
+* 如果`ssh`免密登录的默认端口不是`22`的话，在`bin/start-cluster.sh`加上
 
-```ssh
-export FLINK_SSH_OPTS="-p 10022"
+```bash
+export FLINK_SSH_OPTS="-p 端口号"
 ```
 
 2、启动Flink集群报错
@@ -184,7 +200,7 @@ export HADOOP_USER_NAME=hadoop
 
 
 ## 参考
-```
-http://wuchong.me/blog/2016/02/26/flink-docs-setup-cluster/
-https://ci.apache.org/projects/flink/flink-docs-release-1.6/ops/jobmanager_high_availability.html
-```
+
+* [http://wuchong.me/blog/2016/02/26/flink-docs-setup-cluster/](http://wuchong.me/blog/2016/02/26/flink-docs-setup-cluster/)
+* [flink jobmanager high availability](https://ci.apache.org/projects/flink/flink-docs-release-1.6/ops/jobmanager_high_availability.html)
+

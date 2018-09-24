@@ -11,7 +11,7 @@ categories: Python Docker
 ## 使用`gunicorn`部署`Flask`项目
 添加项目中使用到`python`第三方扩展，如果使用`virtualenv`的话，可以在虚拟环境中使用`pip freeze`命令直接导出。
 
-```sh
+```bash
 pip freeze > requirements.txt
 ```
 

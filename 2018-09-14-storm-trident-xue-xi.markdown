@@ -1,11 +1,13 @@
 ---
 layout: post
-title: "storm trident 学习"
+title: "storm trident 批处理模式学习"
 date: 2018-09-14 12:22:02 +0800
 comments: true
-categories:
+categories: Java Big_Data
 ---
-# Storm Trident 模式批处理消费
+
+
+<!-- more -->
 
 ```java
 /**
