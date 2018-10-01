@@ -87,10 +87,10 @@ ulimit -n 65536
 ```
 
 打开浏览器，访问http://192.168.138.129:9200, 如果出现以下页面则表示安装成功
-![http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164120@2x.png](http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164120@2x.png)
+![http://zhangwenqiang.com.cn/WX20170506-164120@2x.png](http://zhangwenqiang.com.cn/WX20170506-164120@2x.png)
 
 访问http://192.168.138.129:9200/_cluster/health?pretty=true
-![http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164430@2x.png](http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164430@2x.png)
+![http://zhangwenqiang.com.cn/WX20170506-164430@2x.png](http://zhangwenqiang.com.cn/WX20170506-164430@2x.png)
 
 ## kibana安装
 ```
@@ -160,5 +160,5 @@ node_modules/grunt/bin/grunt server
 
 访问http://192.168.138.129:9100, 如果出现以下则表示集群安装成功
 
-![http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-171946@2x.png](http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-171946@2x.png)
+![http://zhangwenqiang.com.cn/WX20170506-171946@2x.png](http://zhangwenqiang.com.cn/WX20170506-171946@2x.png)
 

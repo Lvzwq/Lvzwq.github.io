@@ -9,7 +9,7 @@ categories: IOS
 
 <!--more-->
 首先附上一张从网上找到的`Core Animation`的结构图。
-![Core Animaion](http://7xig7d.com1.z0.glb.clouddn.com/zwq/core_annimation.jpg)
+![Core Animaion](http://zhangwenqiang.com.cn/zwq/core_annimation.jpg)
 
 **准备**: 使用`Core Animation`制作动画需要引入`QuartzCore.framework`库，并在制作动画的地方引入`#import <QuartzCore/QuartzCore.h>`
 

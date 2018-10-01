@@ -57,7 +57,7 @@ categories: Java
 5、`waiting for monitor entry`和 `Object.wait()`: `Monitor`是 Java中用以实现线程之间的互斥与协作的主要手段，它可以看成是对象或者 Class的锁。每一个对象都有，也仅有一个 monitor。
 从下图1中可以看出，每个 `Monitor`在某个时刻，只能被一个线程拥有，该线程就是 "Active Thread"，而其它线程都是 "Waiting Thread"，分别在两个队列 “ Entry Set”和 “Wait Set”里面等候。在 “Entry Set”中等待的线程状态是 "Waiting for monitor entry"，而在 "Wait Set"中等待的线程状态是 "in Object.wait()"。
 
-![http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png](http://7xig7d.com1.z0.glb.clouddn.com/java_monitor.png)
+![http://zhangwenqiang.com.cn/java_monitor.png](http://zhangwenqiang.com.cn/java_monitor.png)
 
 
 #### CPU飙高问题排查
