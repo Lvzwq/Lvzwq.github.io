@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Linux | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-08-17T00:29:18+08:00</updated>
+  <updated>2018-11-02T16:08:28+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -34,23 +34,16 @@ mogu015038
 ifconfig 或者 hostname -i
 </code></p></li>
 <li><p>查看系统内核版本号和系统名称
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>uname -a
-</span><span class='line'>Linux mogu015038 2.6.32-431.el6.x86_64 <span class="c">#1 SMP Fri Nov 22 03:15:09 UTC 2013 x86_64 x86_64 x86_64 GNU/Linux&lt;/p&gt;&lt;/li&gt;</span>
-</span><span class='line'>&lt;/ul&gt;
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>&lt;h2&gt;或者&lt;/h2&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;cat /proc/version
-</span></code></pre></td></tr></table></div></figure></p>
+```sh
+$ uname -a
+Linux mogu015038 2.6.32-431.el6.x86_64 #1 SMP Fri Nov 22 03:15:09 UTC 2013 x86_64 x86_64 x86_64 GNU/Linux</p></li>
+</ul>
+
+
+<h2>或者</h2>
+
+<p>cat /proc/version
+```</p>
 
 <ul>
 <li><p>查看系统CPU的统计信息
@@ -80,65 +73,37 @@ NUMA node0 CPU(s):     0-5,12-17
 NUMA node1 CPU(s):     6-11,18-23
 </code></p></li>
 <li><p>查看系统CPU的统计信息
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="nv">$ </span>cat /proc/cpuinfo
-</span><span class='line'>processor   : 0
-</span><span class='line'>vendor_id   : GenuineIntel
-</span><span class='line'>cpu family  : 6
-</span><span class='line'>model       : 62
-</span><span class='line'>model name  : Intel<span class="p">&amp;</span>reg<span class="p">;</span> Xeon<span class="p">&amp;</span>reg<span class="p">;</span> CPU E5-2620 v2 @ 2.10GHz
-</span><span class='line'>stepping    : 4
-</span><span class='line'>cpu MHz     : 2100.094
-</span><span class='line'>cache size  : <span class="m">15360</span> KB
-</span><span class='line'>physical id : 0
-</span><span class='line'>siblings    : 12
-</span><span class='line'>core id     : 0
-</span><span class='line'>cpu cores   : 6
-</span><span class='line'>apicid      : 0
-</span><span class='line'>initial apicid  : 0
-</span><span class='line'>fpu     : yes
-</span><span class='line'>fpu_exception   : yes
-</span><span class='line'>cpuid level : 13
-</span><span class='line'>wp      : yes
-</span><span class='line'>flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good xtopology nonstop_tsc aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm arat epb xsaveopt pln pts dts tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
-</span><span class='line'>bogomips    : 4200.18
-</span><span class='line'>clflush size    : 64
-</span><span class='line'>cache_alignment : 64
-</span><span class='line'>address sizes   : <span class="m">46</span> bits physical, <span class="m">48</span> bits virtual
-</span><span class='line'>power management:&lt;/p&gt;&lt;/li&gt;
-</span><span class='line'>&lt;/ul&gt;
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;<span class="p">&amp;</span>hellip<span class="p">;&amp;</span>hellip<span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></p>
+```sh
+$ cat /proc/cpuinfo
+processor   : 0
+vendor_id   : GenuineIntel
+cpu family  : 6
+model       : 62
+model name  : Intel&reg; Xeon&reg; CPU E5-2620 v2 @ 2.10GHz
+stepping    : 4
+cpu MHz     : 2100.094
+cache size  : 15360 KB
+physical id : 0
+siblings    : 12
+core id     : 0
+cpu cores   : 6
+apicid      : 0
+initial apicid  : 0
+fpu     : yes
+fpu_exception   : yes
+cpuid level : 13
+wp      : yes
+flags       : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon pebs bts rep_good xtopology nonstop_tsc aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm arat epb xsaveopt pln pts dts tpr_shadow vnmi flexpriority ept vpid fsgsbase smep erms
+bogomips    : 4200.18
+clflush size    : 64
+cache_alignment : 64
+address sizes   : 46 bits physical, 48 bits virtual
+power management:</p></li>
+</ul>
+
+
+<p>&hellip;&hellip;
+```</p>
 
 <ul>
 <li>查看内存统计信息</li>

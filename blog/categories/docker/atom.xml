@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Docker | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/docker/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-08-17T00:29:18+08:00</updated>
+  <updated>2018-11-02T16:08:28+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -25,7 +25,7 @@
 
 <p>添加项目中使用到<code>python</code>第三方扩展，如果使用<code>virtualenv</code>的话，可以在虚拟环境中使用<code>pip freeze</code>命令直接导出。</p>
 
-<pre><code class="sh">pip freeze &gt; requirements.txt
+<pre><code class="bash">pip freeze &gt; requirements.txt
 </code></pre>
 
 <p>如下是所需要的扩展。</p>
@@ -126,42 +126,26 @@ gunicorn -w 4 -b 0.0.0.0:8000 helper:app
 
 <ol>
 <li>添加<code>Dockerfile</code>文件
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>cd /path/to/project
-</span><span class='line'>touch Dockerfile&lt;/li&gt;
-</span><span class='line'>&lt;/ol&gt;
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>&lt;h1&gt;添加以下内容&lt;/h1&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;FROM daocloud.io/python:2.7
-</span><span class='line'>RUN mkdir /code
-</span><span class='line'>WORKDIR /code
-</span><span class='line'>ADD requirements.txt /code/requirements.txt
-</span><span class='line'>RUN pip install -r /code/requirements.txt
-</span><span class='line'>COPY . /code
-</span><span class='line'>COPY docker-entrypoint.sh docker-entrypoint.sh
-</span><span class='line'>RUN chmod +x docker-entrypoint.sh
-</span><span class='line'>EXPOSE 8000&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;CMD /code/docker-entrypoint.sh</span></code></pre></td></tr></table></div></figure>
+```
+cd /path/to/project
+touch Dockerfile</li>
+</ol>
+
+
+<h1>添加以下内容</h1>
+
+<p>FROM daocloud.io/python:2.7
+RUN mkdir /code
+WORKDIR /code
+ADD requirements.txt /code/requirements.txt
+RUN pip install -r /code/requirements.txt
+COPY . /code
+COPY docker-entrypoint.sh docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh
+EXPOSE 8000</p>
+
+<p>CMD /code/docker-entrypoint.sh
+```
 项目服务启动的端口为8000，所以暴露8000端口，供主机访问</p>
 
 <ol>
@@ -558,12 +542,11 @@ $ docker logs 9a0f7279429b
 ...
 </code>
 加上<code>-f</code>参数，监控<code>docker logs</code>日志。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>docker logs -f 9a0f7279429b&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;docker logs &ndash;tail 10 9a0f7279429b 获取最后10行的日志</span></code></pre></td></tr></table></div></figure></p>
+```
+docker logs -f 9a0f7279429b</p>
+
+<p>docker logs &ndash;tail 10 9a0f7279429b 获取最后10行的日志
+```</p>
 
 <h3>查看容器内的进程</h3>
 
@@ -606,8 +589,8 @@ $ docker inspect 4220b7df2d23
 </code>
 有选择地获取<code>docker inspect</code>中的<code>docker</code>容器信息。<code>-f</code>有选择获取信息。
 <code>
-docker inspect --format '' 4220b7df2d23
-docker inspect -f '' 4220b7df2d23
+docker inspect --format '{{.State.FinishedAt}}' 4220b7df2d23
+docker inspect -f '{{.Image}}' 4220b7df2d23
 </code></p>
 
 <h3>使用<code>docker-machine</code>来创建<code>Docker</code>(Mac &amp;&amp; WIN)</h3>
@@ -623,98 +606,54 @@ docker-machine create -d virtualbox default
 </code></p>
 
 <p><code>docker-machine</code> 命令行
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>─$ docker-machine &ndash;help
-</span><span class='line'>Usage: docker-machine [OPTIONS] COMMAND [arg&hellip;]&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;Create and manage machines running Docker.&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;Version: 0.5.4, build 6643d0e&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;Author:
-</span><span class='line'>  Docker Machine Contributors - &lt;a href="https://github.com/docker/machine"&gt;https://github.com/docker/machine&lt;/a&gt;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;Options:
-</span><span class='line'>  &ndash;debug, -D                       Enable debug mode
-</span><span class='line'>  -s, &ndash;storage-path &ldquo;/Users/ilovey/.docker/machine&rdquo;    Configures storage path [$MACHINE_STORAGE_PATH]
-</span><span class='line'>  &ndash;tls-ca-cert                     CA to verify remotes against [$MACHINE_TLS_CA_CERT]
-</span><span class='line'>  &ndash;tls-ca-key                      Private key to generate certificates [$MACHINE_TLS_CA_KEY]
-</span><span class='line'>  &ndash;tls-client-cert                     Client cert to use for TLS [$MACHINE_TLS_CLIENT_CERT]
-</span><span class='line'>  &ndash;tls-client-key                  Private key used in client TLS auth [$MACHINE_TLS_CLIENT_KEY]
-</span><span class='line'>  &ndash;github-api-token                    Token to use for requests to the Github API [$MACHINE_GITHUB_API_TOKEN]
-</span><span class='line'>  &ndash;native-ssh                      Use the native (Go-based) SSH implementation. [$MACHINE_NATIVE_SSH]
-</span><span class='line'>  &ndash;bugsnag-api-token                   BugSnag API token for crash reporting [$MACHINE_BUGSNAG_API_TOKEN]
-</span><span class='line'>  &ndash;help, -h                        show help
-</span><span class='line'>  &ndash;version, -v                     print the version&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;Commands:
-</span><span class='line'>  active        Print which machine is active
-</span><span class='line'>  config        Print the connection config for machine
-</span><span class='line'>  create        Create a machine
-</span><span class='line'>  env           Display the commands to set up the environment for the Docker client
-</span><span class='line'>  inspect       Inspect information about a machine
-</span><span class='line'>  ip            Get the IP address of a machine
-</span><span class='line'>  kill          Kill a machine
-</span><span class='line'>  ls            List machines
-</span><span class='line'>  regenerate-certs  Regenerate TLS Certificates for a machine
-</span><span class='line'>  restart       Restart a machine
-</span><span class='line'>  rm            Remove a machine
-</span><span class='line'>  ssh           Log into or run a command on a machine with SSH.
-</span><span class='line'>  scp           Copy files between machines
-</span><span class='line'>  start         Start a machine
-</span><span class='line'>  status        Get the status of a machine
-</span><span class='line'>  stop          Stop a machine
-</span><span class='line'>  upgrade       Upgrade a machine to the latest version of Docker
-</span><span class='line'>  url           Get the URL of a machine
-</span><span class='line'>  version       Show the Docker Machine version or a machine docker version
-</span><span class='line'>  help          Shows a list of commands or help for one command&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;Run &lsquo;docker-machine COMMAND &ndash;help&rsquo; for more information on a command.</span></code></pre></td></tr></table></div></figure></p>
+```
+─$ docker-machine &ndash;help
+Usage: docker-machine [OPTIONS] COMMAND [arg&hellip;]</p>
+
+<p>Create and manage machines running Docker.</p>
+
+<p>Version: 0.5.4, build 6643d0e</p>
+
+<p>Author:
+  Docker Machine Contributors - <a href="https://github.com/docker/machine">https://github.com/docker/machine</a></p>
+
+<p>Options:
+  &ndash;debug, -D                       Enable debug mode
+  -s, &ndash;storage-path &ldquo;/Users/ilovey/.docker/machine&rdquo;    Configures storage path [$MACHINE_STORAGE_PATH]
+  &ndash;tls-ca-cert                     CA to verify remotes against [$MACHINE_TLS_CA_CERT]
+  &ndash;tls-ca-key                      Private key to generate certificates [$MACHINE_TLS_CA_KEY]
+  &ndash;tls-client-cert                     Client cert to use for TLS [$MACHINE_TLS_CLIENT_CERT]
+  &ndash;tls-client-key                  Private key used in client TLS auth [$MACHINE_TLS_CLIENT_KEY]
+  &ndash;github-api-token                    Token to use for requests to the Github API [$MACHINE_GITHUB_API_TOKEN]
+  &ndash;native-ssh                      Use the native (Go-based) SSH implementation. [$MACHINE_NATIVE_SSH]
+  &ndash;bugsnag-api-token                   BugSnag API token for crash reporting [$MACHINE_BUGSNAG_API_TOKEN]
+  &ndash;help, -h                        show help
+  &ndash;version, -v                     print the version</p>
+
+<p>Commands:
+  active        Print which machine is active
+  config        Print the connection config for machine
+  create        Create a machine
+  env           Display the commands to set up the environment for the Docker client
+  inspect       Inspect information about a machine
+  ip            Get the IP address of a machine
+  kill          Kill a machine
+  ls            List machines
+  regenerate-certs  Regenerate TLS Certificates for a machine
+  restart       Restart a machine
+  rm            Remove a machine
+  ssh           Log into or run a command on a machine with SSH.
+  scp           Copy files between machines
+  start         Start a machine
+  status        Get the status of a machine
+  stop          Stop a machine
+  upgrade       Upgrade a machine to the latest version of Docker
+  url           Get the URL of a machine
+  version       Show the Docker Machine version or a machine docker version
+  help          Shows a list of commands or help for one command</p>
+
+<p>Run &lsquo;docker-machine COMMAND &ndash;help&rsquo; for more information on a command.
+```</p>
 
 <h4>查看当前正在运行的<code>Machine</code></h4>
 

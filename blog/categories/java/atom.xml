@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-08-17T00:29:18+08:00</updated>
+  <updated>2018-11-02T16:08:28+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -12,6 +12,516 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Mongodb 初使用]]></title>
+    <link href="http://lvzwq.github.io/blog/2018/09/24/mongodb-chu-shi-yong/"/>
+    <updated>2018-09-24T01:16:53+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2018/09/24/mongodb-chu-shi-yong</id>
+    <content type="html"><![CDATA[<h2>Java原生API操作MongoDB</h2>
+
+<p>本文主要介绍如何用原生api简易操作mongodb集群，</p>
+
+<h3>加入依赖</h3>
+
+<pre><code class="xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+    &lt;artifactId&gt;mongo-java-driver&lt;/artifactId&gt;
+    &lt;version&gt;3.8.2&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<p>使用集群方式连接<code>Mongodb</code></p>
+
+<h3>Java操作连接</h3>
+
+<pre><code class="java">MongoCredential credential = MongoCredential.createCredential(MONGO_USRE, "admin", MONGO_PASSWD.toCharArray());
+MongoClientOptions options = MongoClientOptions.builder()  
+  .serverSelectionTimeout(30000)  
+  .threadsAllowedToBlockForConnectionMultiplier(50)  
+  .maxWaitTime(6000)  
+  .sslEnabled(false)  
+  .build();
+MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress("10.50.xx.1", 27017),
+                    new ServerAddress("10.50.xx.2", 27017), new ServerAddress("10.xx.3.", 27017)), credential, options);
+
+MongoDatabase database = mongoClient.getDatabase(DBNAME);
+
+MongoDatabase 是一个不可变类型
+</code></pre>
+
+<h3>创建文档链接</h3>
+
+<pre><code class="java">如果根据实体类的形式插入和查询，需要实例化编解码器CodecRegistry
+
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;  
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+
+MongoDatabase database = MongoClientManager.getInstance().getDataBase("ad");
+CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+              fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+
+# 存储结构实例类ChannelConsumeEntity
+MongoCollection&lt;ChannelConsumeEntity&gt; collection = database.getCollection("channelConsume", ChannelConsumeEntity.class).withCodecRegistry(pojoCodecRegistry);
+
+MongoCollection&lt;Document&gt; collection = database.getCollection("channelConsume", Document.class).withCodecRegistry(pojoCodecRegistry);
+</code></pre>
+
+<h3>插入及更新</h3>
+
+<pre><code class="java">ChannelConsumeEntity entity = new ChannelConsumeEntity();  
+entity.setBusinessType(value.getBusinessType());  
+entity.setChannel(value.getChannel());  
+entity.setDate(date);  
+entity.setHour(hour);  
+entity.setConsume(value.getConsume());  
+entity.setVirtualConsume(value.getVirtualConsume());  
+entity.setHit(value.getCount());   
+collection.insertOne(entity);
+# 批量插入
+collection.insertMany();
+</code></pre>
+
+<h4>更新操作</h4>
+
+<p>原生<code>SQL</code>操作修改<code>mongodb</code>
+<code>
+批量更新文档：
+db.collection.update(
+&lt;query&gt;,
+&lt;update&gt;,
+{
+upsert: &lt;boolean&gt;,
+multi: &lt;boolean&gt;,
+writeConcern: &lt;document&gt;
+}
+)
+-   query : update的查询条件，类似sql update查询内where后面的。
+-   update : update的对象和一些更新的操作符（如$,$inc...）等，也可以理解为sql update查询内set后面的
+-   upsert : 可选，这个参数的意思是，如果不存在update的记录，是否插入objNew,true为插入，默认是false，不插入。
+-   multi : 可选，mongodb 默认是false,只更新找到的第一条记录，如果这个参数为true,就把按条件查出来多条记录全部更新。
+-   writeConcern :可选，抛出异常的级别。
+</code></p>
+
+<pre><code>## db.channelConsume.update({"date": xx, "hour": xx, }, {"$set": {"consume": xx, "virtualConsume":xx}})
+
+collection.updateOne(new Document("date", date)  
+  .append("hour", hour)  
+  .append("businessType", value.getBusinessType())  
+  .append("categoryId", value.getCategoryId()),  
+  new Document("$set", new Document("hit", entity.getHit() + value.getCount())  
+  .append("consume", entity.getConsume() + value.getConsume())  
+  .append("virtualConsume", entity.getVirtualConsume() + value.getVirtualConsume())));
+
+## 更新操作
+collection.updateOne(new Document("date", date)  
+  .append("hour", hour)  
+  .append("businessType", value.getBusinessType())  
+  .append("channel", value.getChannel())  
+  .append("detail.minute", minute),  
+  new Document("$set", new Document("detail.$.hit", rawData.getHit() + value.getCount())  
+  .append("detail.$.consume", rawData.getConsume() + value.getConsume())  
+  .append("detail.$.virtualConsume", rawData.getVirtualConsume() + value.getVirtualConsume())  
+ ));
+</code></pre>
+
+<h3>查询</h3>
+
+<pre><code class="java">FindIterable&lt;ChannelConsumeEntity&gt; findIterable = collection.find(new Document("date", date)  
+  .append("businessType", value.getBusinessType())  
+  .append("channel", value.getChannel())  
+  .append("hour", hour), ChannelConsumeEntity.class).limit(1);  
+
+ChannelConsumeEntity entity = findIterable.first();
+# 或者循环方式遍历
+for (ChannelConsumeEntity entity: findIterable) {
+}
+</code></pre>
+
+<h3>聚合操作</h3>
+
+<p>管道的概念：管道在Unix和Linux中一般用于将当前命令的输出结果作为下一个命令的参数。
+MongoDB的聚合管道将MongoDB文档在一个管道处理完毕后将结果传递给下一个管道处理。管道操作是可以重复的。
+表达式：处理输入文档并输出。表达式是无状态的，只能用于计算当前聚合管道的文档，不能处理其它的文档。</p>
+
+<p>这里我们介绍一下聚合框架中常用的几个操作：
+-   <code>$project</code>：修改输入文档的结构。可以用来重命名、增加或删除域，也可以用于创建计算结果以及嵌套文档。
+-   <code>$match</code>：用于过滤数据，只输出符合条件的文档。$match使用MongoDB的标准查询操作。
+-   <code>$limit</code>：用来限制MongoDB聚合管道返回的文档数。
+-   <code>$skip</code>：在聚合管道中跳过指定数量的文档，并返回余下的文档。
+-   <code>$unwind</code>：将文档中的某一个数组类型字段拆分成多条，每条包含数组中的一个值。
+-   <code>$group</code>：将集合中的文档分组，可用于统计结果。
+-   <code>$sort</code>：将输入文档排序后输出。
+-   <code>$geoNear</code>：输出接近某一地理位置的有序文档。
+```</p>
+
+<h1>取出20181001号按照categoryId进行聚合的数据，类似于mysql如下</h1>
+
+<h1>select SUM(payOrders) AS payOrderSum, SUM(payPrice) AS payPrice, categoryId, date FROM categoryOrder</h1>
+
+<p> WHERE date = 20181001 group by categoryId order by payPrice DESC;</p>
+
+<h1>mongodb sql语法</h1>
+
+<p>db.categoryOrder.aggregate({&ldquo;$match&rdquo;: {&ldquo;date&rdquo;: 20181001}}, {&ldquo;$group&rdquo;:{&ldquo;_id&rdquo;:{&ldquo;categoryId&rdquo;: &ldquo;$categoryId&rdquo;}, &ldquo;payOrderSum&rdquo;:{&ldquo;$sum&rdquo;:&ldquo;$payOrders&rdquo;}, &ldquo;payPrice&rdquo;:{&ldquo;$sum&rdquo;: &ldquo;$payPrice&rdquo;}}}, {&ldquo;$sort&rdquo;: {&ldquo;payPrice&rdquo;: -1}})
+```</p>
+
+<pre><code class="java">MongoCollection&lt;ChannelConsumeEntity&gt; collection = database.getCollection("channelConsume", ChannelConsumeEntity.class).withCodecRegistry(pojoCodecRegistry);  
+
+List&lt;BasicDBObject&gt; pipeLine = new ArrayList&lt;&gt;(3);  
+BasicDBObject match = new BasicDBObject("$match", new Document("date", date));  
+BasicDBObject group = new BasicDBObject("$group", new Document("_id", new Document("channel", "$channel").append("businessType", "$businessType"))  
+  .append("consume", new Document("$sum", "$consume"))  
+  .append("virtualConsume", new Document("$sum", "$virtualConsume"))  
+  .append("hit", new Document("$sum", "$hit")));  
+BasicDBObject sort = new BasicDBObject("$sort", new Document("hit", -1));  
+
+pipeLine.add(match);  
+pipeLine.add(group);  
+pipeLine.add(sort);  
+AggregateIterable&lt;Document&gt; aggregateIterable = collection.aggregate(pipeLine, Document.class);
+</code></pre>
+
+<h3>参考</h3>
+
+<ul>
+<li><a href="http://rosslawley.co.uk/mongodb-pojo-support/">MongoDB POJO Support</a></li>
+<li><a href="http://www.runoob.com/mongodb/mongodb-update.html">菜鸟文档 - MongoDB 更新文档</a></li>
+<li><a href="http://www.runoob.com/mongodb/mongodb-aggregate.html">菜鸟文档 - MongoDB聚合</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Storm Trident 批处理模式学习]]></title>
+    <link href="http://lvzwq.github.io/blog/2018/09/14/storm-trident-xue-xi/"/>
+    <updated>2018-09-14T12:22:02+08:00</updated>
+    <id>http://lvzwq.github.io/blog/2018/09/14/storm-trident-xue-xi</id>
+    <content type="html"><![CDATA[<!-- more -->
+
+
+<pre><code class="java">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.storm.trident.topology;
+
+import org.apache.storm.Config;
+import org.apache.storm.spout.SpoutOutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.topology.base.BaseRichSpout;
+import org.apache.storm.trident.spout.ITridentSpout;
+import org.apache.storm.trident.topology.state.TransactionalState;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Values;
+import org.apache.storm.utils.WindowedTimeThrottler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
+public class MasterBatchCoordinator extends BaseRichSpout {
+    public static final Logger LOG = LoggerFactory.getLogger(MasterBatchCoordinator.class);
+
+    public static final long INIT_TXID = 1L;
+
+
+    public static final String BATCH_STREAM_ID = "$batch";
+    public static final String COMMIT_STREAM_ID = "$commit";
+    public static final String SUCCESS_STREAM_ID = "$success";
+
+    private static final String CURRENT_TX = "currtx";
+    private static final String CURRENT_ATTEMPTS = "currattempts";
+
+    private List&lt;TransactionalState&gt; _states = new ArrayList();
+
+    TreeMap&lt;Long, TransactionStatus&gt; _activeTx = new TreeMap&lt;Long, TransactionStatus&gt;();
+    TreeMap&lt;Long, Integer&gt; _attemptIds;
+
+    private SpoutOutputCollector _collector;
+    Long _currTransaction;
+
+    // 默认值为1, 取配置的TOPOLOGY_MAX_SPOUT_PENDING
+    int _maxTransactionActive;
+
+    List&lt;ITridentSpout.BatchCoordinator&gt; _coordinators = new ArrayList();
+
+
+    List&lt;String&gt; _managedSpoutIds;
+    List&lt;ITridentSpout&gt; _spouts;
+    WindowedTimeThrottler _throttler;
+
+    boolean _active = true;
+
+    public MasterBatchCoordinator(List&lt;String&gt; spoutIds, List&lt;ITridentSpout&gt; spouts) {
+        if(spoutIds.isEmpty()) {
+            throw new IllegalArgumentException("Must manage at least one spout");
+        }
+        _managedSpoutIds = spoutIds;
+        _spouts = spouts;
+        LOG.debug("Created {}", this);
+    }
+
+    public List&lt;String&gt; getManagedSpoutIds(){
+        return _managedSpoutIds;
+    }
+
+    @Override
+    public void activate() {
+        _active = true;
+    }
+
+    @Override
+    public void deactivate() {
+        _active = false;
+    }
+
+    @Override
+    public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+        _throttler = new WindowedTimeThrottler((Number)conf.get(Config.TOPOLOGY_TRIDENT_BATCH_EMIT_INTERVAL_MILLIS), 1);
+        for(String spoutId: _managedSpoutIds) {
+            _states.add(TransactionalState.newCoordinatorState(conf, spoutId));
+        }
+        _currTransaction = getStoredCurrTransaction();
+
+        _collector = collector;
+        Number active = (Number) conf.get(Config.TOPOLOGY_MAX_SPOUT_PENDING);
+        if(active==null) {
+            _maxTransactionActive = 1;
+        } else {
+            _maxTransactionActive = active.intValue();
+        }
+        _attemptIds = getStoredCurrAttempts(_currTransaction, _maxTransactionActive);
+
+
+        for(int i=0; i&lt;_spouts.size(); i++) {
+            String txId = _managedSpoutIds.get(i);
+            _coordinators.add(_spouts.get(i).getCoordinator(txId, conf, context));
+        }
+        LOG.debug("Opened {}", this);
+    }
+
+    @Override
+    public void close() {
+        for(TransactionalState state: _states) {
+            state.close();
+        }
+        LOG.debug("Closed {}", this);
+    }
+
+    @Override
+    public void nextTuple() {
+        sync();
+    }
+
+    @Override
+    public void ack(Object msgId) {
+        TransactionAttempt tx = (TransactionAttempt) msgId;
+        TransactionStatus status = _activeTx.get(tx.getTransactionId());
+        LOG.debug("Ack. [tx_attempt = {}], [tx_status = {}], [{}]", tx, status, this);
+        if(status!=null &amp;&amp; tx.equals(status.attempt)) {
+            if(status.status==AttemptStatus.PROCESSING) {
+                status.status = AttemptStatus.PROCESSED;
+                LOG.debug("Changed status. [tx_attempt = {}] [tx_status = {}]", tx, status);
+            } else if(status.status==AttemptStatus.COMMITTING) {
+                _activeTx.remove(tx.getTransactionId());
+                _attemptIds.remove(tx.getTransactionId());
+                _collector.emit(SUCCESS_STREAM_ID, new Values(tx));
+                _currTransaction = nextTransactionId(tx.getTransactionId());
+                for(TransactionalState state: _states) {
+                    state.setData(CURRENT_TX, _currTransaction);                    
+                }
+                LOG.debug("Emitted on [stream = {}], [tx_attempt = {}], [tx_status = {}], [{}]", SUCCESS_STREAM_ID, tx, status, this);
+            }
+            sync();
+        }
+    }
+
+    @Override
+    public void fail(Object msgId) {
+        TransactionAttempt tx = (TransactionAttempt) msgId;
+        TransactionStatus stored = _activeTx.remove(tx.getTransactionId());
+        LOG.debug("Fail. [tx_attempt = {}], [tx_status = {}], [{}]", tx, stored, this);
+        if(stored!=null &amp;&amp; tx.equals(stored.attempt)) {
+            _activeTx.tailMap(tx.getTransactionId()).clear();
+            sync();
+        }
+    }
+
+    @Override
+    public void declareOutputFields(OutputFieldsDeclarer declarer) {
+        // in partitioned example, in case an emitter task receives a later transaction than it's emitted so far,
+        // when it sees the earlier txid it should know to emit nothing
+        declarer.declareStream(BATCH_STREAM_ID, new Fields("tx"));
+        declarer.declareStream(COMMIT_STREAM_ID, new Fields("tx"));
+        declarer.declareStream(SUCCESS_STREAM_ID, new Fields("tx"));
+    }
+
+    private void sync() {
+        // note that sometimes the tuples active may be less than max_spout_pending, e.g.
+        // max_spout_pending = 3
+        // tx 1, 2, 3 active, tx 2 is acked. there won't be a commit for tx 2 (because tx 1 isn't committed yet),
+        // and there won't be a batch for tx 4 because there's max_spout_pending tx active
+        TransactionStatus maybeCommit = _activeTx.get(_currTransaction);
+        if(maybeCommit!=null &amp;&amp; maybeCommit.status == AttemptStatus.PROCESSED) {
+            maybeCommit.status = AttemptStatus.COMMITTING;
+            _collector.emit(COMMIT_STREAM_ID, new Values(maybeCommit.attempt), maybeCommit.attempt);
+            LOG.debug("Emitted on [stream = {}], [tx_status = {}], [{}]", COMMIT_STREAM_ID, maybeCommit, this);
+        }
+
+        if(_active) {
+            if(_activeTx.size() &lt; _maxTransactionActive) {
+                Long curr = _currTransaction;
+                for(int i=0; i&lt;_maxTransactionActive; i++) {
+                    if(!_activeTx.containsKey(curr) &amp;&amp; isReady(curr)) {
+                        // by using a monotonically increasing attempt id, downstream tasks
+                        // can be memory efficient by clearing out state for old attempts
+                        // as soon as they see a higher attempt id for a transaction
+                        Integer attemptId = _attemptIds.get(curr);
+                        if(attemptId==null) {
+                            attemptId = 0;
+                        } else {
+                            attemptId++;
+                        }
+                        _attemptIds.put(curr, attemptId);
+                        for(TransactionalState state: _states) {
+                            state.setData(CURRENT_ATTEMPTS, _attemptIds);
+                        }
+
+                        TransactionAttempt attempt = new TransactionAttempt(curr, attemptId);
+                        final TransactionStatus newTransactionStatus = new TransactionStatus(attempt);
+                        _activeTx.put(curr, newTransactionStatus);
+                        _collector.emit(BATCH_STREAM_ID, new Values(attempt), attempt);
+                        LOG.debug("Emitted on [stream = {}], [tx_attempt = {}], [tx_status = {}], [{}]", BATCH_STREAM_ID, attempt, newTransactionStatus, this);
+                        _throttler.markEvent();
+                    }
+                    curr = nextTransactionId(curr);
+                }
+            }
+        }
+    }
+
+    private boolean isReady(long txid) {
+        if(_throttler.isThrottled()) return false;
+        //TODO: make this strategy configurable?... right now it goes if anyone is ready
+        for(ITridentSpout.BatchCoordinator coord: _coordinators) {
+            if(coord.isReady(txid)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Map&lt;String, Object&gt; getComponentConfiguration() {
+        Config ret = new Config();
+        ret.setMaxTaskParallelism(1);
+        ret.registerSerialization(TransactionAttempt.class);
+        return ret;
+    }
+
+    private static enum AttemptStatus {
+        PROCESSING,
+        PROCESSED,
+        COMMITTING
+    }
+
+    private static class TransactionStatus {
+        TransactionAttempt attempt;
+        AttemptStatus status;
+
+        public TransactionStatus(TransactionAttempt attempt) {
+            this.attempt = attempt;
+            this.status = AttemptStatus.PROCESSING;
+        }
+
+        @Override
+        public String toString() {
+            return attempt.toString() + " &lt;" + status.toString() + "&gt;";
+        }        
+    }
+
+
+    private Long nextTransactionId(Long id) {
+        return id + 1;
+    }  
+
+    private Long getStoredCurrTransaction() {
+        Long ret = INIT_TXID;
+        for(TransactionalState state: _states) {
+            Long curr = (Long) state.getData(CURRENT_TX);
+            if(curr!=null &amp;&amp; curr.compareTo(ret) &gt; 0) {
+                ret = curr;
+            }
+        }
+        return ret;
+    }
+
+    private TreeMap&lt;Long, Integer&gt; getStoredCurrAttempts(long currTransaction, int maxBatches) {
+        TreeMap&lt;Long, Integer&gt; ret = new TreeMap&lt;Long, Integer&gt;();
+        for(TransactionalState state: _states) {
+            Map&lt;Object, Number&gt; attempts = (Map) state.getData(CURRENT_ATTEMPTS);
+            if(attempts==null) attempts = new HashMap();
+            for(Entry&lt;Object, Number&gt; e: attempts.entrySet()) {
+                // this is because json doesn't allow numbers as keys...
+                // TODO: replace json with a better form of encoding
+                Number txidObj;
+                if(e.getKey() instanceof String) {
+                    txidObj = Long.parseLong((String) e.getKey());
+                } else {
+                    txidObj = (Number) e.getKey();
+                }
+                long txid = ((Number) txidObj).longValue();
+                int attemptId = ((Number) e.getValue()).intValue();
+                Integer curr = ret.get(txid);
+                if(curr==null || attemptId &gt; curr) {
+                    ret.put(txid, attemptId);
+                }                
+            }
+        }
+        ret.headMap(currTransaction).clear();
+        ret.tailMap(currTransaction + maxBatches - 1).clear();
+        return ret;
+    }
+
+    @Override
+    public String toString() {
+        return "MasterBatchCoordinator{" +
+                "_states=" + _states +
+                ", _activeTx=" + _activeTx +
+                ", _attemptIds=" + _attemptIds +
+                ", _collector=" + _collector +
+                ", _currTransaction=" + _currTransaction +
+                ", _maxTransactionActive=" + _maxTransactionActive +
+                ", _coordinators=" + _coordinators +
+                ", _managedSpoutIds=" + _managedSpoutIds +
+                ", _spouts=" + _spouts +
+                ", _throttler=" + _throttler +
+                ", _active=" + _active +
+                "}";
+    }
+}
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Java内存区域与垃圾收集器]]></title>
@@ -25,7 +535,7 @@
 <!-- more -->
 
 
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%86%85%E5%AD%98.png" /></p>
+<p><img src="http://zhangwenqiang.com.cn/%E5%86%85%E5%AD%98.png" alt="http://zhangwenqiang.com.cn/%E5%86%85%E5%AD%98.png" /></p>
 
 <h3>程序计数器(Program Counter Register)</h3>
 
@@ -102,7 +612,7 @@
 
 <h2>垃圾收集器</h2>
 
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/%E5%88%86%E5%8C%BA.png" /></p>
+<p><img src="http://zhangwenqiang.com.cn/%E5%88%86%E5%8C%BA.png" alt="http://zhangwenqiang.com.cn/%E5%88%86%E5%8C%BA.png" /></p>
 
 <h3>Serial收集器</h3>
 
@@ -135,32 +645,21 @@
 
 
 <p>SpringBoot应用Maven依赖加入
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;dependency&gt;
-</span><span class='line'>    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-</span><span class='line'>    &lt;artifactId&gt;spring-boot-parent&lt;/artifactId&gt;
-</span><span class='line'>    &lt;version&gt;1.5.6.RELEASE&lt;/version&gt;
-</span><span class='line'>    &lt;scope&gt;import&lt;/scope&gt;
-</span><span class='line'>    &lt;type&gt;pom&lt;/type&gt;
-</span><span class='line'>&lt;/dependency&gt;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;&lt;dependency&gt;
-</span><span class='line'>    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-</span><span class='line'>    &lt;artifactId&gt;spring-boot-starter&lt;/artifactId&gt;
-</span><span class='line'>    &lt;version&gt;1.5.6.RELEASE&lt;/version&gt;
-</span><span class='line'>&lt;/dependency&gt;</span></code></pre></td></tr></table></div></figure></p>
+```
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-parent</artifactId>
+    <version>1.5.6.RELEASE</version>
+    <scope>import</scope>
+    <type>pom</type>
+</dependency></p>
+
+<p><dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter</artifactId>
+    <version>1.5.6.RELEASE</version>
+</dependency>
+```</p>
 
 <p>如果要web环境，只需要加入web的starter
 <code>
@@ -172,32 +671,21 @@
 </code></p>
 
 <p>SpringBoot应用建立
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>@Slf4j
-</span><span class='line'>@SpringBootApplication
-</span><span class='line'>public class Application {&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;pre&gt;&lt;code&gt;public static void main(String[] args) {
-</span><span class='line'>    SpringApplication app = new SpringApplication(Application.class);
-</span><span class='line'>    app.run(args);
-</span><span class='line'>    //或者直接调用run方法
-</span><span class='line'>   //SpringApplication.run(Application.class, args);
-</span><span class='line'>}     
-</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;}</span></code></pre></td></tr></table></div></figure>
+```
+@Slf4j
+@SpringBootApplication
+public class Application {</p>
+
+<pre><code>public static void main(String[] args) {
+    SpringApplication app = new SpringApplication(Application.class);
+    app.run(args);
+    //或者直接调用run方法
+   //SpringApplication.run(Application.class, args);
+}     
+</code></pre>
+
+<p>}
+```
 注解@SpringBootApplication是@Configuration、@EnableAutoConfiguration 和@ComponentScan的简化方式。</p>
 
 <h3>初始化</h3>
@@ -376,276 +864,149 @@ protected ConfigurableApplicationContext createApplicationContext() {
 </code></p>
 
 <p>容器准备阶段
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>private void prepareContext(ConfigurableApplicationContext context,
-</span><span class='line'>      ConfigurableEnvironment environment, SpringApplicationRunListeners listeners,
-</span><span class='line'>      ApplicationArguments applicationArguments, Banner printedBanner) {
-</span><span class='line'>   // 设置Spring容器的环境信息
-</span><span class='line'>   context.setEnvironment(environment);
-</span><span class='line'>    // 回调方法，Spring容器创建之后做一些额外的事
-</span><span class='line'>   postProcessApplicationContext(context);
-</span><span class='line'>   // SpringApplication的的初始化器开始工作,批量执行ApplicationContextInitializer.initialize()方法
-</span><span class='line'>   applyInitializers(context);&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   listeners.contextPrepared(context);  //没对应具体的事件，EventPublishingRunListener.contextPrepared()不执行任何操作
-</span><span class='line'>   if (this.logStartupInfo) {
-</span><span class='line'>      logStartupInfo(context.getParent() == null);
-</span><span class='line'>      logStartupProfileInfo(context);
-</span><span class='line'>   }&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   // Add boot specific singleton beans
-</span><span class='line'>   context.getBeanFactory().registerSingleton(&ldquo;springApplicationArguments&rdquo;, applicationArguments);
-</span><span class='line'>   if (printedBanner != null) {
-</span><span class='line'>      context.getBeanFactory().registerSingleton(&ldquo;springBootBanner&rdquo;, printedBanner);
-</span><span class='line'>   }&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   // Load the sources
-</span><span class='line'>   Set&lt;Object&gt; sources = getSources();
-</span><span class='line'>   Assert.notEmpty(sources, &ldquo;Sources must not be empty&rdquo;);
-</span><span class='line'>   //加载bean到容器context中
-</span><span class='line'>   load(context, sources.toArray(new Object[sources.size()]));
-</span><span class='line'>   //执行ApplicationPreparedEvent
-</span><span class='line'>   listeners.contextLoaded(context);
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h2&gt;其中&lt;/h2&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;/&lt;em&gt;*
-</span><span class='line'> * Apply any relevant post processing the {@link ApplicationContext}. Subclasses can
-</span><span class='line'> * apply additional processing as required.
-</span><span class='line'> * @param context the application context
-</span><span class='line'> &lt;/em&gt;/
-</span><span class='line'>protected void postProcessApplicationContext(ConfigurableApplicationContext context) {
-</span><span class='line'>   if (this.beanNameGenerator != null) {
-</span><span class='line'>      context.getBeanFactory().registerSingleton(AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR, this.beanNameGenerator);
-</span><span class='line'>   }
-</span><span class='line'>   // 如果SpringApplication设置了资源加载器，设置到Spring容器中
-</span><span class='line'>   if (this.resourceLoader != null) {
-</span><span class='line'>      if (context instanceof GenericApplicationContext) {
-</span><span class='line'>         ((GenericApplicationContext) context).setResourceLoader(this.resourceLoader);
-</span><span class='line'>      }
-</span><span class='line'>      if (context instanceof DefaultResourceLoader) {
-</span><span class='line'>         ((DefaultResourceLoader) context).setClassLoader(this.resourceLoader.getClassLoader());
-</span><span class='line'>      }
-</span><span class='line'>   }
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+```
+private void prepareContext(ConfigurableApplicationContext context,
+      ConfigurableEnvironment environment, SpringApplicationRunListeners listeners,
+      ApplicationArguments applicationArguments, Banner printedBanner) {
+   // 设置Spring容器的环境信息
+   context.setEnvironment(environment);
+    // 回调方法，Spring容器创建之后做一些额外的事
+   postProcessApplicationContext(context);
+   // SpringApplication的的初始化器开始工作,批量执行ApplicationContextInitializer.initialize()方法
+   applyInitializers(context);</p>
+
+<p>   listeners.contextPrepared(context);  //没对应具体的事件，EventPublishingRunListener.contextPrepared()不执行任何操作
+   if (this.logStartupInfo) {
+      logStartupInfo(context.getParent() == null);
+      logStartupProfileInfo(context);
+   }</p>
+
+<p>   // Add boot specific singleton beans
+   context.getBeanFactory().registerSingleton(&ldquo;springApplicationArguments&rdquo;, applicationArguments);
+   if (printedBanner != null) {
+      context.getBeanFactory().registerSingleton(&ldquo;springBootBanner&rdquo;, printedBanner);
+   }</p>
+
+<p>   // Load the sources
+   Set<Object> sources = getSources();
+   Assert.notEmpty(sources, &ldquo;Sources must not be empty&rdquo;);
+   //加载bean到容器context中
+   load(context, sources.toArray(new Object[sources.size()]));
+   //执行ApplicationPreparedEvent
+   listeners.contextLoaded(context);
+}</p>
+
+<h2>其中</h2>
+
+<p>/<em>*
+ * Apply any relevant post processing the {@link ApplicationContext}. Subclasses can
+ * apply additional processing as required.
+ * @param context the application context
+ </em>/
+protected void postProcessApplicationContext(ConfigurableApplicationContext context) {
+   if (this.beanNameGenerator != null) {
+      context.getBeanFactory().registerSingleton(AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR, this.beanNameGenerator);
+   }
+   // 如果SpringApplication设置了资源加载器，设置到Spring容器中
+   if (this.resourceLoader != null) {
+      if (context instanceof GenericApplicationContext) {
+         ((GenericApplicationContext) context).setResourceLoader(this.resourceLoader);
+      }
+      if (context instanceof DefaultResourceLoader) {
+         ((DefaultResourceLoader) context).setClassLoader(this.resourceLoader.getClassLoader());
+      }
+   }
+}
+```</p>
 
 <p>容器刷新阶段
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>private void refreshContext(ConfigurableApplicationContext context) {
-</span><span class='line'>   refresh(context);
-</span><span class='line'>   if (this.registerShutdownHook) {
-</span><span class='line'>      try {
-</span><span class='line'>         context.registerShutdownHook();
-</span><span class='line'>      }
-</span><span class='line'>      catch (AccessControlException ex) {
-</span><span class='line'>         // Not allowed in some environments.
-</span><span class='line'>      }
-</span><span class='line'>   }
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h2&gt;执行applicationContext.refresh()方法&lt;/h2&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;protected void refresh(ApplicationContext applicationContext) {
-</span><span class='line'>   Assert.isInstanceOf(AbstractApplicationContext.class, applicationContext);
-</span><span class='line'>   ((AbstractApplicationContext) applicationContext).refresh();
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h2&gt;spring-context包内的applicationContext.refresh()方法&lt;/h2&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;public void refresh() throws BeansException, IllegalStateException {
-</span><span class='line'>    Object var1 = this.startupShutdownMonitor;
-</span><span class='line'>    synchronized(this.startupShutdownMonitor) {
-</span><span class='line'>        this.prepareRefresh();
-</span><span class='line'>        ConfigurableListableBeanFactory beanFactory = this.obtainFreshBeanFactory();
-</span><span class='line'>        this.prepareBeanFactory(beanFactory);&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;pre&gt;&lt;code&gt;    try {
-</span><span class='line'>        this.postProcessBeanFactory(beanFactory);
-</span><span class='line'>        this.invokeBeanFactoryPostProcessors(beanFactory);
-</span><span class='line'>        this.registerBeanPostProcessors(beanFactory);
-</span><span class='line'>        this.initMessageSource();
-</span><span class='line'>        this.initApplicationEventMulticaster();
-</span><span class='line'>        this.onRefresh();
-</span><span class='line'>        this.registerListeners();
-</span><span class='line'>        this.finishBeanFactoryInitialization(beanFactory);
-</span><span class='line'>        this.finishRefresh();
-</span><span class='line'>    } catch (BeansException var9) {
-</span><span class='line'>        if(this.logger.isWarnEnabled()) {
-</span><span class='line'>            this.logger.warn("Exception encountered during context initialization - cancelling refresh attempt: " + var9);
-</span><span class='line'>        }
-</span><span class='line'>
-</span><span class='line'>        this.destroyBeans();
-</span><span class='line'>        this.cancelRefresh(var9);
-</span><span class='line'>        throw var9;
-</span><span class='line'>    } finally {
-</span><span class='line'>        this.resetCommonCaches();
-</span><span class='line'>    }
-</span><span class='line'>
-</span><span class='line'>}
-</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;}</span></code></pre></td></tr></table></div></figure></p>
+```
+private void refreshContext(ConfigurableApplicationContext context) {
+   refresh(context);
+   if (this.registerShutdownHook) {
+      try {
+         context.registerShutdownHook();
+      }
+      catch (AccessControlException ex) {
+         // Not allowed in some environments.
+      }
+   }
+}</p>
+
+<h2>执行applicationContext.refresh()方法</h2>
+
+<p>protected void refresh(ApplicationContext applicationContext) {
+   Assert.isInstanceOf(AbstractApplicationContext.class, applicationContext);
+   ((AbstractApplicationContext) applicationContext).refresh();
+}</p>
+
+<h2>spring-context包内的applicationContext.refresh()方法</h2>
+
+<p>public void refresh() throws BeansException, IllegalStateException {
+    Object var1 = this.startupShutdownMonitor;
+    synchronized(this.startupShutdownMonitor) {
+        this.prepareRefresh();
+        ConfigurableListableBeanFactory beanFactory = this.obtainFreshBeanFactory();
+        this.prepareBeanFactory(beanFactory);</p>
+
+<pre><code>    try {
+        this.postProcessBeanFactory(beanFactory);
+        this.invokeBeanFactoryPostProcessors(beanFactory);
+        this.registerBeanPostProcessors(beanFactory);
+        this.initMessageSource();
+        this.initApplicationEventMulticaster();
+        this.onRefresh();
+        this.registerListeners();
+        this.finishBeanFactoryInitialization(beanFactory);
+        this.finishRefresh();
+    } catch (BeansException var9) {
+        if(this.logger.isWarnEnabled()) {
+            this.logger.warn("Exception encountered during context initialization - cancelling refresh attempt: " + var9);
+        }
+
+        this.destroyBeans();
+        this.cancelRefresh(var9);
+        throw var9;
+    } finally {
+        this.resetCommonCaches();
+    }
+
+}
+</code></pre>
+
+<p>}
+```</p>
 
 <p>容器创建完成之后
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>/&lt;em&gt;*
-</span><span class='line'> * Called after the context has been refreshed.
-</span><span class='line'> * @param context the application context
-</span><span class='line'> * @param args the application arguments
-</span><span class='line'> &lt;/em&gt;/
-</span><span class='line'>protected void afterRefresh(ConfigurableApplicationContext context, ApplicationArguments args) {
-</span><span class='line'>   callRunners(context, args);
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;private void callRunners(ApplicationContext context, ApplicationArguments args) {
-</span><span class='line'>   List&lt;Object&gt; runners = new ArrayList&lt;Object&gt;();
-</span><span class='line'>   runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
-</span><span class='line'>   runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
-</span><span class='line'>   // 对runners进行排序
-</span><span class='line'>   AnnotationAwareOrderComparator.sort(runners);&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   for (Object runner : new LinkedHashSet&lt;Object&gt;(runners)) {
-</span><span class='line'>      // 找出Spring容器中ApplicationRunner接口的实现类
-</span><span class='line'>      if (runner instanceof ApplicationRunner) {
-</span><span class='line'>         callRunner((ApplicationRunner) runner, args);
-</span><span class='line'>      }
-</span><span class='line'>      // 找出Spring容器中CommandLineRunner接口的实现类
-</span><span class='line'>      if (runner instanceof CommandLineRunner) {
-</span><span class='line'>         callRunner((CommandLineRunner) runner, args);
-</span><span class='line'>      }
-</span><span class='line'>   }
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+```
+/<em>*
+ * Called after the context has been refreshed.
+ * @param context the application context
+ * @param args the application arguments
+ </em>/
+protected void afterRefresh(ConfigurableApplicationContext context, ApplicationArguments args) {
+   callRunners(context, args);
+}</p>
+
+<p>private void callRunners(ApplicationContext context, ApplicationArguments args) {
+   List<Object> runners = new ArrayList<Object>();
+   runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
+   runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
+   // 对runners进行排序
+   AnnotationAwareOrderComparator.sort(runners);</p>
+
+<p>   for (Object runner : new LinkedHashSet<Object>(runners)) {
+      // 找出Spring容器中ApplicationRunner接口的实现类
+      if (runner instanceof ApplicationRunner) {
+         callRunner((ApplicationRunner) runner, args);
+      }
+      // 找出Spring容器中CommandLineRunner接口的实现类
+      if (runner instanceof CommandLineRunner) {
+         callRunner((CommandLineRunner) runner, args);
+      }
+   }
+}
+```
 这样run方法执行完成之后。Spring容器也已经初始化完成，各种监听器和初始化器也做了相应的工作。</p>
 
 <h2>配置自动导入</h2>
@@ -666,292 +1027,151 @@ public @interface EnableAutoConfiguration {
 </code></pre>
 
 <p>主要看EnableAutoConfigurationImportSelector这个类，这个类会导入spring boot中的一个配置文件，方法如下：
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-<span class='line-number'>64</span>
-<span class='line-number'>65</span>
-<span class='line-number'>66</span>
-<span class='line-number'>67</span>
-<span class='line-number'>68</span>
-<span class='line-number'>69</span>
-<span class='line-number'>70</span>
-<span class='line-number'>71</span>
-<span class='line-number'>72</span>
-<span class='line-number'>73</span>
-<span class='line-number'>74</span>
-<span class='line-number'>75</span>
-<span class='line-number'>76</span>
-<span class='line-number'>77</span>
-<span class='line-number'>78</span>
-<span class='line-number'>79</span>
-<span class='line-number'>80</span>
-<span class='line-number'>81</span>
-<span class='line-number'>82</span>
-<span class='line-number'>83</span>
-<span class='line-number'>84</span>
-<span class='line-number'>85</span>
-<span class='line-number'>86</span>
-<span class='line-number'>87</span>
-<span class='line-number'>88</span>
-<span class='line-number'>89</span>
-<span class='line-number'>90</span>
-<span class='line-number'>91</span>
-<span class='line-number'>92</span>
-<span class='line-number'>93</span>
-<span class='line-number'>94</span>
-<span class='line-number'>95</span>
-<span class='line-number'>96</span>
-<span class='line-number'>97</span>
-<span class='line-number'>98</span>
-<span class='line-number'>99</span>
-<span class='line-number'>100</span>
-<span class='line-number'>101</span>
-<span class='line-number'>102</span>
-<span class='line-number'>103</span>
-<span class='line-number'>104</span>
-<span class='line-number'>105</span>
-<span class='line-number'>106</span>
-<span class='line-number'>107</span>
-<span class='line-number'>108</span>
-<span class='line-number'>109</span>
-<span class='line-number'>110</span>
-<span class='line-number'>111</span>
-<span class='line-number'>112</span>
-<span class='line-number'>113</span>
-<span class='line-number'>114</span>
-<span class='line-number'>115</span>
-<span class='line-number'>116</span>
-<span class='line-number'>117</span>
-<span class='line-number'>118</span>
-<span class='line-number'>119</span>
-<span class='line-number'>120</span>
-<span class='line-number'>121</span>
-<span class='line-number'>122</span>
-<span class='line-number'>123</span>
-<span class='line-number'>124</span>
-<span class='line-number'>125</span>
-<span class='line-number'>126</span>
-<span class='line-number'>127</span>
-<span class='line-number'>128</span>
-<span class='line-number'>129</span>
-<span class='line-number'>130</span>
-<span class='line-number'>131</span>
-<span class='line-number'>132</span>
-<span class='line-number'>133</span>
-<span class='line-number'>134</span>
-<span class='line-number'>135</span>
-<span class='line-number'>136</span>
-<span class='line-number'>137</span>
-<span class='line-number'>138</span>
-<span class='line-number'>139</span>
-<span class='line-number'>140</span>
-<span class='line-number'>141</span>
-<span class='line-number'>142</span>
-<span class='line-number'>143</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'> protected List&lt;String&gt; getCandidateConfigurations(AnnotationMetadata metadata,
-</span><span class='line'>            AnnotationAttributes attributes) {
-</span><span class='line'>        List&lt;String&gt; configurations = SpringFactoriesLoader.loadFactoryNames(
-</span><span class='line'>                getSpringFactoriesLoaderFactoryClass(), getBeanClassLoader());
-</span><span class='line'>        Assert.notEmpty(configurations,
-</span><span class='line'>                &ldquo;No auto configuration classes found in META-INF/spring.factories. If you &rdquo;
-</span><span class='line'>                        + &ldquo;are using a custom packaging, make sure that file is correct.&rdquo;);
-</span><span class='line'>        return configurations;
-</span><span class='line'> }&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;pre&gt;&lt;code&gt;这个方法会导入spring-boot-autoconfigure包下META-INF/spring.factories配置文件spring.factories
-</span><span class='line'>
-</span><span class='line'>
-</span><span class='line'>&gt;Spring Boot 内部提供了很多自动化配置的类，例如，
-</span><span class='line'>RedisAutoConfiguration 、MongoRepositoriesAutoConfiguration 、ElasticsearchAutoConfiguration ，
-</span><span class='line'>这些自动化配置的类会判断 classpath 中是否存在自己需要的那个类，如果存在则会自动配置相关的配置，否则就不会自动配置，
-</span><span class='line'>因此，开发者在 Maven 的 pom 文件中添加相关依赖后，这些依赖就会下载很多 jar 包到 classpath 中，有了这些 lib 就会触发自动化配置，
-</span><span class='line'>所以，我们就能很便捷地使用对于的模块功能了。
-</span><span class='line'>
-</span><span class='line'>我们看一下自动加载的配置
-</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h1&gt;Initializers&lt;/h1&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;org.springframework.context.ApplicationContextInitializer=\
-</span><span class='line'>org.springframework.boot.autoconfigure.logging.AutoConfigurationReportLoggingInitializer&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h1&gt;Application Listeners&lt;/h1&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;org.springframework.context.ApplicationListener=\
-</span><span class='line'>org.springframework.boot.autoconfigure.BackgroundPreinitializer&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h1&gt;Auto Configure&lt;/h1&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-</span><span class='line'>org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.MessageSourceAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.PropertyPlaceholderAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.cloud.CloudAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.dao.PersistenceExceptionTranslationAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.cassandra.CassandraRepositoriesAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.solr.SolrRepositoriesAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.rest.RepositoryRestMvcAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.h2.H2ConsoleAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.hazelcast.HazelcastJpaDependencyAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.integration.IntegrationAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.JndiDataSourceAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.XADataSourceAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jms.JndiConnectionFactoryAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jms.activemq.ActiveMQAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jms.artemis.ArtemisAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jms.hornetq.HornetQAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jersey.JerseyAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.jooq.JooqAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mobile.DeviceResolverAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mobile.DeviceDelegatingViewResolverAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mobile.SitePreferenceAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.reactor.ReactorAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.security.SecurityFilterAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.security.FallbackWebSecurityAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.security.oauth2.OAuth2AutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.sendgrid.SendGridAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.session.SessionAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.social.SocialWebAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.social.FacebookAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.social.LinkedInAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.social.TwitterAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.velocity.VelocityAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.transaction.jta.JtaAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.DispatcherServletAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.HttpEncodingAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.HttpMessageConvertersAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.MultipartAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.ServerPropertiesAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.websocket.WebSocketAutoConfiguration,\
-</span><span class='line'>org.springframework.boot.autoconfigure.websocket.WebSocketMessagingAutoConfiguration&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h1&gt;Template availability providers&lt;/h1&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;org.springframework.boot.autoconfigure.template.TemplateAvailabilityProvider=\
-</span><span class='line'>org.springframework.boot.autoconfigure.freemarker.FreeMarkerTemplateAvailabilityProvider,\
-</span><span class='line'>org.springframework.boot.autoconfigure.mustache.MustacheTemplateAvailabilityProvider,\
-</span><span class='line'>org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAvailabilityProvider,\
-</span><span class='line'>org.springframework.boot.autoconfigure.thymeleaf.ThymeleafTemplateAvailabilityProvider,\
-</span><span class='line'>org.springframework.boot.autoconfigure.velocity.VelocityTemplateAvailabilityProvider,\
-</span><span class='line'>org.springframework.boot.autoconfigure.web.JspTemplateAvailabilityProvider
-</span><span class='line'>&lt;code&gt;
-</span><span class='line'>我们来看如何自动加载MongoAutoConfiguration
-</span><span class='line'>&lt;/code&gt;
-</span><span class='line'>@Configuration
-</span><span class='line'>@ConditionalOnClass(MongoClient.class)
-</span><span class='line'>@EnableConfigurationProperties(MongoProperties.class)
-</span><span class='line'>@ConditionalOnMissingBean(type = &ldquo;org.springframework.data.mongodb.MongoDbFactory&rdquo;)
-</span><span class='line'>public class MongoAutoConfiguration {&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   private final MongoProperties properties;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   private final MongoClientOptions options;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   private final Environment environment;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;   private MongoClient mongo;
-</span><span class='line'>&hellip;</span></code></pre></td></tr></table></div></figure>
+```
+ protected List<String> getCandidateConfigurations(AnnotationMetadata metadata,
+            AnnotationAttributes attributes) {
+        List<String> configurations = SpringFactoriesLoader.loadFactoryNames(
+                getSpringFactoriesLoaderFactoryClass(), getBeanClassLoader());
+        Assert.notEmpty(configurations,
+                &ldquo;No auto configuration classes found in META-INF/spring.factories. If you &rdquo;
+                        + &ldquo;are using a custom packaging, make sure that file is correct.&rdquo;);
+        return configurations;
+ }</p>
+
+<pre><code>这个方法会导入spring-boot-autoconfigure包下META-INF/spring.factories配置文件spring.factories
+
+
+&gt;Spring Boot 内部提供了很多自动化配置的类，例如，
+RedisAutoConfiguration 、MongoRepositoriesAutoConfiguration 、ElasticsearchAutoConfiguration ，
+这些自动化配置的类会判断 classpath 中是否存在自己需要的那个类，如果存在则会自动配置相关的配置，否则就不会自动配置，
+因此，开发者在 Maven 的 pom 文件中添加相关依赖后，这些依赖就会下载很多 jar 包到 classpath 中，有了这些 lib 就会触发自动化配置，
+所以，我们就能很便捷地使用对于的模块功能了。
+
+我们看一下自动加载的配置
+</code></pre>
+
+<h1>Initializers</h1>
+
+<p>org.springframework.context.ApplicationContextInitializer=\
+org.springframework.boot.autoconfigure.logging.AutoConfigurationReportLoggingInitializer</p>
+
+<h1>Application Listeners</h1>
+
+<p>org.springframework.context.ApplicationListener=\
+org.springframework.boot.autoconfigure.BackgroundPreinitializer</p>
+
+<h1>Auto Configure</h1>
+
+<p>org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\
+org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\
+org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration,\
+org.springframework.boot.autoconfigure.MessageSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.PropertyPlaceholderAutoConfiguration,\
+org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration,\
+org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration,\
+org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration,\
+org.springframework.boot.autoconfigure.cloud.CloudAutoConfiguration,\
+org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration,\
+org.springframework.boot.autoconfigure.dao.PersistenceExceptionTranslationAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.cassandra.CassandraRepositoriesAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchRepositoriesAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.solr.SolrRepositoriesAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.rest.RepositoryRestMvcAutoConfiguration,\
+org.springframework.boot.autoconfigure.data.web.SpringDataWebAutoConfiguration,\
+org.springframework.boot.autoconfigure.freemarker.FreeMarkerAutoConfiguration,\
+org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration,\
+org.springframework.boot.autoconfigure.h2.H2ConsoleAutoConfiguration,\
+org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration,\
+org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration,\
+org.springframework.boot.autoconfigure.hazelcast.HazelcastJpaDependencyAutoConfiguration,\
+org.springframework.boot.autoconfigure.integration.IntegrationAutoConfiguration,\
+org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.JndiDataSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.XADataSourceAutoConfiguration,\
+org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,\
+org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration,\
+org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration,\
+org.springframework.boot.autoconfigure.jms.JndiConnectionFactoryAutoConfiguration,\
+org.springframework.boot.autoconfigure.jms.activemq.ActiveMQAutoConfiguration,\
+org.springframework.boot.autoconfigure.jms.artemis.ArtemisAutoConfiguration,\
+org.springframework.boot.autoconfigure.jms.hornetq.HornetQAutoConfiguration,\
+org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration,\
+org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAutoConfiguration,\
+org.springframework.boot.autoconfigure.jersey.JerseyAutoConfiguration,\
+org.springframework.boot.autoconfigure.jooq.JooqAutoConfiguration,\
+org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration,\
+org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration,\
+org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration,\
+org.springframework.boot.autoconfigure.mobile.DeviceResolverAutoConfiguration,\
+org.springframework.boot.autoconfigure.mobile.DeviceDelegatingViewResolverAutoConfiguration,\
+org.springframework.boot.autoconfigure.mobile.SitePreferenceAutoConfiguration,\
+org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration,\
+org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,\
+org.springframework.boot.autoconfigure.mustache.MustacheAutoConfiguration,\
+org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,\
+org.springframework.boot.autoconfigure.reactor.ReactorAutoConfiguration,\
+org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration,\
+org.springframework.boot.autoconfigure.security.SecurityFilterAutoConfiguration,\
+org.springframework.boot.autoconfigure.security.FallbackWebSecurityAutoConfiguration,\
+org.springframework.boot.autoconfigure.security.oauth2.OAuth2AutoConfiguration,\
+org.springframework.boot.autoconfigure.sendgrid.SendGridAutoConfiguration,\
+org.springframework.boot.autoconfigure.session.SessionAutoConfiguration,\
+org.springframework.boot.autoconfigure.social.SocialWebAutoConfiguration,\
+org.springframework.boot.autoconfigure.social.FacebookAutoConfiguration,\
+org.springframework.boot.autoconfigure.social.LinkedInAutoConfiguration,\
+org.springframework.boot.autoconfigure.social.TwitterAutoConfiguration,\
+org.springframework.boot.autoconfigure.solr.SolrAutoConfiguration,\
+org.springframework.boot.autoconfigure.velocity.VelocityAutoConfiguration,\
+org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration,\
+org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration,\
+org.springframework.boot.autoconfigure.transaction.jta.JtaAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.DispatcherServletAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.EmbeddedServletContainerAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.HttpEncodingAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.HttpMessageConvertersAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.MultipartAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.ServerPropertiesAutoConfiguration,\
+org.springframework.boot.autoconfigure.web.WebMvcAutoConfiguration,\
+org.springframework.boot.autoconfigure.websocket.WebSocketAutoConfiguration,\
+org.springframework.boot.autoconfigure.websocket.WebSocketMessagingAutoConfiguration</p>
+
+<h1>Template availability providers</h1>
+
+<p>org.springframework.boot.autoconfigure.template.TemplateAvailabilityProvider=\
+org.springframework.boot.autoconfigure.freemarker.FreeMarkerTemplateAvailabilityProvider,\
+org.springframework.boot.autoconfigure.mustache.MustacheTemplateAvailabilityProvider,\
+org.springframework.boot.autoconfigure.groovy.template.GroovyTemplateAvailabilityProvider,\
+org.springframework.boot.autoconfigure.thymeleaf.ThymeleafTemplateAvailabilityProvider,\
+org.springframework.boot.autoconfigure.velocity.VelocityTemplateAvailabilityProvider,\
+org.springframework.boot.autoconfigure.web.JspTemplateAvailabilityProvider
+<code>
+我们来看如何自动加载MongoAutoConfiguration
+</code>
+@Configuration
+@ConditionalOnClass(MongoClient.class)
+@EnableConfigurationProperties(MongoProperties.class)
+@ConditionalOnMissingBean(type = &ldquo;org.springframework.data.mongodb.MongoDbFactory&rdquo;)
+public class MongoAutoConfiguration {</p>
+
+<p>   private final MongoProperties properties;</p>
+
+<p>   private final MongoClientOptions options;</p>
+
+<p>   private final Environment environment;</p>
+
+<p>   private MongoClient mongo;
+&hellip;
+```
 @ConditionalOnClass(MongoClient.class)
 当我们的Jar依赖也就是有我们的环境中存在MongoClient.class,才会创建这个Bean；
 其中ConditionalOnClass中依赖@Conditional(OnClassCondition.class)条件，判断是否加载。</p>
@@ -1015,243 +1235,45 @@ public class CorgiProducer implements InitializingBean, DisposableBean{
 </code></pre>
 
 <p>另外一种，通过SpringMVC中<code>@Value("${xxx}")</code>注解的方式来获取属性文件中的值
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Data</span>
-</span><span class='line'><span class="nd">@Component</span>
-</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Config</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.groupId}&quot;</span><span class="o">)</span>
-</span><span class='line'><span class="kd">private</span> <span class="n">String</span> <span class="n">groupId</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.topic}&quot;</span><span class="o">)</span>
-</span><span class='line'><span class="kd">private</span> <span class="n">String</span> <span class="n">topic</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.address}&quot;</span><span class="o">)</span>
-</span><span class='line'><span class="kd">private</span> <span class="n">String</span> <span class="n">address</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.batchSize}&quot;</span><span class="o">)</span>
-</span><span class='line'><span class="kd">private</span> <span class="kt">int</span> <span class="n">batchSize</span><span class="o">;</span>
-</span><span class='line'>
-</span><span class='line'><span class="nd">@Value</span><span class="o">(</span><span class="s">&quot;${mq.consumer.timeOut}&quot;</span><span class="o">)</span>
-</span><span class='line'><span class="kd">private</span> <span class="kt">long</span> <span class="n">timeOut</span><span class="o">;</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;&amp;</span><span class="n">hellip</span><span class="o">;</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
+```java
+@Data
+@Component
+public class Config {</p>
 
-<p>通过@Bean结合@ConfigurationProperties的方式可以配置相同类的2个不同实例，如配置2个数据源。
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Bean</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">defaultConfig</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
-</span><span class='line'><span class="nd">@ConfigurationProperties</span><span class="o">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">mq</span><span class="o">.</span><span class="na">consumer</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
-</span><span class='line'><span class="kd">public</span> <span class="n">CorgiConfig</span> <span class="nf">defaultCorgiConfig</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="nf">CorgiConfig</span><span class="o">();</span>
-</span><span class='line'><span class="o">}&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="nd">@Bean</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">asynConfig</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
-</span><span class='line'><span class="nd">@ConfigurationProperties</span><span class="o">(</span><span class="n">prefix</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="o">;</span><span class="n">mq</span><span class="o">.</span><span class="na">asyn</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="o">;)</span>
-</span><span class='line'><span class="kd">public</span> <span class="n">CorgiConfig</span> <span class="nf">asynCorgiConfig</span><span class="o">()</span> <span class="o">{</span>
-</span><span class='line'>    <span class="k">return</span> <span class="k">new</span> <span class="nf">CorgiConfig</span><span class="o">();</span>
-</span><span class='line'><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Spring AOP学习]]></title>
-    <link href="http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi/"/>
-    <updated>2017-06-15T19:49:18+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2017/06/15/spring-aopxue-xi</id>
-    <content type="html"><![CDATA[<h3>AOP概念</h3>
+<pre><code>@Value("${mq.consumer.groupId}")
+private String groupId;
 
-<p>AOP概念和术语不是Spring独有的，AOP术语并不是直观感受的，而是一种抽象概念。</p>
+@Value("${mq.consumer.topic}")
+private String topic;
 
-<!-- more -->
+@Value("${mq.consumer.address}")
+private String address;
 
+@Value("${mq.consumer.batchSize}")
+private int batchSize;
 
-<blockquote><p>切面Aspect: 跨越多个类的模块化的关系。事务管理就是其中一个典型的应用。
-连接点Join Point： 程序运行中的一个点，比如调用方法和处理异常，在Spring AOP中，通常指代方法调用。
-通知Advice: 在一个特殊的Joint Point被Aspect执行的动作。不同的类型的Advice有"around,&ldquo; "before&rdquo; 和 &ldquo;after&rdquo; 类型。
-切入点Pointcut: 通知定义了切面要发生的“故事”和时间，那么切入点就定义了“故事”发生的地点，例如某个类或方法的名称，spring中允许我们方便的用正则表达式来指定</p></blockquote>
-
-<p>Spring AOP是用纯Java实现的，不需要特殊的编译过程，并且不需要控制Classloader的层级关系，并且可以用在Servlet容器中和应用服务器中。
-Spring AOP目前只支持方法级别的执行Joint Point(在Spring Bean中方法执行的通知Advice)。</p>
-
-<h4>AOP代理</h4>
-
-<p>Spring AOP代理默认使用标准SDK的动态代理，这允许代理任意接口interface。Spring AOP也可以使用CGLIB代理，这是代理类而不是代理接口interface,如果一个类没有实现一个接口默认是使用CGLIB代理的。</p>
-
-<h4>@AspectJ</h4>
-
-<p>需要手动开启@AspectJ支持，可以在Java配置中添加@Configuration上添加@EnableAspectJAutoProxy注解。
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="nd">@Configuration</span>
-</span><span class='line'><span class="nd">@EnableAspectJAutoProxy</span>
-</span><span class='line'><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AppConfig</span> <span class="o">{&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;}</span>
-</span><span class='line'><span class="o">&lt;</span><span class="n">code</span><span class="o">&gt;</span>
-</span><span class='line'><span class="n">或者在xml配置中开启</span><span class="nd">@AspectJ</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;</span><span class="n">xml</span>
-</span><span class='line'><span class="o">&amp;</span><span class="n">lt</span><span class="o">;</span><span class="nl">aop:</span><span class="n">aspectj</span><span class="o">-</span><span class="n">autoproxy</span><span class="o">/&gt;</span>
-</span></code></pre></td></tr></table></div></figure></p>
-
-<ul>
-<li><p>声明一个Aspect
-开启了@AspectJ支持，任何Spring bean使用了@Aspect注解都将被Spring检测并配置成Spring AOP。</p></li>
-<li><p>声明一个切入点Pointcut
-使用@Pointcut注解的切入点表达式，并且注解的方法必须是含void返回值的方法。
-<code>
-@Pointcut("execution(* transfer(..))")  // the pointcut expression
-private void anyOldTransfer() {} // the pointcut signature
-</code></p></li>
-</ul>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[堆内存最佳实践]]></title>
-    <link href="http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian/"/>
-    <updated>2017-06-08T01:05:38+08:00</updated>
-    <id>http://lvzwq.github.io/blog/2017/06/08/dui-nei-cun-zui-jia-shi-jian</id>
-    <content type="html"><![CDATA[<!-- more -->
-
-
-<h2>堆分析</h2>
-
-<h3>采用堆直方图分析堆内存使用</h3>
-
-<p>利用堆直方图，我们可以快速看到应用内的对象数目，同时不需要进行完整的堆转储。堆直方图获取方式<code>jcmd PID GC.class_histogram</code></p>
-
-<pre><code class="sh">$ jcmd 16685 GC.class_histogram | more
-16685:
-
- num     #instances         #bytes  class name
-----------------------------------------------
-   1:       3382715      310396224  [C
-   2:       3293714       79049136  java.lang.String
-   3:       2364000       75648000  java.util.HashMap$Node
-   4:         14080       54832544  [I
-   5:         95607       23472416  [B
-   6:        159142       22423488  [Ljava.util.HashMap$Node;
-   7:         53314       13002496  [Ljava.lang.Object;
-   8:        524288       12582912  com.mogujie.union.cpmbilling.common.disruptor.CpmLogEvent
-   9:        472423       11338152  java.util.concurrent.atomic.AtomicLong
-  10:        164987        7919376  java.util.HashMap
-  11:        142903        4572896  com.mogujie.union.cpmbilling.common.kafka.consumer.MessageInfo
-  12:        161610        3878640  java.lang.Long
-  13:        131572        3157728  com.mogujie.union.cpmbilling.common.kafka.producer.KafkaLogEntity
-  14:        169888        2718208  java.lang.Integer
-......
+@Value("${mq.consumer.timeOut}")
+private long timeOut;
 </code></pre>
 
-<p>在接近顶端的地方，字符数组(<code>[C</code>)和<code>String</code>对象很常见，因为他们是最常创建的Java对象。字节数组(<code>[B</code>)和Object数组同样很常见。该命令不会强制执行Full GC，但是<code>GC.class_histogram</code>中的输出仅包含活跃对象。</p>
+<p>&hellip;
+}
+```</p>
 
-<p>运行下面的命令也会得到同样的结果
-<code>sh
-jmap -histo PID
-</code>
-<code>jmap</code>的输出中包含会被回收的对象(死对象)。如果在获取直方图之前强制执行一次Full GC，可以使用下面命令
-<code>sh
-jmap -histo:live PID
-</code>
-直方图擅长识别有分配了一两个特定类的过多实例而引发的问题，但是要进行深度的分析，就需要应用到堆转储。</p>
+<p>通过@Bean结合@ConfigurationProperties的方式可以配置相同类的2个不同实例，如配置2个数据源。
+```java
+@Bean(name = &ldquo;defaultConfig&rdquo;)
+@ConfigurationProperties(prefix = &ldquo;mq.consumer&rdquo;)
+public CorgiConfig defaultCorgiConfig() {
+    return new CorgiConfig();
+}</p>
 
-<h3>堆转储</h3>
-
-<p>生成堆转储文件的方式
-<code>sh
-jcmd PID GC.heap_dump /path/to/save/heap_dump.hprof
-</code>
-或者
-<code>sh
-jmap -dump:live,file=/path/to/save/heap_dump.hprof PID
-</code>
-在jmap中包含live选项，这会在生成堆转储之前强制执行一次Full GC; jcmd默认就会这样做。如果你想包含其他对象(死对象)，可以在jcmd命令后面加上-all选项。</p>
-
-<p>生成的heap_dump.hprof文件我们可以使用下面一些工具打开，常见的有:<br/>
-<code>jhat</code>: 这是最原始的堆分析工具，它会读取堆转储文件，并运行一个小型的http服务器，可以在网页上查看堆转储的信息。</p>
-
-<p>VisualVM 以及 mat等开源原件</p>
-
-<p>对堆的第一遍分析通常涉及保留内存。一个对象的保留内存，是指回收该对象可以释放出的内存量。</p>
-
-<h4>浅对象大小、保留对象大小及深对象大小</h4>
-
-<blockquote><p>对于内存分析，还有其他两个很有用的术语: 浅(shallow)和深(deep)。一个对象的浅大小，值的是该对象本身的大小。如果该对象包含一个指向另一个对象的引用，4字节或8字节的引用会计算在内，但是目标对象的大小不会包含进来。</p>
-
-<p>深大小则包含哪些对象的大小。深大小与保留大小的区别在于那些存在共享的对象。在深大小包括那些共享的内存空间，而保留大小则不包含。</p></blockquote>
-
-<h3>内存溢出错误</h3>
-
-<ul>
-<li>JVM没有原生内存可用</li>
-<li>永久代(在Java 7和更早的版本中) 或元空间(在Java 8)内存不足。</li>
-<li>Java堆本身空间不足 - 对于给定的堆空间而言，应用中活跃对象太多</li>
-<li>JVM执行GC耗时太多</li>
-</ul>
-
-
-<p>自动堆转储
-OutOfMemoryError是不可预料的，我们很难确定应该何时获得堆转储。有几个JVM参数可以帮助我们获取</p>
-
-<p>-XX:+HeapDumpOnOutOfMemoryError
-该标志默认为false，打开该标志，JVM会在抛出OutOfMemoryError时创建堆转储。</p>
-
-<p>-XX:HeapDumpPath=<path>
-该标志执行堆转储存储路径。默认会生成java_pid.hprof文件</p>
-
-<p>-XX:+HeapDumpAfterFullGC
-这会在运行一次Full GC后生成一个堆转储文件</p>
-
-<p>-XX:+HeapDumpBeforeFullGC
-这回在运行一次Full GC之前生成一个堆转储文件</p>
-
-<h3>减少内存使用</h3>
-
-<h4>减少对象大小</h4>
-
-<p>减少对象大小的大小有2种方式：减少实例变量的个数(效果很明显),或者减小实例变量的大小。</p>
+<p>@Bean(name = &ldquo;asynConfig&rdquo;)
+@ConfigurationProperties(prefix = &ldquo;mq.asyn&rdquo;)
+public CorgiConfig asynCorgiConfig() {
+    return new CorgiConfig();
+}
+```</p>
 ]]></content>
   </entry>
   

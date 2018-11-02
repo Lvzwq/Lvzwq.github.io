@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Scala | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/scala/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-08-17T00:29:18+08:00</updated>
+  <updated>2018-11-02T16:08:28+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -42,70 +42,48 @@ res0: Int = 2
 <h3>值(常量)</h3>
 
 <p>你可以给一个表达式的结果起个名字赋成一个不变量<code>（val）</code>
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; val two = 1 + 1
-</span><span class='line'>two: Int = 2&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; two = 2
-</span><span class='line'>&lt;console&gt;:8: error: reassignment to val
-</span><span class='line'>       two = 2
-</span><span class='line'>           ^</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> val two = 1 + 1
+two: Int = 2</p>
+
+<p>scala> two = 2
+<console>:8: error: reassignment to val
+       two = 2
+           ^
+```</p>
 
 <h3>变量</h3>
 
 <p>如果你需要修改这个名称和结果的绑定，可以选择使用<code>var</code>。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; var name = &ldquo;steve&rdquo;
-</span><span class='line'>name: java.lang.String = steve&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; name = &ldquo;marius&rdquo;
-</span><span class='line'>name: java.lang.String = marius</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> var name = &ldquo;steve&rdquo;
+name: java.lang.String = steve</p>
+
+<p>scala> name = &ldquo;marius&rdquo;
+name: java.lang.String = marius
+```</p>
 
 <h3>函数(<code>function</code>)</h3>
 
 <p>你可以使用def创建函数.
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; def addOne(m: Int): Int = m + 1
-</span><span class='line'>addOne: (m: Int)Int&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;h1&gt;其中m为参数,冒号后为参数类型，括号为Int为返回值类型。可以不写，编译器自动识别。&lt;/h1&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;pre&gt;&lt;code&gt;如果函数不带参数，你可以不写括号
-</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; def three() = 1 + 2
-</span><span class='line'>three: ()Int&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; three()
-</span><span class='line'>res2: Int = 3&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; three
-</span><span class='line'>res3: Int = 3</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> def addOne(m: Int): Int = m + 1
+addOne: (m: Int)Int</p>
+
+<h1>其中m为参数,冒号后为参数类型，括号为Int为返回值类型。可以不写，编译器自动识别。</h1>
+
+<pre><code>如果函数不带参数，你可以不写括号
+</code></pre>
+
+<p>scala> def three() = 1 + 2
+three: ()Int</p>
+
+<p>scala> three()
+res2: Int = 3</p>
+
+<p>scala> three
+res3: Int = 3
+```</p>
 
 <h3>匿名函数</h3>
 
@@ -119,52 +97,34 @@ scala&gt; res2(1)
 res3: Int = 2
 </code>
 你可以传递匿名函数，或将其保存成不变量。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; val addOne = (x: Int) =&gt; x + 1
-</span><span class='line'>addOne: (Int) =&gt; Int = &lt;function1&gt;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; addOne(1)
-</span><span class='line'>res4: Int = 2
-</span><span class='line'>&lt;code&gt;
-</span><span class='line'>如果你的函数有很多表达式，可以使用`{}`来格式化代码，使之易读
-</span><span class='line'>&lt;/code&gt;
-</span><span class='line'>def timesTwo(i: Int): Int = {
-</span><span class='line'>  println(&ldquo;hello world&rdquo;)
-</span><span class='line'>  i * 2   //返回值为Int
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> val addOne = (x: Int) => x + 1
+addOne: (Int) => Int = <function1></p>
+
+<p>scala> addOne(1)
+res4: Int = 2
+<code>
+如果你的函数有很多表达式，可以使用`{}`来格式化代码，使之易读
+</code>
+def timesTwo(i: Int): Int = {
+  println(&ldquo;hello world&rdquo;)
+  i * 2   //返回值为Int
+}
+```</p>
 
 <p>对匿名函数也是这样的。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; { i: Int =&gt;
-</span><span class='line'>  println(&ldquo;hello world&rdquo;)
-</span><span class='line'>  i * 2
-</span><span class='line'>}
-</span><span class='line'>res0: (Int) =&gt; Int = &lt;function1&gt;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;等价于 (i: Int) =&gt;{
-</span><span class='line'>    println(&ldquo;hello world&rdquo;)
-</span><span class='line'>    i * 2
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> { i: Int =>
+  println(&ldquo;hello world&rdquo;)
+  i * 2
+}
+res0: (Int) => Int = <function1></p>
+
+<p>等价于 (i: Int) =>{
+    println(&ldquo;hello world&rdquo;)
+    i * 2
+}
+```</p>
 
 <h3>函数是一等公民</h3>
 
@@ -198,22 +158,16 @@ def log(msg: =&gt; String) =
 <h3>部分应用<code>(Partial application)</code></h3>
 
 <p>你可以使用下划线<code>“_”</code>部分应用一个函数，结果将得到另一个函数。<code>Scala</code>使用下划线表示不同上下文中的不同事物，你通常可以把它看作是一个没有命名的神奇通配符。在<code>{ _ + 2 }</code>的上下文中，它代表一个匿名参数。你可以这样使用它：
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; def adder(m: Int, n: Int, i: Int) = m + n + i
-</span><span class='line'>adder: (m: Int, n: Int, i: Int)Int&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; val add2 = adder(5, _: Int, 10)
-</span><span class='line'>add2: Int =&gt; Int = &lt;function1&gt;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; add2(7)
-</span><span class='line'>res25: Int = 22</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> def adder(m: Int, n: Int, i: Int) = m + n + i
+adder: (m: Int, n: Int, i: Int)Int</p>
+
+<p>scala> val add2 = adder(5, _: Int, 10)
+add2: Int => Int = <function1></p>
+
+<p>scala> add2(7)
+res25: Int = 22
+```</p>
 
 <h3>鸭子类型</h3>
 
@@ -222,32 +176,21 @@ def log(msg: =&gt; String) =
 
 <p>作为参数类型。因此任何含有<code>close()</code>的函数的类都可以作为参数。
 不必使用继承这种不够灵活的特性。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>def withClose(closeAble: { def close(): Unit },  op: { def close(): Unit } =&gt; Unit) {
-</span><span class='line'>    try {
-</span><span class='line'>        op(closeAble)
-</span><span class='line'>    } finally {
-</span><span class='line'>        closeAble.close()
-</span><span class='line'>    }
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;class Connection {
-</span><span class='line'>    def close() = println(&ldquo;close Connection&rdquo;)&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;val conn: Connection = new Connection()
-</span><span class='line'>withClose(conn, conn =&gt; println(&ldquo;do something with Connection&rdquo;))</span></code></pre></td></tr></table></div></figure></p>
+```
+def withClose(closeAble: { def close(): Unit },  op: { def close(): Unit } => Unit) {
+    try {
+        op(closeAble)
+    } finally {
+        closeAble.close()
+    }
+}</p>
+
+<p>class Connection {
+    def close() = println(&ldquo;close Connection&rdquo;)</p>
+
+<p>val conn: Connection = new Connection()
+withClose(conn, conn => println(&ldquo;do something with Connection&rdquo;))
+```</p>
 
 <h3>柯里化函数</h3>
 
@@ -263,54 +206,32 @@ def add(x:Int) = (y:Int) =&gt; x + y
 def add(x:Int)(y:Int) = x + y
 </code>
 有时会有这样的需求：允许别人一会在你的函数上应用一些参数，然后又应用另外的一些参数。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; def multiply(m: Int)(n: Int): Int = m * n
-</span><span class='line'>multiply: (m: Int)(n: Int)Int&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;// 你可以直接传入两个参数。
-</span><span class='line'>scala&gt; multiply(2)(3)
-</span><span class='line'>res0: Int = 6&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;// 你可以填上第一个参数并且部分应用第二个参数。加 _ 作为部分应用函数
-</span><span class='line'>scala&gt; val timesTwo = multiply(2) _ &lt;br/&gt;
-</span><span class='line'>timesTwo: (Int) =&gt; Int = &lt;function1&gt;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; timesTwo(3)
-</span><span class='line'>res1: Int = 6
-</span><span class='line'>&lt;code&gt;
-</span><span class='line'>也可以
-</span><span class='line'>&lt;/code&gt;
-</span><span class='line'>scala&gt; def multiply(m: Int) = (n: Int) =&gt; m * n
-</span><span class='line'>multiply: (m: Int)Int =&gt; Int&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; val timesTwo = multiply(2)
-</span><span class='line'>timesTwo: Int =&gt; Int = &lt;function1&gt;&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; timesTwo(5)
-</span><span class='line'>res36: Int = 10</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> def multiply(m: Int)(n: Int): Int = m * n
+multiply: (m: Int)(n: Int)Int</p>
+
+<p>// 你可以直接传入两个参数。
+scala> multiply(2)(3)
+res0: Int = 6</p>
+
+<p>// 你可以填上第一个参数并且部分应用第二个参数。加 _ 作为部分应用函数
+scala> val timesTwo = multiply(2) _ <br/>
+timesTwo: (Int) => Int = <function1></p>
+
+<p>scala> timesTwo(3)
+res1: Int = 6
+<code>
+也可以
+</code>
+scala> def multiply(m: Int) = (n: Int) => m * n
+multiply: (m: Int)Int => Int</p>
+
+<p>scala> val timesTwo = multiply(2)
+timesTwo: Int => Int = <function1></p>
+
+<p>scala> timesTwo(5)
+res36: Int = 10
+```</p>
 
 <h3>可变长度参数</h3>
 
@@ -319,22 +240,16 @@ def add(x:Int)(y:Int) = x + y
 def printf(text: String, xs: Any*) = Console.print(text.format(xs: _*))
 </code>
 例如要在多个字符串上执行String的capitalize函数，可以这样写：
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>def capitalizeAll(args: String*) = {
-</span><span class='line'>  args.map { arg =&gt;
-</span><span class='line'>    arg.capitalize
-</span><span class='line'>  }
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; capitalizeAll(&ldquo;rarity&rdquo;, &ldquo;applejack&rdquo;)
-</span><span class='line'>res2: Seq[String] = ArrayBuffer(Rarity, Applejack)</span></code></pre></td></tr></table></div></figure></p>
+```
+def capitalizeAll(args: String*) = {
+  args.map { arg =>
+    arg.capitalize
+  }
+}</p>
+
+<p>scala> capitalizeAll(&ldquo;rarity&rdquo;, &ldquo;applejack&rdquo;)
+res2: Seq[String] = ArrayBuffer(Rarity, Applejack)
+```</p>
 
 <pre><code class="Scala">def printA (args: String *) = 
     for (arg &lt;- args) 
@@ -347,38 +262,24 @@ scala&gt; printA ("1", "2", "3")
 </code></pre>
 
 <p>在函数内部，变长参数的类型，实际为一数组，比如上例的<code>String *</code> 类型实际为 <code>Array[String]</code>。 然而，如今你试图直接传入一个数组类型的参数给这个参数，编译器会报错：
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; var arr = Array(&ldquo;hello&rdquo;, &ldquo;world&rdquo;, &ldquo;goodbye&rdquo;)
-</span><span class='line'>arr: Array[String] = Array(hello, world, goodbye)&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; printA(arr)
-</span><span class='line'>&lt;console&gt;:10: error: type mismatch;
-</span><span class='line'> found   : Array[String]
-</span><span class='line'> required: String
-</span><span class='line'>              printA(arr)
-</span><span class='line'>                     ^
-</span><span class='line'>&lt;code&gt;
-</span><span class='line'>为了避免这种情况，你可以通过在变量后面添加 `_*`来解决，这个符号告诉`Scala`编译器在传递参数时逐个传入数组的每个元素，而不是数组整体。
-</span><span class='line'>&lt;/code&gt;
-</span><span class='line'>scala&gt; printA(arr: _*)
-</span><span class='line'>hello
-</span><span class='line'>world
-</span><span class='line'>goodbye</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> var arr = Array(&ldquo;hello&rdquo;, &ldquo;world&rdquo;, &ldquo;goodbye&rdquo;)
+arr: Array[String] = Array(hello, world, goodbye)</p>
+
+<p>scala> printA(arr)
+<console>:10: error: type mismatch;
+ found   : Array[String]
+ required: String
+              printA(arr)
+                     ^
+<code>
+为了避免这种情况，你可以通过在变量后面添加 `_*`来解决，这个符号告诉`Scala`编译器在传递参数时逐个传入数组的每个元素，而不是数组整体。
+</code>
+scala> printA(arr: _*)
+hello
+world
+goodbye
+```</p>
 
 <h3>类</h3>
 
@@ -398,84 +299,51 @@ scala&gt; printA ("1", "2", "3")
 <h4>构造函数</h4>
 
 <p>构造函数不是特殊的方法，他们是除了类的方法定义之外的代码。让我们扩展计算器的例子，增加一个构造函数参数，并用它来初始化内部状态。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>class Calculator(brand: String) {
-</span><span class='line'>  /&lt;em&gt;*
-</span><span class='line'>   * A constructor.
-</span><span class='line'>   &lt;/em&gt;/
-</span><span class='line'>  val color: String = if (brand == &ldquo;TI&rdquo;) {
-</span><span class='line'>    &ldquo;blue&rdquo;
-</span><span class='line'>  } else if (brand == &ldquo;HP&rdquo;) {
-</span><span class='line'>    &ldquo;black&rdquo;
-</span><span class='line'>  } else {
-</span><span class='line'>    &ldquo;white&rdquo;
-</span><span class='line'>  }&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;  // An instance method.
-</span><span class='line'>  def add(m: Int, n: Int): Int = m + n
-</span><span class='line'>}
-</span><span class='line'>&lt;code&gt;
-</span><span class='line'>你可以使用构造函数来构造一个实例：
-</span><span class='line'>&lt;/code&gt;
-</span><span class='line'>scala&gt; val calc = new Calculator(&ldquo;HP&rdquo;)
-</span><span class='line'>calc: Calculator = Calculator@1e64cc4d&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; calc.color
-</span><span class='line'>res0: String = black</span></code></pre></td></tr></table></div></figure></p>
+```
+class Calculator(brand: String) {
+  /<em>*
+   * A constructor.
+   </em>/
+  val color: String = if (brand == &ldquo;TI&rdquo;) {
+    &ldquo;blue&rdquo;
+  } else if (brand == &ldquo;HP&rdquo;) {
+    &ldquo;black&rdquo;
+  } else {
+    &ldquo;white&rdquo;
+  }</p>
+
+<p>  // An instance method.
+  def add(m: Int, n: Int): Int = m + n
+}
+<code>
+你可以使用构造函数来构造一个实例：
+</code>
+scala> val calc = new Calculator(&ldquo;HP&rdquo;)
+calc: Calculator = Calculator@1e64cc4d</p>
+
+<p>scala> calc.color
+res0: String = black
+```</p>
 
 <h3>函数与方法</h3>
 
 <p>函数和方法在很大程度上是可以互换的。由于函数和方法是如此的相似，你可能都不知道你调用的东西是一个函数还是一个方法。而当真正碰到的方法和函数之间的差异的时候，你可能会感到困惑。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>scala&gt; class C {
-</span><span class='line'>     |   var acc = 0
-</span><span class='line'>     |   def minc = { acc += 1 }  //定义方法
-</span><span class='line'>     |   val finc = { () =&gt; acc += 1 }    // 定义函数
-</span><span class='line'>     | }
-</span><span class='line'>defined class C&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; val c = new C
-</span><span class='line'>c: C = C@1af1bd6&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; c.minc // calls c.minc()&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;scala&gt; c.finc // returns the function as a value:
-</span><span class='line'>res2: () =&gt; Unit = &lt;function0&gt;</span></code></pre></td></tr></table></div></figure></p>
+```
+scala> class C {
+     |   var acc = 0
+     |   def minc = { acc += 1 }  //定义方法
+     |   val finc = { () => acc += 1 }    // 定义函数
+     | }
+defined class C</p>
+
+<p>scala> val c = new C
+c: C = C@1af1bd6</p>
+
+<p>scala> c.minc // calls c.minc()</p>
+
+<p>scala> c.finc // returns the function as a value:
+res2: () => Unit = <function0>
+```</p>
 
 <h3>继承</h3>
 
@@ -494,42 +362,26 @@ scala&gt; printA ("1", "2", "3")
 <h3>特质<code>(Trait)</code></h3>
 
 <p>特质是一些字段和行为的集合，Traits就像是有函数体的Interface,可以扩展或混入（mixin）你的类中。
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>trait Car {
-</span><span class='line'>  val brand: String
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;trait Shiny {
-</span><span class='line'>  val shineRefraction: Int
-</span><span class='line'>}&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;class BMW extends Car {
-</span><span class='line'>  val brand = &ldquo;BMW&rdquo;
-</span><span class='line'>}
-</span><span class='line'>&lt;code&gt;
-</span><span class='line'>通过`with`关键字，一个类可以扩展多个特质
-</span><span class='line'>&lt;/code&gt;
-</span><span class='line'>class BMW extends Car with Shiny {
-</span><span class='line'>  val brand = &ldquo;BMW&rdquo;
-</span><span class='line'>  val shineRefraction = 12
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure></p>
+```
+trait Car {
+  val brand: String
+}</p>
+
+<p>trait Shiny {
+  val shineRefraction: Int
+}</p>
+
+<p>class BMW extends Car {
+  val brand = &ldquo;BMW&rdquo;
+}
+<code>
+通过`with`关键字，一个类可以扩展多个特质
+</code>
+class BMW extends Car with Shiny {
+  val brand = &ldquo;BMW&rdquo;
+  val shineRefraction = 12
+}
+```</p>
 
 <h3>泛型</h3>
 

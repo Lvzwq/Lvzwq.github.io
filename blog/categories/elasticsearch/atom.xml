@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Elasticsearch | 闲散记事]]></title>
   <link href="http://lvzwq.github.io/blog/categories/elasticsearch/atom.xml" rel="self"/>
   <link href="http://lvzwq.github.io/"/>
-  <updated>2017-08-17T00:29:18+08:00</updated>
+  <updated>2018-11-02T16:08:28+08:00</updated>
   <id>http://lvzwq.github.io/</id>
   <author>
     <name><![CDATA[Lvzwq]]></name>
@@ -96,10 +96,10 @@ ulimit -n 65536
 </code></pre>
 
 <p>打开浏览器，访问<a href="http://192.168.138.129:9200,">http://192.168.138.129:9200,</a> 如果出现以下页面则表示安装成功
-<img src="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164120@2x.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164120@2x.png" /></p>
+<img src="http://zhangwenqiang.com.cn/WX20170506-164120@2x.png" alt="http://zhangwenqiang.com.cn/WX20170506-164120@2x.png" /></p>
 
 <p>访问<a href="http://192.168.138.129:9200/_cluster/health?pretty=true">http://192.168.138.129:9200/_cluster/health?pretty=true</a>
-<img src="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164430@2x.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-164430@2x.png" /></p>
+<img src="http://zhangwenqiang.com.cn/WX20170506-164430@2x.png" alt="http://zhangwenqiang.com.cn/WX20170506-164430@2x.png" /></p>
 
 <h2>kibana安装</h2>
 
@@ -162,7 +162,7 @@ http.cors.allow-origin: "*"
 
 <p>访问<a href="http://192.168.138.129:9100,">http://192.168.138.129:9100,</a> 如果出现以下则表示集群安装成功</p>
 
-<p><img src="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-171946@2x.png" alt="http://7xig7d.com1.z0.glb.clouddn.com/WX20170506-171946@2x.png" /></p>
+<p><img src="http://zhangwenqiang.com.cn/WX20170506-171946@2x.png" alt="http://zhangwenqiang.com.cn/WX20170506-171946@2x.png" /></p>
 ]]></content>
   </entry>
   
